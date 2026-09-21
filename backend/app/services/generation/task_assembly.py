@@ -84,6 +84,19 @@ class TaskAssembly:
     elapsed_ms: float
 
 
+def assemble_task_from_assets(request, retrieval, assets):
+    """Explicit offline composition entry; no complete chunk reaches Atomic.
+
+Assets may be precomputed without any task. Current retrieval still owns the
+authorized text and all roles, restrictions, ordering and admission context.
+"""
+    from app.services.generation.material_digest import compose_material_digest
+    from app.services.generation.stable_material_assets import authorized_retrieval_view
+
+    digest = compose_material_digest(retrieval, assets)
+    return assemble_task(request, authorized_retrieval_view(retrieval), digest)
+
+
 def assemble_task(request, retrieval, digest: MaterialDigest):
     """Rebuild every task-bound decision; return a validated packet, no model.
 

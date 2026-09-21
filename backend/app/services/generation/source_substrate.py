@@ -77,6 +77,32 @@ class SourceSubstrateLoad:
     elapsed_ms: float
 
 
+def compose_source_substrate(retrieval, assets):
+    """Create an ephemeral view of ONLY this retrieval's explicit text.
+
+Partial text must be parsed in its own context: clipping full-source fragments
+could lose an incomplete boundary clause or import an unauthorized qualifier.
+The full asset's fragments are reusable unchanged only for the identical text.
+"""
+    from app.services.generation.atomic_evidence import _source_fragments
+    from app.services.generation.stable_material_assets import (
+        authorized_retrieval_view, selected_asset_sources,
+    )
+
+    sources = selected_asset_sources(retrieval, assets)
+    view = authorized_retrieval_view(retrieval)
+    rows = {}
+    for text, payload in sources:
+        if text not in rows:
+            rows[text] = (tuple(payload["fragments"]) if text == payload["chunk_text"]
+                          else tuple(_source_fragments(text, exact_source_spans=True)))
+    projection = canonical_json(_source_projection(view))
+    parser_sha = _parser_sha256()
+    key = text_sha(canonical_json({"version": VERSION, "task_sources": projection,
+                                   "parser_sha256": parser_sha}))
+    return SourceSubstrate(projection, tuple(sorted(rows.items())), True, parser_sha, key)
+
+
 def load_source_substrate(retrieval, cache_dir: Path, *, exact_source_spans=True):
     """Build/load deterministic local source results, with corruption fail-closed.
 
