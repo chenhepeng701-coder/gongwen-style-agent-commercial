@@ -70,7 +70,8 @@ def admit_full_draft_registry(registry: dict, *, expected_sha256: str) -> dict:
     return snapshot
 
 
-def build_full_draft_anchor_input(task: Any, retrieval: dict, *, evidence_pack: dict | None = None) -> dict:
+def build_full_draft_anchor_input(task: Any, retrieval: dict, *, evidence_pack: dict | None = None,
+                                  source_substrate=None) -> dict:
     """Current RAG -> existing Atomic owner -> plan-free Anchor projection.
 
     Existing explicit evidence_scope_id belongs to the source owner. Otherwise
@@ -83,7 +84,8 @@ def build_full_draft_anchor_input(task: Any, retrieval: dict, *, evidence_pack: 
     from app.services.generation.work_summary_evidence_group import writable_fact_diagnostic
     if retrieval.get("retrieval_status") != "SUFFICIENT" or not retrieval.get("selected_chunks"):
         raise FullArticleContractError("FULL_DRAFT_MATERIAL_UNAVAILABLE")
-    authoritative = build_atomic_evidence_pack(task, retrieval, exact_source_spans=True)
+    authoritative = build_atomic_evidence_pack(task, retrieval, exact_source_spans=True,
+                                              source_substrate=source_substrate)
     report = validate_atomic_evidence_pack(authoritative, retrieval)
     if not report["passed"]:
         raise InvalidEvidencePackError(report)
@@ -106,7 +108,9 @@ def build_full_draft_anchor_input(task: Any, retrieval: dict, *, evidence_pack: 
         chunk = chunks.get(key, {})
         meta = chunk.get("metadata") or {}
         source_text = str(chunk.get("text") or chunk.get("chunk_text") or "")
-        span = next((s for s in _source_fragments(source_text, exact_source_spans=True)
+        fragments = (source_substrate.fragments(source_text, exact_source_spans=True)
+                     if source_substrate is not None else _source_fragments(source_text, exact_source_spans=True))
+        span = next((s for s in fragments
                      if text_sha(s) == atom.get("source_span_sha256")), "")
         declared = [obj["evidence_scope_id"] for obj in (chunk, meta) if "evidence_scope_id" in obj]
         reason = ""
@@ -1029,7 +1033,9 @@ def _select_core_evidence(task: Any, evidence: list[dict[str, Any]]) -> tuple[li
 
 
 def build_atomic_evidence_pack(task: Any, retrieval_payload: dict[str, Any], *,
-                               exact_source_spans: bool = False) -> dict[str, Any]:
+                               exact_source_spans: bool = False, source_substrate=None) -> dict[str, Any]:
+    if source_substrate is not None:
+        source_substrate.validate_sources(retrieval_payload)
     primary_id = str(retrieval_payload.get("primary_document_id") or "")
     auxiliary_ids = [str(value) for value in (retrieval_payload.get("auxiliary_document_ids") or [])][:2]
     selected_ids = {primary_id, *auxiliary_ids}
@@ -1066,7 +1072,9 @@ def build_atomic_evidence_pack(task: Any, retrieval_payload: dict[str, Any], *,
             if has_chunk_index and has_section_index
             else None
         )
-        fragments = list(_source_fragments(text, exact_source_spans=exact_source_spans))
+        fragments = (source_substrate.fragments(text, exact_source_spans=exact_source_spans)
+                     if source_substrate is not None
+                     else list(_source_fragments(text, exact_source_spans=exact_source_spans)))
         for clause_index, clause in enumerate(fragments):
             source_titles = {
                 _compact(value)
