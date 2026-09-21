@@ -90,6 +90,32 @@ class MaterialDigestLoad:
     elapsed_ms: float
 
 
+def compose_material_digest(retrieval, assets):
+    """Task-only reading index; never persist authorization as a stable asset."""
+    from app.services.generation.source_substrate import compose_source_substrate
+    from app.services.generation.stable_material_assets import selected_asset_sources
+
+    assets = tuple(assets)
+    substrate = compose_source_substrate(retrieval, assets)
+    available = {unit["source_span"]: unit
+                 for _, payload in selected_asset_sources(retrieval, assets)
+                 for unit in payload["reading_units"]}
+    spans = sorted({span for _, fragments in substrate.fragments_by_text for span in fragments})
+    missing = tuple(span for span in spans if span not in available)
+    if missing:
+        # A newly truncated clause has different literal signals. Reuse the
+        # same owner on that exact authorized clause, never signals from its tail.
+        partial = SourceSubstrate(substrate.sources_json, (("", missing),), True,
+                                  substrate.parser_sha256, substrate.cache_key)
+        available.update({unit["source_span"]: unit for unit in _reading_units(partial)})
+    units = [available[span] for span in spans]
+    _validate_units(units, substrate)
+    rules = _rules_sha256()
+    key = text_sha(canonical_json({"version": VERSION, "task_substrate": substrate.cache_key,
+                                   "rules_sha256": rules}))
+    return MaterialDigest(substrate, canonical_json(units), rules, key)
+
+
 def load_material_digest(retrieval, cache_dir: Path):
     """Explicit experiment entry; never reads a task or calls a project model.
 
