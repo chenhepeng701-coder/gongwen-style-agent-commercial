@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "baseline": "Repository Baseline 02B-R1",
+  "baseline": "Repository Baseline 02B-R2R3 Final Normalization",
   "manifest_excludes_self": true,
-  "file_count": 184,
+  "file_count": 186,
   "files": [
     {
       "target_path": ".env.example",
@@ -10,6 +10,13 @@
       "sha256": "a11e4dc0929ca7c8beafe94e983adb9bba5bb71854eeec0a63851a393916ea75",
       "classification": "generated_baseline_file",
       "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": ".gitattributes",
+      "source_path": null,
+      "sha256": "d60f352d0db1404c70afb4bb8b2ca3fd1c610572aa40720e8a0b7baa7885418c",
+      "classification": "generated_baseline_file",
+      "reason": "规范文本 checkout 为 LF，保持 canonical repository state 与克隆文件的字节一致性。"
     },
     {
       "target_path": ".gitignore",
@@ -35,7 +42,7 @@
     {
       "target_path": "backend/app/config.py",
       "source_path": "backend/app/config.py",
-      "sha256": "0b3c7672fe66349af212d03a61ecc3791f7e5cc6e6eee5900101eec79b69451e",
+      "sha256": "0674f6345a38a737d7046224b2dd84888742c4f7bfb01d960dce1827fa269a44",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -77,7 +84,7 @@
     {
       "target_path": "backend/app/models/generation.py",
       "source_path": "backend/app/models/generation.py",
-      "sha256": "9c37a4c8af6a7f7a6895ce340b1a9d1cc5131afcb0c362533f253271fddee21f",
+      "sha256": "74e7cbb0c5efb5b26e3f34a8c6887f236007025e1d6ea8a4ae7bdcdc0f25d34b",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -231,21 +238,21 @@
     {
       "target_path": "backend/app/services/generation/atomic_evidence.py",
       "source_path": "backend/app/services/generation/atomic_evidence.py",
-      "sha256": "f41844ff682a702e83124db6aa221ec0e2049fa8357149e2a63ab93b994ff2f6",
+      "sha256": "581497663890809d4ede65cd45db98214653635bb999da8aae21094208148307",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
     {
       "target_path": "backend/app/services/generation/case32_contract/brief_rules.txt",
       "source_path": "backend/app/services/generation/case32_contract/brief_rules.txt",
-      "sha256": "e60b63a5959511b9500437e75ae05890356b957a7d159db4141add3a2b5e063e",
+      "sha256": "2d3a4a2c7b846f21137010d897142b6ba7b31587adc2ec1ac7a5daccefd47ec0",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
     {
       "target_path": "backend/app/services/generation/case32_contract/brief_schema.json",
       "source_path": "backend/app/services/generation/case32_contract/brief_schema.json",
-      "sha256": "d5f3832b9fad0e57cce8026bbf67cdb9a5c4e84010b7dbf41af77112c7e41ecf",
+      "sha256": "e29b2d3331d1e9a81f5a4d1e85ca6a1abd171d4295a41535b454d8a2abbfd47d",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -266,7 +273,7 @@
     {
       "target_path": "backend/app/services/generation/evidence_safety.py",
       "source_path": "backend/app/services/generation/evidence_safety.py",
-      "sha256": "19fe560721142d09a003dda5c59ff887570f09eb552a62d0230a1129ecebf11b",
+      "sha256": "691b9cec6c14a0188b82ddfd61eff263bf26904edac403edc5e89e720a808a71",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -287,7 +294,7 @@
     {
       "target_path": "backend/app/services/generation/flow3_v3_trace.py",
       "source_path": "backend/app/services/generation/flow3_v3_trace.py",
-      "sha256": "47d61bcf7bef8a31bd6e81de4bd13e99e6b1a8d7ba01063f188cc13a7d9bd026",
+      "sha256": "55af486ff2b7696aeab33ab6ae53c5f0ef1d9a3eee345775edd8d1438374dadf",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -322,7 +329,7 @@
     {
       "target_path": "backend/app/services/generation/generator.py",
       "source_path": "backend/app/services/generation/generator.py",
-      "sha256": "d4096560d484d1e059dfe6ee27ddbd7de7bc10aa97009aac7b7083fc5cd93420",
+      "sha256": "63a7f374766a420381db9da214a05782ea8c475afab1c62728a81e2b0f74e21a",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -336,7 +343,7 @@
     {
       "target_path": "backend/app/services/generation/new_draft_prompt_v3.py",
       "source_path": "backend/app/services/generation/new_draft_prompt_v3.py",
-      "sha256": "68d5701433a411ea1d2103d077e27e2e837c7ad39ed4ec81b6c77f23fc8b4cbe",
+      "sha256": "df6536dace06958740c48436431cfc7b0e2639a4e2d34a324ed784684fc6f91c",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -413,7 +420,7 @@
     {
       "target_path": "backend/app/services/generation/reference_structure.py",
       "source_path": "backend/app/services/generation/reference_structure.py",
-      "sha256": "26190ee13abc01406087e14010c55bfdfb7ef6c9f8ff2e325af1d7ec329d8ad4",
+      "sha256": "362e48a8d25f7da06ff7d90108197c08cc2bdfbc50511a9b7600af7ed33e092f",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -441,7 +448,7 @@
     {
       "target_path": "backend/app/services/generation/section_writer.py",
       "source_path": "backend/app/services/generation/section_writer.py",
-      "sha256": "6b6986f65c2a6af5061eb8b33c62466a1c4b4b7acfdffc458885fa1967c79ca4",
+      "sha256": "4a4df8d07a6ea703d91e6a2dba21c847659958ec25652fb3ae043b961cb7d379",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -574,7 +581,7 @@
     {
       "target_path": "backend/app/services/library/embedder.py",
       "source_path": "backend/app/services/library/embedder.py",
-      "sha256": "f9c9a93c0ff287dbd2c4852618ac753d3062aab5f31e6ff54f87d7385715b144",
+      "sha256": "88a7646ee4576fd399b4639afeb2481cb0af30e25b1b3ca878af9a8b0a19b24e",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -749,7 +756,7 @@
     {
       "target_path": "backend/app/services/retrieval/retriever.py",
       "source_path": "backend/app/services/retrieval/retriever.py",
-      "sha256": "e12f6f519745e9c49b923a34c66c0de24116f77444e2cc74659efdead360cfc9",
+      "sha256": "746f1b7c0bb871004450530843712c7b407576f905c0ace6fcfff193b65afaf7",
       "classification": "production_backend",
       "reason": "当前生产后端代码。"
     },
@@ -833,7 +840,7 @@
     {
       "target_path": "backend/requirements.txt",
       "source_path": "backend/requirements.txt",
-      "sha256": "07f2fc9f92fc948e66ab0c3c4ee22032d223601844846ce1aa1dabd7b1b05839",
+      "sha256": "d49144426f3c3196ecbd003dd9d933ec5742942b238007e7e695692a890685cb",
       "classification": "build_dependency",
       "reason": "生产依赖、锁文件或构建入口。"
     },
@@ -854,7 +861,7 @@
     {
       "target_path": "backend/tests/test_flow3_v3_atomic_evidence_generation.py",
       "source_path": "backend/tests/test_flow3_v3_atomic_evidence_generation.py",
-      "sha256": "6ae78a56529a05803f2d8c70b0bb59466e37d9901a8119777d72ebf60b83ffb2",
+      "sha256": "28efdc97862a6562fba57d9df5622374ade8a87084e945c892a46160f778a379",
       "classification": "synthetic_offline_test",
       "reason": "自包含离线测试或脱敏合成 fixture。"
     },
@@ -910,7 +917,7 @@
     {
       "target_path": "frontend/index.html",
       "source_path": "frontend/index.html",
-      "sha256": "d6f693e6c0c28bd3fed6c3fe46e471d16d23bc4f0692e4be4b2df66b7658b5dc",
+      "sha256": "404206c6dd39f8e9fad258ce1499169bd121ccb95f2c3b434a06ff9a8dfaec33",
       "classification": "build_dependency",
       "reason": "生产依赖、锁文件或构建入口。"
     },
@@ -1064,7 +1071,7 @@
     {
       "target_path": "frontend/src/pages/ArticleGenPage.jsx",
       "source_path": "frontend/src/pages/ArticleGenPage.jsx",
-      "sha256": "62477954cf747dfea8b4a12c0f4adcdb4a02251c7e74b0d1b37272acf74d9463",
+      "sha256": "6cf6e6102500ff31c5bcf17bfeeecdb1f39eeb0128d762ec08720a6b81db86a9",
       "classification": "production_frontend",
       "reason": "当前生产前端代码。"
     },
@@ -1113,7 +1120,7 @@
     {
       "target_path": "frontend/src/pages/HistoryPage.jsx",
       "source_path": "frontend/src/pages/HistoryPage.jsx",
-      "sha256": "75ace91ee76b54e3da83549534f818a2043c05505c5a92963d03a9f2dd87f9c6",
+      "sha256": "762dd5589c91f0eb647615ba56fcf9ec596432b5721b5a042a9867c9353d537f",
       "classification": "production_frontend",
       "reason": "当前生产前端代码。"
     },
@@ -1134,7 +1141,7 @@
     {
       "target_path": "frontend/src/pages/OperationSuggestionsPage.jsx",
       "source_path": "frontend/src/pages/OperationSuggestionsPage.jsx",
-      "sha256": "8f277980b83031ebb509fb3feb81580148d593c0cb114de759f7aa9ca5adea3e",
+      "sha256": "fbf644536681f3885c4ce6d3d563bbbb4058c80acac1f104bacf812eee102c46",
       "classification": "production_frontend",
       "reason": "当前生产前端代码。"
     },
@@ -1216,6 +1223,13 @@
       "reason": "自包含离线测试或脱敏合成 fixture。"
     },
     {
+      "target_path": "frontend/tests/pages/OperationSuggestionsPage.mode-map.test.mjs",
+      "source_path": null,
+      "sha256": "e1b6a8d381d231c9e75efe3c61f5b6b3d13f3f44b969e20164329580c8a7904f",
+      "classification": "synthetic_offline_test",
+      "reason": "OperationSuggestions 推荐模式唯一映射及后端返回合同回归测试。"
+    },
+    {
       "target_path": "frontend/tests/utils/apiErrorMessages.test.mjs",
       "source_path": "frontend/tests/utils/apiErrorMessages.test.mjs",
       "sha256": "398b6836774c4b8b82b8793487f0a0cb115e4fd0f30cf2834b96c4a12d5e4468",
@@ -1267,7 +1281,7 @@
     {
       "target_path": "frontend/vite.config.js",
       "source_path": "frontend/vite.config.js",
-      "sha256": "98188c02342f785342bc39fad7fbecc552c35d25bddf209c55e7dce7dad10372",
+      "sha256": "718f84ee3b793e65684aec1f71add4f40d2e383c233f4674b44b803e2be1204d",
       "classification": "build_dependency",
       "reason": "生产依赖、锁文件或构建入口。"
     },

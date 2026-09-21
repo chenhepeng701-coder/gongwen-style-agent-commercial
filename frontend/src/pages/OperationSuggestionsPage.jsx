@@ -3,8 +3,7 @@ import { getTopicSuggestions } from '../api'
 import ErrorState from '../components/ErrorState'
 
 const MODE_MAP = {
-  '公文初稿': 'full_article',
-  公文初稿: 'draft_article',
+  '公文初稿': 'official_draft',
 }
 
 function MatchBadge({ level }) {
