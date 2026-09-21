@@ -1,0 +1,80 @@
+:root {
+  color-scheme: light;
+
+  --color-bg-page: #fafaf9;
+  --color-bg-sidebar: #fafaf8;
+  --color-bg-surface: #ffffff;
+  --color-bg-muted: #f7f6f3;
+  --color-bg-hover: #f5f4f2;
+  --color-bg-selected: #ebeae7;
+
+  --color-text-primary: #37352f;
+  --color-text-secondary: #5f5e5a;
+  --color-text-muted: #787774;
+  --color-text-disabled: #9b9a97;
+
+  --color-border: #e6e3dd;
+  --color-border-strong: #d8d4cd;
+
+  --color-primary: #56534d;
+  --color-primary-hover: #45423d;
+  --color-primary-text: #ffffff;
+
+  --color-success: #15805b;
+  --color-success-bg: #e8faf0;
+  --color-warning: #946200;
+  --color-warning-bg: #fff5e0;
+  --color-danger: #c23a3a;
+  --color-danger-bg: #ffebeb;
+  --color-info: #3157c8;
+  --color-info-bg: #ebf2ff;
+
+  --sidebar-width: 236px;
+  --topbar-height: 78px;
+  --content-max-width: 1148px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 9999px;
+
+  --font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --line-height: 1.6;
+
+  --shadow-sm: 0 1px 2px rgba(55, 53, 47, 0.04);
+  --shadow-md: 0 3px 10px rgba(55, 53, 47, 0.06);
+  --shadow-lg: 0 12px 32px rgba(55, 53, 47, 0.14);
+
+  /* Existing page styles consume these aliases. */
+  --color-brand: var(--color-primary);
+  --color-brand-hover: var(--color-primary-hover);
+  --color-brand-strong: var(--color-text-primary);
+  --color-accent-gold: var(--color-warning);
+  --color-bg: var(--color-bg-page);
+  --color-bg-alt: var(--color-bg-muted);
+  --color-bg-card: var(--color-bg-surface);
+  --color-bg-panel: var(--color-bg-muted);
+  --color-text-inverse: var(--color-primary-text);
+  --color-success-soft: var(--color-success-bg);
+  --color-danger-soft: var(--color-danger-bg);
+}

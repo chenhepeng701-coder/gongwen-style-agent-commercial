@@ -1,0 +1,20 @@
+{
+  "S02": {
+    "role": "PRIMARY_WRITING_EXAMPLE_NOT_FACTS",
+    "outline": [{"line": 1, "text": "SYNTHETIC_ONLY outline alpha"}],
+    "excerpts": [{
+      "reference_id": "SYNTHETIC-R01", "line_start": 2, "line_end": 3,
+      "text": "SYNTHETIC_ONLY paragraph alpha. No real organization or event.",
+      "teaches": "SYNTHETIC_ONLY paragraph order",
+      "observation": "SYNTHETIC_ONLY short then long",
+      "transfer_limit": "SYNTHETIC_ONLY style, never evidence"
+    }],
+    "limitations": ["SYNTHETIC_ONLY no factual authority"]
+  },
+  "S05": {
+    "role": "PROBLEM_PASSAGE_ONLY",
+    "text": "SYNTHETIC_ONLY problem passage beta. This is invented test data.",
+    "observation": "SYNTHETIC_ONLY restrained wording",
+    "transfer_limit": "SYNTHETIC_ONLY no factual transfer"
+  }
+}

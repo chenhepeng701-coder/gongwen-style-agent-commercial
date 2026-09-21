@@ -1,0 +1,1296 @@
+{
+  "schema_version": "1.0",
+  "baseline": "Repository Baseline 02B-R1",
+  "manifest_excludes_self": true,
+  "file_count": 184,
+  "files": [
+    {
+      "target_path": ".env.example",
+      "source_path": null,
+      "sha256": "a11e4dc0929ca7c8beafe94e983adb9bba5bb71854eeec0a63851a393916ea75",
+      "classification": "generated_baseline_file",
+      "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": ".gitignore",
+      "source_path": null,
+      "sha256": "1194d34c256319a0b57f06e31bb7f76bb4100eb5d4d4493c1d425b9c2fb57d56",
+      "classification": "generated_baseline_file",
+      "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": "AGENTS.md",
+      "source_path": null,
+      "sha256": "92b30d470051c0214c651e2ff7c3e6a9df63abc2ed026a8709e458cc3bd23a3f",
+      "classification": "project_rules",
+      "reason": "项目规则真源；仅更新新项目根目录声明。"
+    },
+    {
+      "target_path": "backend/app/__init__.py",
+      "source_path": "backend/app/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/config.py",
+      "source_path": "backend/app/config.py",
+      "sha256": "0b3c7672fe66349af212d03a61ecc3791f7e5cc6e6eee5900101eec79b69451e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/main.py",
+      "source_path": "backend/app/main.py",
+      "sha256": "083284af39bdfb640166e6a4ac1077f7373764ef7c5682cd0412706455270138",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/__init__.py",
+      "source_path": "backend/app/models/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/flow4.py",
+      "source_path": "backend/app/models/flow4.py",
+      "sha256": "7331b2c2598a9e3fa66bd1413530bd2bb145668b15b454de4337792469a821cf",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/flow4_artifact.py",
+      "source_path": "backend/app/models/flow4_artifact.py",
+      "sha256": "a9ed011ce174de4cf2a634a2a8e9e7763446906d50a427933d1fdedc577dff83",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/full_article.py",
+      "source_path": "backend/app/models/full_article.py",
+      "sha256": "627dfb26bf6808e17609e25b8c5bad40cbab3b1c1859779cad47e793854f8040",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/generation.py",
+      "source_path": "backend/app/models/generation.py",
+      "sha256": "9c37a4c8af6a7f7a6895ce340b1a9d1cc5131afcb0c362533f253271fddee21f",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/library.py",
+      "source_path": "backend/app/models/library.py",
+      "sha256": "5844110c64edd807b893fe10198db97dc794f3a55a0a89273f30f214ed9716a3",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/models/schemas.py",
+      "source_path": "backend/app/models/schemas.py",
+      "sha256": "e99bf807a5e14e9273e3e31a2d080b8dd4273ebcda3e311b35858bde6b5feece",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/__init__.py",
+      "source_path": "backend/app/routers/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/generation.py",
+      "source_path": "backend/app/routers/generation.py",
+      "sha256": "62c33d788e496d66efd7df8d294e9c270ce52b09ec36e521bcd896d5d539f975",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/health.py",
+      "source_path": "backend/app/routers/health.py",
+      "sha256": "0436f802e02d78bf753cd5906c9f6c846ecb04751ba4edc7defc38930cd567d8",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/library.py",
+      "source_path": "backend/app/routers/library.py",
+      "sha256": "40c69a81320bf4501ad36707e297f2fb31976bec8639fdac6a6369f29a0fe010",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/operation.py",
+      "source_path": "backend/app/routers/operation.py",
+      "sha256": "2f06d1d3ed3878cdb2e17975bb426d05be42ba5b00515aad0c5e126c14d34881",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/retrieval.py",
+      "source_path": "backend/app/routers/retrieval.py",
+      "sha256": "d5f0f08945bd39c2591bc22b3776ff27c924fd9f04e1ce7581268c9094ae7cd9",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/routers/settings.py",
+      "source_path": "backend/app/routers/settings.py",
+      "sha256": "fd830296e0edb7105da8e0d57075ab8255e0d0e872ecdbdef088ffa805ae5aad",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/__init__.py",
+      "source_path": "backend/app/services/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/app_settings.py",
+      "source_path": "backend/app/services/app_settings.py",
+      "sha256": "2b9bbd5f4477890c10907ea877bbf096d9531ee9bf9ea767030694a0bced6953",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/export/__init__.py",
+      "source_path": "backend/app/services/export/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/export/word_exporter.py",
+      "source_path": "backend/app/services/export/word_exporter.py",
+      "sha256": "5af55f256bd3af3d2eefe4f249c71a05e452bc1013c841704c0bdb3c95bf117c",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/flow4/__init__.py",
+      "source_path": "backend/app/services/flow4/__init__.py",
+      "sha256": "9cfcdb33f0d3806acca0550fec4b2b2822b085098cb05b73ce604c7fdb7276f5",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/flow4/artifact_delivery.py",
+      "source_path": "backend/app/services/flow4/artifact_delivery.py",
+      "sha256": "d1ed2792ccc83c0507a183cd4b3f961e381b40a787f47da551d606a3008aeef3",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/flow4/handoff.py",
+      "source_path": "backend/app/services/flow4/handoff.py",
+      "sha256": "da549587debc9ad812b3246645faf7f4c1af8cc7af59df1b01fe0c90a8e0cb9e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/flow4/integrity_gate.py",
+      "source_path": "backend/app/services/flow4/integrity_gate.py",
+      "sha256": "07f6d3f27cea4e15183c3401ec93c156955fc7e3e8f64fc48748228e4e0d94da",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/flow4/renderer.py",
+      "source_path": "backend/app/services/flow4/renderer.py",
+      "sha256": "3848cdd28c0a4bc54c418fa2bceb362a9e913f7d4814ab559a454cc21c2ef5ed",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/__init__.py",
+      "source_path": "backend/app/services/generation/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/article_outline.py",
+      "source_path": "backend/app/services/generation/article_outline.py",
+      "sha256": "2e953375355bcc5a0215695c9cb22cb2ed143e05b5aeb0aff92e54a40169b8c6",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/article_traceability.py",
+      "source_path": "backend/app/services/generation/article_traceability.py",
+      "sha256": "a055b984149179fafc290e521cbc882133c54fe64be1c0434693f824a3929285",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/atomic_evidence.py",
+      "source_path": "backend/app/services/generation/atomic_evidence.py",
+      "sha256": "f41844ff682a702e83124db6aa221ec0e2049fa8357149e2a63ab93b994ff2f6",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/case32_contract/brief_rules.txt",
+      "source_path": "backend/app/services/generation/case32_contract/brief_rules.txt",
+      "sha256": "e60b63a5959511b9500437e75ae05890356b957a7d159db4141add3a2b5e063e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/case32_contract/brief_schema.json",
+      "source_path": "backend/app/services/generation/case32_contract/brief_schema.json",
+      "sha256": "d5f3832b9fad0e57cce8026bbf67cdb9a5c4e84010b7dbf41af77112c7e41ecf",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/delivery_decision.py",
+      "source_path": "backend/app/services/generation/delivery_decision.py",
+      "sha256": "f12ab0856d33a84fabfd8dfcc32bba6ce055f2c03c8314f9857f90dc69d1f03e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/dynamic_budget.py",
+      "source_path": "backend/app/services/generation/dynamic_budget.py",
+      "sha256": "05717e02c8b9e6bed2ad51d515170a15a325023aab062f7c59b61eda4f2ed661",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/evidence_safety.py",
+      "source_path": "backend/app/services/generation/evidence_safety.py",
+      "sha256": "19fe560721142d09a003dda5c59ff887570f09eb552a62d0230a1129ecebf11b",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/fact_policy.py",
+      "source_path": "backend/app/services/generation/fact_policy.py",
+      "sha256": "a5ea0a853d8b241b6bc44ec38bd4aba7e341dbdabb0e899de421af218e58ba6a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/fact_source_auditor.py",
+      "source_path": "backend/app/services/generation/fact_source_auditor.py",
+      "sha256": "930b14f11320e94288c6956ede209070b968ef636c0fcdd6ecfc2e7a2dcb8eb6",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/flow3_v3_trace.py",
+      "source_path": "backend/app/services/generation/flow3_v3_trace.py",
+      "sha256": "47d61bcf7bef8a31bd6e81de4bd13e99e6b1a8d7ba01063f188cc13a7d9bd026",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/full_article_candidate_adapter.py",
+      "source_path": "backend/app/services/generation/full_article_candidate_adapter.py",
+      "sha256": "6f1a15cac6527ec3a56245848a316ff6a1aa96a59a46a17669ebc0430d64f0e1",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/full_article_revision.py",
+      "source_path": "backend/app/services/generation/full_article_revision.py",
+      "sha256": "585fe9e6ab251f1fb6293f899e70a7b93b08c578359996d759851346e118e992",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/full_draft_generation.py",
+      "source_path": "backend/app/services/generation/full_draft_generation.py",
+      "sha256": "83bee955f176ed746e6a6722fcb1f0dfaf664df7baf1db74f2bc71fed16d579a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/full_draft_material.py",
+      "source_path": "backend/app/services/generation/full_draft_material.py",
+      "sha256": "5abcd7c201f35b7bdc0775255fd5e287994afbdf801839ce7df8926039abe540",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/generator.py",
+      "source_path": "backend/app/services/generation/generator.py",
+      "sha256": "d4096560d484d1e059dfe6ee27ddbd7de7bc10aa97009aac7b7083fc5cd93420",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/m4_response_syntax.py",
+      "source_path": "backend/app/services/generation/m4_response_syntax.py",
+      "sha256": "51af04429a60c9baca5df0cf9388b91ca1e409774aa9ceb60f8ed69ac18b09f7",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/new_draft_prompt_v3.py",
+      "source_path": "backend/app/services/generation/new_draft_prompt_v3.py",
+      "sha256": "68d5701433a411ea1d2103d077e27e2e837c7ad39ed4ec81b6c77f23fc8b4cbe",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/official_document_drafting.py",
+      "source_path": "backend/app/services/generation/official_document_drafting.py",
+      "sha256": "b7cbd5bdae3580fdd83b4f1cd1b38bd838c77141faa985b8f8eb0781e4537711",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/official_draft_rules.py",
+      "source_path": "backend/app/services/generation/official_draft_rules.py",
+      "sha256": "e061462bcacac9ac52bafe357a59785f423dc1c688500009992d699db3f6562a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/paragraph_compatibility.py",
+      "source_path": "backend/app/services/generation/paragraph_compatibility.py",
+      "sha256": "9874e2e29cb25d6270a06b755d46e1cd431a091586af95699e918ff8897dfa88",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/paragraph_task.py",
+      "source_path": "backend/app/services/generation/paragraph_task.py",
+      "sha256": "b128a05c7cc13f9f56478b70e263efb1ed514421dea998e8650f37cf3306b731",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/planning_engine.py",
+      "source_path": "backend/app/services/generation/planning_engine.py",
+      "sha256": "557080319a90bd9b5a19c00f1d453bcef95e9abc42751384100573a6f38ca180",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/quality/__init__.py",
+      "source_path": "backend/app/services/generation/quality/__init__.py",
+      "sha256": "3e970a0d99e9fe4be916507c9250fadea7adc36c6d4f79e232f5a6af3b039c83",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/quality/models.py",
+      "source_path": "backend/app/services/generation/quality/models.py",
+      "sha256": "41827059fd08938609838b9f8c97df0567207a56e8f82a4cd5515435cabc8bc8",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/quality/work_summary_v1.py",
+      "source_path": "backend/app/services/generation/quality/work_summary_v1.py",
+      "sha256": "9158e2a5277ad53c63f9d813dd3a5671ba79b5dea53554adbece04edf0c26fdd",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/quality_test_draft.py",
+      "source_path": "backend/app/services/generation/quality_test_draft.py",
+      "sha256": "9a4607c13594bbe5f161166a121a67735cd9fa4c06d42b04510b8cb0f4ccb87f",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/rag_reference_splitter.py",
+      "source_path": "backend/app/services/generation/rag_reference_splitter.py",
+      "sha256": "deb722ef6504c5f39358ea98a444eedf6fbe1bb06521a93da074b3d2c8eca653",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/reference_structure.py",
+      "source_path": "backend/app/services/generation/reference_structure.py",
+      "sha256": "26190ee13abc01406087e14010c55bfdfb7ef6c9f8ff2e325af1d7ec329d8ad4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/safe_fact_rewriter.py",
+      "source_path": "backend/app/services/generation/safe_fact_rewriter.py",
+      "sha256": "f6ae429aa54f20ba0831e96b6eee2171787be6e185d74bde9ba1bf43bceb1c60",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/section_expansion.py",
+      "source_path": "backend/app/services/generation/section_expansion.py",
+      "sha256": "7a48c373ae8ff5ba9e436bb81937272019bdb278551215b03fd3071b6d35701e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/section_rewrite_recovery.py",
+      "source_path": "backend/app/services/generation/section_rewrite_recovery.py",
+      "sha256": "dac1b6a36325db2ee8977fdfe0f0db1fe90f01dade0a1ff350b5a72a4cec1631",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/section_writer.py",
+      "source_path": "backend/app/services/generation/section_writer.py",
+      "sha256": "6b6986f65c2a6af5061eb8b33c62466a1c4b4b7acfdffc458885fa1967c79ca4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/section_writer_integration.py",
+      "source_path": "backend/app/services/generation/section_writer_integration.py",
+      "sha256": "01311ac8f4f32cc279a553d2c2fcbe659b646a0fb5bd47ff33a368ce11532dd5",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/structure_validator.py",
+      "source_path": "backend/app/services/generation/structure_validator.py",
+      "sha256": "2482e50778cb98abf3b2858ada07ee09ae5efb22fe278e7295b4e6cd54af1a89",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/structured_execution_repair.py",
+      "source_path": "backend/app/services/generation/structured_execution_repair.py",
+      "sha256": "d7221fe67d3a9917b6962413ca3ac0b69f63be01193c8665d6e82338649e68fc",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/targeted_quality_repairer.py",
+      "source_path": "backend/app/services/generation/targeted_quality_repairer.py",
+      "sha256": "9bf2f3ba0629e686f55cd2d6c569437797f9fbbd2506b2881e740ccff711a005",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/unsupported_claim_guard.py",
+      "source_path": "backend/app/services/generation/unsupported_claim_guard.py",
+      "sha256": "164f6d8b78e09aec01aa2c4b464b3ced56cc255592af02fb8e34369db519b022",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_capacity_budget.py",
+      "source_path": "backend/app/services/generation/work_summary_capacity_budget.py",
+      "sha256": "c32c4a08b885d7ec66be3ba8f235b75f4d18c17c47ff2f03dde4b2548ccdb02e",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_evidence_chain.py",
+      "source_path": "backend/app/services/generation/work_summary_evidence_chain.py",
+      "sha256": "47b6451400e1fe21b40a99b9322fddd6be5840eddb51c9d7db006b386c632296",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_evidence_group.py",
+      "source_path": "backend/app/services/generation/work_summary_evidence_group.py",
+      "sha256": "1dc5474766e8078dcfc4d4a9beaab4d42967296beedbf3c7da0339ea2052954c",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_execution_policy.py",
+      "source_path": "backend/app/services/generation/work_summary_execution_policy.py",
+      "sha256": "cb738b0e642c61bf7bd64322bb47969d50187f0a1d8e6a58781f8e5172421fef",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_planner.py",
+      "source_path": "backend/app/services/generation/work_summary_planner.py",
+      "sha256": "65f60ee8e3fa919e328a97db0e56f1f74d638f7539b264d13f7ecb45435946c3",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_quality_gate.py",
+      "source_path": "backend/app/services/generation/work_summary_quality_gate.py",
+      "sha256": "64b91e4451106e7539b0ab83d37fb140612b4ef8560be941b617fce3de53cc40",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/work_summary_quality_recovery.py",
+      "source_path": "backend/app/services/generation/work_summary_quality_recovery.py",
+      "sha256": "6a4d550360db2685715b71c8d7868e195818754eb62d577bf7279e42c27c13aa",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/writer_observation.py",
+      "source_path": "backend/app/services/generation/writer_observation.py",
+      "sha256": "3164fa48f293aba879a928e05ce64d7712394a2b375ad0d52568fa220bd8df2c",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/writing_reference.py",
+      "source_path": "backend/app/services/generation/writing_reference.py",
+      "sha256": "ba59ba48a308ddb32b1f824f5d4b1a73d628f3b69c015a1a145fd61c7c4a12b1",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/writing_reference_pack.py",
+      "source_path": "backend/app/services/generation/writing_reference_pack.py",
+      "sha256": "151791e1fd89a8dc23ce7ea6eea319473f3512af6c0c806ae3a7b5a94558e0c6",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/generation/writing_style_library.py",
+      "source_path": "backend/app/services/generation/writing_style_library.py",
+      "sha256": "2802962ac5025e36c45d70d0bd7e07cb3b326227e1d173b2afa9bc8ee64003ba",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/__init__.py",
+      "source_path": "backend/app/services/library/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/card_extractor.py",
+      "source_path": "backend/app/services/library/card_extractor.py",
+      "sha256": "9a5926f74ca3a610bd578641bc8bdbf35e4bf6bea2f1f8b11c3885ec0d22abb3",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/embedder.py",
+      "source_path": "backend/app/services/library/embedder.py",
+      "sha256": "f9c9a93c0ff287dbd2c4852618ac753d3062aab5f31e6ff54f87d7385715b144",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/indexer.py",
+      "source_path": "backend/app/services/library/indexer.py",
+      "sha256": "a93538d793cff95dbcaded29ad0f7d5c48330d17af5a625ac9bed22a86ac6cd4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/source_content.py",
+      "source_path": "backend/app/services/library/source_content.py",
+      "sha256": "1ab3f03a1319d5a1543a56ce1c502e183277c0ea9f802290460cc0be5d0c28bc",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/library/style_extractor.py",
+      "source_path": "backend/app/services/library/style_extractor.py",
+      "sha256": "c1716cc7ee2cada981ffdcb2044366ba38b20568fe13fa80c58c0ba41cc31186",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/__init__.py",
+      "source_path": "backend/app/services/llm/__init__.py",
+      "sha256": "eab4431e253c92c9beb1862368ceed4de115a2c289da64912b7ab9a9d9205be9",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/base.py",
+      "source_path": "backend/app/services/llm/base.py",
+      "sha256": "6e24d332cbab302b18376b79f57752e8831b344501eeefe73076c3b904cff1e4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/connection_test.py",
+      "source_path": "backend/app/services/llm/connection_test.py",
+      "sha256": "e5427b59b2ebc5dee850d1357b7c6828e9e65b0097b9978261b7f224c25993d4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/custom_provider.py",
+      "source_path": "backend/app/services/llm/custom_provider.py",
+      "sha256": "c404db74d743e8bfeae2cf974d2938fe94fb6a380d63f9118ccf5c8dcd37e1b5",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/factory.py",
+      "source_path": "backend/app/services/llm/factory.py",
+      "sha256": "361b1b5926608104235fa80574e2cc112eeef746ff8d2e543859d045b26e0b6a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/openai_compatible_provider.py",
+      "source_path": "backend/app/services/llm/openai_compatible_provider.py",
+      "sha256": "595b788ca0e751f4b8b60e2c2dbedd786ae7270acaf729e193993c5e855b5897",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/llm/presets.py",
+      "source_path": "backend/app/services/llm/presets.py",
+      "sha256": "5c633e00c8760b9a105aee5f64678880e8b8e70eab56f8ab5ba352a4e20f26d9",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/operation/__init__.py",
+      "source_path": "backend/app/services/operation/__init__.py",
+      "sha256": "494f4e2134b10bf4d457fe1469f1cf11d996aa6feeb06e64f1adfc23588db6af",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/operation/topic_suggestion_service.py",
+      "source_path": "backend/app/services/operation/topic_suggestion_service.py",
+      "sha256": "479b424e9726acb8eaf4d3846363f05e4976c9cec212b385fa5edcf68fda39e4",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/parser/__init__.py",
+      "source_path": "backend/app/services/parser/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/parser/docx_parser.py",
+      "source_path": "backend/app/services/parser/docx_parser.py",
+      "sha256": "e030b677fc355255aaa689370b7d67ce15476c10f9d2392cf6bcf9ecbc2a909b",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/parser/txt_parser.py",
+      "source_path": "backend/app/services/parser/txt_parser.py",
+      "sha256": "34064b30726064b0f0784eef76a39e73d01b12cd6856024744b534f74898cba1",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/__init__.py",
+      "source_path": "backend/app/services/retrieval/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/bm25_index.py",
+      "source_path": "backend/app/services/retrieval/bm25_index.py",
+      "sha256": "7b84781560b19a34015cd29590483c658bf1aabaea2491d662937d934694276b",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/document_retriever.py",
+      "source_path": "backend/app/services/retrieval/document_retriever.py",
+      "sha256": "84a04cd176dbf1e196c18581249357fed3b2485e206602e84623663c141958c1",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/hybrid_ranker.py",
+      "source_path": "backend/app/services/retrieval/hybrid_ranker.py",
+      "sha256": "20429a7b2b27aa7c3af5edca57a66af89dda4ada968841bba25ec66a47946104",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/metadata_reranker.py",
+      "source_path": "backend/app/services/retrieval/metadata_reranker.py",
+      "sha256": "96ffe94f3f3035b8efc96fd697ee1e284eb5413b3e80f1359ff71f700a9f79f1",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/official_chunk_metadata.py",
+      "source_path": "backend/app/services/retrieval/official_chunk_metadata.py",
+      "sha256": "f4c4bca1a3861aa697e7f3d1464613da75597c0494c924698c10194cf1ae65a7",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/official_document_classifier.py",
+      "source_path": "backend/app/services/retrieval/official_document_classifier.py",
+      "sha256": "b081737ce8bffd8dd40881509b45106ac6a84b1ce6c77b4cdecf9cecdbb82afc",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/official_query_tokenizer.py",
+      "source_path": "backend/app/services/retrieval/official_query_tokenizer.py",
+      "sha256": "00f80fe732e798201885489c3ea4db82d3158efe54f5db9ee784d153534681d0",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/official_semantic_chunker.py",
+      "source_path": "backend/app/services/retrieval/official_semantic_chunker.py",
+      "sha256": "7f33cced6a2e4df088c4f607beb40fbdb8a6f95101939d9e180f45c39570cc62",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/retriever.py",
+      "source_path": "backend/app/services/retrieval/retriever.py",
+      "sha256": "e12f6f519745e9c49b923a34c66c0de24116f77444e2cc74659efdead360cfc9",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/scene_classifier.py",
+      "source_path": "backend/app/services/retrieval/scene_classifier.py",
+      "sha256": "20e5d25132a63c5463a34f8440368e45f3a37acb36145fff6613bae0128b71b8",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/services/retrieval/style_aggregator.py",
+      "source_path": "backend/app/services/retrieval/style_aggregator.py",
+      "sha256": "b7788a4f1e51db13f101a6d9243ad8d2692d5729d849a8d1f7635b0934f7ab0d",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/__init__.py",
+      "source_path": "backend/app/utils/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/api_errors.py",
+      "source_path": "backend/app/utils/api_errors.py",
+      "sha256": "5e2d56a2d149dc7f3a1e07c3a447b3dbc26b073230fcd67d8ab6a3a50b34476c",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/file_utils.py",
+      "source_path": "backend/app/utils/file_utils.py",
+      "sha256": "3e8699d48d1beacc063bb9433909a1b252c52d8c6e87084200924f55dd3f9e12",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/http_client.py",
+      "source_path": "backend/app/utils/http_client.py",
+      "sha256": "a0f84b72273b119f7acea99c0c67b5c3bd52a6142a73a3104ecba92003339a9a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/runtime_paths.py",
+      "source_path": "backend/app/utils/runtime_paths.py",
+      "sha256": "06b403f493ca09b6446cf2457408aa6973ade42602f716d2ca33c02305393de9",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/app/utils/storage.py",
+      "source_path": "backend/app/utils/storage.py",
+      "sha256": "579e0c90c7fb13cc498dce65080077b885508e8e267a1b8a929e6875f2241c4a",
+      "classification": "production_backend",
+      "reason": "当前生产后端代码。"
+    },
+    {
+      "target_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/dist/offline/default/doc-types/summary-工作总结/system_prompt.md",
+      "source_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/dist/offline/default/doc-types/summary-工作总结/system_prompt.md",
+      "sha256": "80c99367127e6eabca3a5329ec745bcd5bad46734b10aa577a478f4627f858b1",
+      "classification": "pinned_upstream",
+      "reason": "正式 Writer 按 SHA256 读取的最小固定上游与许可证。"
+    },
+    {
+      "target_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/LICENSE",
+      "source_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/LICENSE",
+      "sha256": "2d8ba6968842d2d058a2f1f02f8a5252603e32124d79b684edf2ca119acd6a38",
+      "classification": "pinned_upstream",
+      "reason": "正式 Writer 按 SHA256 读取的最小固定上游与许可证。"
+    },
+    {
+      "target_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/src/adapters/offline/build.py",
+      "source_path": "backend/experiments/case_a_upstream_drafting_validation_32/upstream/src/adapters/offline/build.py",
+      "sha256": "8e57d70b0467a18e05379e668a7345b2d2c7c9c7c59a24cfc9e0c3c237fbe72c",
+      "classification": "pinned_upstream",
+      "reason": "正式 Writer 按 SHA256 读取的最小固定上游与许可证。"
+    },
+    {
+      "target_path": "backend/requirements.txt",
+      "source_path": "backend/requirements.txt",
+      "sha256": "07f2fc9f92fc948e66ab0c3c4ee22032d223601844846ce1aa1dabd7b1b05839",
+      "classification": "build_dependency",
+      "reason": "生产依赖、锁文件或构建入口。"
+    },
+    {
+      "target_path": "backend/tests/fixtures/writing_reference_pack_synthetic.json",
+      "source_path": "backend/tests/fixtures/writing_reference_pack_synthetic.json",
+      "sha256": "7befcb774079e29a5f78042f790aa0f1fb3b331d154d298bdf53344de0f080d6",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_fact_safety_delivery_policy_reset.py",
+      "source_path": "backend/tests/test_fact_safety_delivery_policy_reset.py",
+      "sha256": "4b8edeca3a8a1ca4890a191432b8f7e5c465a3db5af28fb362d7aa1526b44c20",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_flow3_v3_atomic_evidence_generation.py",
+      "source_path": "backend/tests/test_flow3_v3_atomic_evidence_generation.py",
+      "sha256": "6ae78a56529a05803f2d8c70b0bb59466e37d9901a8119777d72ebf60b83ffb2",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_flow4_dev002_integrity_gate.py",
+      "source_path": "backend/tests/test_flow4_dev002_integrity_gate.py",
+      "sha256": "207b3d418fd5be9c31b7a9036520206099e47043b17b23804a2812d0c29aad74",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_flow4_dev003_renderer.py",
+      "source_path": "backend/tests/test_flow4_dev003_renderer.py",
+      "sha256": "cc1c0937c1e115eef5e5fd3a9c4c78a4db5b37399d46e38ac744e940bab5a296",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_flow4_dev004_artifact_delivery.py",
+      "source_path": "backend/tests/test_flow4_dev004_artifact_delivery.py",
+      "sha256": "08b31d46a5947683033045951a3d369a5cfb214b9f8ec64a55fbc0694e32374c",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_m2m3_writing_reference_dev21.py",
+      "source_path": "backend/tests/test_m2m3_writing_reference_dev21.py",
+      "sha256": "bed4f0b1d7095f5b3074b7f7be0e22c3faee4f357118beb7903f1820179ad580",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_m3_section_writer.py",
+      "source_path": "backend/tests/test_m3_section_writer.py",
+      "sha256": "0be8a615b84c00d29e256e319a3027418bc83220f20161a7eea3dfef6cf0a0b8",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "backend/tests/test_writing_reference_pack_02b1.py",
+      "source_path": "backend/tests/test_writing_reference_pack_02b1.py",
+      "sha256": "dea5206a6796be40b5793ec918acdfb47dee4adf681b539ef47ce5d562cf358c",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "EXCLUDED_MANIFEST.json",
+      "source_path": null,
+      "sha256": "234b8fdb13f386210b42f869441a4221d7bc362f2c5892ffdf550bcfdc21219f",
+      "classification": "generated_baseline_file",
+      "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": "frontend/index.html",
+      "source_path": "frontend/index.html",
+      "sha256": "d6f693e6c0c28bd3fed6c3fe46e471d16d23bc4f0692e4be4b2df66b7658b5dc",
+      "classification": "build_dependency",
+      "reason": "生产依赖、锁文件或构建入口。"
+    },
+    {
+      "target_path": "frontend/package-lock.json",
+      "source_path": "frontend/package-lock.json",
+      "sha256": "d939de47e48805cd33dd21ace6862714634b09051b1cf81f8ea32ef73f2ecbfc",
+      "classification": "build_dependency",
+      "reason": "生产依赖、锁文件或构建入口。"
+    },
+    {
+      "target_path": "frontend/package.json",
+      "source_path": "frontend/package.json",
+      "sha256": "ce7f65e47a611124b281051a64e764b671f86be619c8cedaac5cec1413d0c46f",
+      "classification": "build_dependency",
+      "reason": "生产依赖、锁文件或构建入口。"
+    },
+    {
+      "target_path": "frontend/src/api.js",
+      "source_path": "frontend/src/api.js",
+      "sha256": "4f0d62cac547c702a80f488f104fa5b80c6410fba5461fa4ff707b9438f58fd1",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/App.css",
+      "source_path": "frontend/src/App.css",
+      "sha256": "1f2e4f880889b803e4c7149fbe5380d5085897960d0ae81920a4eb4702ff2007",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/App.jsx",
+      "source_path": "frontend/src/App.jsx",
+      "sha256": "20ff13e074733d3a244ea569b5de2ed24e6a43cb19085a5259a28a96f613536d",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/AppSidebar.jsx",
+      "source_path": "frontend/src/components/AppSidebar.jsx",
+      "sha256": "2c926314a882c008b333155ddf87a6b669b0f8c9b924bb1dd3f516adb9b4ba19",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/AppTopBar.jsx",
+      "source_path": "frontend/src/components/AppTopBar.jsx",
+      "sha256": "5898c7f6521953973e377d4379c432571960d179abcad1fb5186289b7198505f",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/Button.jsx",
+      "source_path": "frontend/src/components/Button.jsx",
+      "sha256": "4dbf415df3704487cb93860f8dcd61f20084debf8638403bc47820509d72dddc",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/ConfirmDialog.jsx",
+      "source_path": "frontend/src/components/ConfirmDialog.jsx",
+      "sha256": "e8135c587087a9fc795da903da1fc96c0f848afe89610dbbd15a7ee4e6c7d2b7",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/EmptyState.jsx",
+      "source_path": "frontend/src/components/EmptyState.jsx",
+      "sha256": "75af4f0e933a89c82133d31ffb7eeeba509fa11da7d24c01632141d505337320",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/ErrorState.jsx",
+      "source_path": "frontend/src/components/ErrorState.jsx",
+      "sha256": "70d9d204900cc121afe3f2a311501763b59a10f9f578d4ae4ebb8a613eddb75e",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/FormControl.jsx",
+      "source_path": "frontend/src/components/FormControl.jsx",
+      "sha256": "6b443b997b1709a896599be6b990328c65fc628f89663de8660cb4fafba6b575",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/FullArticleContent.jsx",
+      "source_path": "frontend/src/components/FullArticleContent.jsx",
+      "sha256": "81841a8cc858d91e2d2755bc2dcb71cf2a71240edd0f9c98a69f245f363a404d",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/FullArticleEditor.jsx",
+      "source_path": "frontend/src/components/FullArticleEditor.jsx",
+      "sha256": "51e181ddf6dad58eab7eed1cb7cd011c1ca7e92480b381056a63452c79165f08",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/Modal.jsx",
+      "source_path": "frontend/src/components/Modal.jsx",
+      "sha256": "e1ef7606f3f0e4cd9db587499741c9a4d55193c2b0dccb75186d7e618476b769",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/SourceDocumentDrawer.jsx",
+      "source_path": "frontend/src/components/SourceDocumentDrawer.jsx",
+      "sha256": "b72abe508999abda3370a296887e0d4d88fd1bbd6f4a9f363103583166be91f9",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/StateDialog.jsx",
+      "source_path": "frontend/src/components/StateDialog.jsx",
+      "sha256": "6ef3b73306b34b7f7fc395e8c823ccbad77122e4ce543ab40d2c51cf6bf990aa",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/components/StatusTag.jsx",
+      "source_path": "frontend/src/components/StatusTag.jsx",
+      "sha256": "c97a13bdccc743dcd5ce9b6e179c7cf9a2cf3a48fa6f1e5c7207d42f8540e5d6",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/Layout.jsx",
+      "source_path": "frontend/src/Layout.jsx",
+      "sha256": "257ab280365f3d34a78fdb5ef2981de5557d348013b20d23aa066ba6b7182d47",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/main.jsx",
+      "source_path": "frontend/src/main.jsx",
+      "sha256": "5767de65d93e7cde5b1733fa7053133d74d5e467e4ed0b9e4dacc303b607fd50",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/AccountPage.jsx",
+      "source_path": "frontend/src/pages/AccountPage.jsx",
+      "sha256": "48ff22877443b75145c908e47b18794d790d3934ba206d15d8ffa9eac7dd11ba",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/ArticleGenPage.jsx",
+      "source_path": "frontend/src/pages/ArticleGenPage.jsx",
+      "sha256": "62477954cf747dfea8b4a12c0f4adcdb4a02251c7e74b0d1b37272acf74d9463",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/BackupPage.jsx",
+      "source_path": "frontend/src/pages/BackupPage.jsx",
+      "sha256": "cbec6d379b5b540807b554ca5cf5bbab6b46ee4e9f948d902fdc7bdcd3c66f46",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/BatchTaskPage.jsx",
+      "source_path": "frontend/src/pages/BatchTaskPage.jsx",
+      "sha256": "3a9653b78642c9d0c305dc4825e2bb4863aa39c2af619e6ededdcafa717d6873",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/CreditsPage.jsx",
+      "source_path": "frontend/src/pages/CreditsPage.jsx",
+      "sha256": "73d86481bd858a82a2bdcc125641e2892f366b5dc4ebded4d7059285bac346c6",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/EditorPage.jsx",
+      "source_path": "frontend/src/pages/EditorPage.jsx",
+      "sha256": "fdb3c201bf4fd745bf69f7308d327e7ccecd85a8b4042d5bf83d43ce4e0f7b59",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/GenerationPage.jsx",
+      "source_path": "frontend/src/pages/GenerationPage.jsx",
+      "sha256": "68eb79e66eca50f280d93daf6025b6ef480c315601ad4a86f65a019e5d392224",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/GenResultPage.jsx",
+      "source_path": "frontend/src/pages/GenResultPage.jsx",
+      "sha256": "6e200317801dd4d82da7e2cf3d7eca189d59c58ffe1279150fadd77f5ed4bd0a",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/HistoryPage.jsx",
+      "source_path": "frontend/src/pages/HistoryPage.jsx",
+      "sha256": "75ace91ee76b54e3da83549534f818a2043c05505c5a92963d03a9f2dd87f9c6",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/LibraryPage.jsx",
+      "source_path": "frontend/src/pages/LibraryPage.jsx",
+      "sha256": "686db2c03d716648868278f3f0d0d6e53eb49dba7077ca9028b6db4c8edc0215",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/ModelConfigPage.jsx",
+      "source_path": "frontend/src/pages/ModelConfigPage.jsx",
+      "sha256": "55d04555a1c3562ffe6f41772cbc8905daa0feed08dd1c2a37e71905f30d64e3",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/OperationSuggestionsPage.jsx",
+      "source_path": "frontend/src/pages/OperationSuggestionsPage.jsx",
+      "sha256": "8f277980b83031ebb509fb3feb81580148d593c0cb114de759f7aa9ca5adea3e",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/pages/PromptManagePage.jsx",
+      "source_path": "frontend/src/pages/PromptManagePage.jsx",
+      "sha256": "d76e2618437d00c2274e321172eb07dde0cdf12d97c77a88b749f5fb01179703",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/styles/tokens.css",
+      "source_path": "frontend/src/styles/tokens.css",
+      "sha256": "d32517f72fc089e54c30cbc330573f656a6c93ea99573963d5d3924491286a3d",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/articleResult.js",
+      "source_path": "frontend/src/utils/articleResult.js",
+      "sha256": "6119db5e5aaa4c02392b0496d8bd6616769d240b2d84b95cd80c79f17a02d055",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/batchExcelImport.js",
+      "source_path": "frontend/src/utils/batchExcelImport.js",
+      "sha256": "c05b667bba27f4cf76b32500f309a14d777eeeae081e29f654fcb2ea60d264aa",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/batchTaskParams.js",
+      "source_path": "frontend/src/utils/batchTaskParams.js",
+      "sha256": "fe79ad2eaa0640d8553f0539a0300c08a3a357902cb980079dda1db5b7c6edda",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/documentModeDraft.js",
+      "source_path": "frontend/src/utils/documentModeDraft.js",
+      "sha256": "7100ca4352dfdf0940cf6f9a0d4cb6f655a729938b1d78f6222fab57372855f1",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/dropFiles.js",
+      "source_path": "frontend/src/utils/dropFiles.js",
+      "sha256": "c9218523edee185133cc5a9fb5b74aa3bc9cbd62fd4974aef2779b0e204b05c5",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/fullArticleProjection.js",
+      "source_path": "frontend/src/utils/fullArticleProjection.js",
+      "sha256": "904afb096ab276e5a3435e635bfdba21dddd78f9dfe588be9d4b47b5de8a783a",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/src/utils/libraryUpload.js",
+      "source_path": "frontend/src/utils/libraryUpload.js",
+      "sha256": "772c65994b880db6c71064053e776d1c4cd21e391ca7898ce1bd4b87f977551b",
+      "classification": "production_frontend",
+      "reason": "当前生产前端代码。"
+    },
+    {
+      "target_path": "frontend/tests/pages/ArticleGenPage.fact-safety-review.test.mjs",
+      "source_path": "frontend/tests/pages/ArticleGenPage.fact-safety-review.test.mjs",
+      "sha256": "b6084af302d7f471065e02f9f4703218135e67cdc84fbfe257ecb8de47d53dc1",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/pages/ArticleGenPage.quality-test-draft.test.mjs",
+      "source_path": "frontend/tests/pages/ArticleGenPage.quality-test-draft.test.mjs",
+      "sha256": "fed512c186141e98b1ac7b839434179e235935a0fafb29b315e9fd6b3a866bd8",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/apiErrorMessages.test.mjs",
+      "source_path": "frontend/tests/utils/apiErrorMessages.test.mjs",
+      "sha256": "398b6836774c4b8b82b8793487f0a0cb115e4fd0f30cf2834b96c4a12d5e4468",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/articleResult.test.mjs",
+      "source_path": "frontend/tests/utils/articleResult.test.mjs",
+      "sha256": "3367b9fbc0885c402f480f8e0ab5b416c7c6a9f300b0ff4e67b0ec9b06cf96d7",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/batchExcelImport.test.mjs",
+      "source_path": "frontend/tests/utils/batchExcelImport.test.mjs",
+      "sha256": "077c04aaed7ab66f8878472fe54ee98a5a0838252f5cf944c2eccca6b7cb6c18",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/batchTaskParams.test.mjs",
+      "source_path": "frontend/tests/utils/batchTaskParams.test.mjs",
+      "sha256": "25d7042f97710a5cf9edb458c8ff3cb8a5c9b1dd4fdd7f9582a135af694196dd",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/dropFiles.test.mjs",
+      "source_path": "frontend/tests/utils/dropFiles.test.mjs",
+      "sha256": "f99bb9a034d6a59aa7022a6b9b4751551f2c8b8b1f05011657a2b1a124364ee1",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/libraryUpload.test.mjs",
+      "source_path": "frontend/tests/utils/libraryUpload.test.mjs",
+      "sha256": "c9970395cb555bfacafa5af4fe1585cca9c09c3639f471a4e31429ba90be069c",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/tests/utils/wechatPublishDraft.test.mjs",
+      "source_path": "frontend/tests/utils/wechatPublishDraft.test.mjs",
+      "sha256": "2dfa2b8929a4cd217bb867ccd459a06c9d91181776c899178dff08408ac6267b",
+      "classification": "synthetic_offline_test",
+      "reason": "自包含离线测试或脱敏合成 fixture。"
+    },
+    {
+      "target_path": "frontend/vite.config.js",
+      "source_path": "frontend/vite.config.js",
+      "sha256": "98188c02342f785342bc39fad7fbecc552c35d25bddf209c55e7dce7dad10372",
+      "classification": "build_dependency",
+      "reason": "生产依赖、锁文件或构建入口。"
+    },
+    {
+      "target_path": "LICENSE",
+      "source_path": null,
+      "sha256": "aca08710e07eb0245cee0466d2b81e5dcf6097b8340ab61ccad868e236b9b937",
+      "classification": "generated_baseline_file",
+      "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": "README.md",
+      "source_path": null,
+      "sha256": "d5df0d70aaba369e7723fac0616c947a9bc5bdd543faf2c690e2e07858ba7b92",
+      "classification": "generated_baseline_file",
+      "reason": "为干净基线新建的说明、边界或许可文件。"
+    },
+    {
+      "target_path": "writing_style_library/safety_production/work_summary_v1.json",
+      "source_path": "writing_style_library/safety_production/work_summary_v1.json",
+      "sha256": "e1fdfbdede09b0bdef3d996c66a76e920b8b6c1920f29107447ddc5836d1eb9a",
+      "classification": "rule_asset",
+      "reason": "结构/风格约束资产，不是事实来源。"
+    }
+  ]
+}

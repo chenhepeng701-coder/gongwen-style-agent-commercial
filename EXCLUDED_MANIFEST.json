@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "baseline": "Repository Baseline 02B-R1",
+  "excluded_families": [
+    {
+      "path_family": ".git/**",
+      "reason": "旧 Git 历史含用户资料；新基线不得继承历史。"
+    },
+    {
+      "path_family": "backend/.env; .env; *.env",
+      "reason": "本机密钥与私有绝对路径。"
+    },
+    {
+      "path_family": "backend/app/services/generation/case32_contract/reference_outbound.json",
+      "reason": "真实私有 Writing Reference 包，禁止再分发。"
+    },
+    {
+      "path_family": "backend/data/**; backend/uploads/**; backend/output/**; backend/tmp/**; tmp/**",
+      "reason": "用户资料、索引、上传、生成物、日志与运行垃圾。"
+    },
+    {
+      "path_family": "docs/style_samples/**; docs/audit/evidence/**",
+      "reason": "用户样本与历史审计证据，可能含私有材料或原始响应。"
+    },
+    {
+      "path_family": "frontend/node_modules/**; backend/.venv/**; **/__pycache__/**; .pytest_cache/**",
+      "reason": "本机依赖与缓存，可由锁文件/requirements 重建。"
+    },
+    {
+      "path_family": "frontend/dist/**; frontend/dist-commercial/**; dist/**; build/**",
+      "reason": "构建产物，可重复生成。"
+    },
+    {
+      "path_family": "backend/experiments/**",
+      "reason": "实验、调试和恢复文件；仅例外纳入正式 Writer 哈希锁定的 3 个 pinned upstream 文件及其 LICENSE。"
+    },
+    {
+      "path_family": "backend/app/services/generation_core_v2/**; backend/app/services/generation_core_v2.rar",
+      "reason": "明确退役候选，非当前生产入口。"
+    },
+    {
+      "path_family": "backend/app/services/evaluation/**; offline calibration/observer modules",
+      "reason": "不在 app.main 当前生产可达链，属于离线评估或观察能力。"
+    },
+    {
+      "path_family": "repository reports, work orders, screenshots, raw/model responses, generated DOCX/TXT",
+      "reason": "历史审计、调试、恢复或运行证据，不属于可分发生产系统。"
+    },
+    {
+      "path_family": "legacy full-article experimental integration modules not imported by app.main",
+      "reason": "不可达实验代码，不进入干净生产基线。"
+    }
+  ]
+}

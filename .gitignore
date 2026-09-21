@@ -1,0 +1,62 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+*.pem
+*.key
+
+# Python environments and caches
+backend/.venv/
+.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Node dependencies and builds
+frontend/node_modules/
+frontend/dist/
+frontend/dist-commercial/
+frontend/.vite/
+node_modules/
+/dist/
+/build/
+
+# Runtime data and user content
+backend/data/
+backend/uploads/
+backend/output/
+backend/outputs/
+backend/tmp/
+tmp/
+output/
+outputs/
+docs/style_samples/
+docs/audit/evidence/
+
+# Private Writing Reference
+/backend/app/services/generation/case32_contract/reference_outbound.json
+*reference_outbound*.json
+private-reference/
+private_reference/
+
+# Logs, raw responses and generated drafts
+*.log
+logs/
+*raw_response*
+*model_response*
+*RAW_SSE*
+*.docx
+*.generated.txt
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
