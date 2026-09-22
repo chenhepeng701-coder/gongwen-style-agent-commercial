@@ -379,7 +379,9 @@ def test_admission_failures_and_task_restrictions_match_committed(tmp_path, comm
 
 
 def test_production_and_fact_owners_remain_unchanged():
-    files = ["backend/app/routers/library.py", "backend/app/routers/generation.py",
+    # W3-8C-2A authorizes library upload/readiness wiring. Generation/fact/retrieval
+    # owners remain byte-for-byte protected; ingestion has its own boundary tests.
+    files = ["backend/app/routers/generation.py",
              "backend/app/services/generation/full_draft_generation.py",
              "backend/app/services/generation/generator.py",
              "backend/app/services/generation/atomic_evidence.py",

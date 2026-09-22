@@ -1,6 +1,7 @@
 """Data models for the library (资料库) system."""
 
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -28,6 +29,11 @@ class LibraryDocument(BaseModel):
     embedding_chunks: int = 0
     embedding_model: str = ""
     embedded_at: str = ""
+    ingestion_status: Literal["INDEXED", "PROCESSING", "READY", "FAILED"] = "INDEXED"
+    ingestion_stage: str = ""
+    ingestion_error: dict[str, str] = Field(default_factory=dict)
+    ingestion_lease_expires_at: float = 0.0  # UTC epoch seconds; 0 means no lease
+    processed_at: str = ""
 
 
 class SourceDocumentInfo(BaseModel):

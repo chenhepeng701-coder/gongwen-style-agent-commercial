@@ -5,6 +5,7 @@ import math
 import os
 import threading
 import uuid
+import weakref
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +18,28 @@ from app.utils.storage import atomic_write_text
 ALLOWED_EXTENSIONS = {".docx", ".txt", ".md"}
 
 _index_lock = threading.Lock()
+_document_locks = weakref.WeakValueDictionary()
+_document_locks_guard = threading.Lock()
+
+
+def document_lock(doc_id: str):
+    """Per-document locks; unused locks expire without blocking unrelated uploads."""
+    with _document_locks_guard:
+        lock = _document_locks.get(doc_id)
+        if lock is None:
+            lock = threading.RLock()
+            _document_locks[doc_id] = lock
+        return lock
+
+
+def update_document(doc_id: str, **fields) -> LibraryDocument:
+    with _index_lock:
+        doc = get_document(doc_id)
+        if doc is None:
+            raise FileNotFoundError("文档不存在")
+        doc = LibraryDocument(**{**doc.model_dump(), **fields})
+        atomic_write_text(_index_path(doc_id), doc.model_dump_json(indent=2), encoding="utf-8")
+        return doc
 
 
 def _make_preview(content: str, max_chars: int = 200) -> str:
@@ -129,11 +152,12 @@ def get_document(doc_id: str) -> LibraryDocument | None:
 
 def delete_document(doc_id: str) -> bool:
     """Delete an index entry. Does NOT delete the original file."""
-    p = _index_path(doc_id)
-    if not p.exists():
-        return False
-    p.unlink()
-    return True
+    with _index_lock:
+        p = _index_path(doc_id)
+        if not p.exists():
+            return False
+        p.unlink()
+        return True
 
 
 def get_documents_by_scene(scene_name: str, limit: int = 5) -> list[dict]:

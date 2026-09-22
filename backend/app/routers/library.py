@@ -5,7 +5,7 @@ import logging
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File, HTTPException, Query
 from starlette.concurrency import run_in_threadpool
 
 from app.models.library import (
@@ -26,20 +26,22 @@ from app.services.library.indexer import (
     index_file,
     list_documents,
     get_document,
-    delete_document,
     update_scene_tags,
     ALLOWED_EXTENSIONS,
 )
 from app.services.library.embedder import (
     generate_embeddings,
     get_embedding_info,
-    delete_embeddings,
 )
-from app.services.library.card_extractor import extract_cards, get_cards_info, delete_cards
-from app.services.library.style_extractor import extract_style, get_style_info, delete_style
+from app.services.library.card_extractor import extract_cards, get_cards_info
+from app.services.library.style_extractor import extract_style, get_style_info
 from app.utils.runtime_paths import get_uploads_dir
 from app.utils.api_errors import internal_error, public_batch_error
 from app.services.library.source_content import SourceContentError, read_source_document_content
+from app.services.library.material_ingestion import (
+    schedule_processing, document_readiness, documents_readiness,
+    delete_material_document, MaterialProcessingBusy,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ def _cleanup_saved_upload(path: Path) -> None:
 
 
 @router.post("/upload", response_model=UploadResponse)
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """Upload a file, parse it, and add to the library index.
 
     The original file is temporarily saved to the uploads directory for parsing,
@@ -88,17 +90,33 @@ async def upload_document(file: UploadFile = File(...)):
     # Index the file (this also records the file path)
     try:
         doc = await run_in_threadpool(index_file, str(dest_path), original_filename=filename)
-        return UploadResponse(
-            success=True,
-            message=f"入库成功: {doc.title}",
-            document=doc,
-        )
     except ValueError as e:
         _cleanup_saved_upload(dest_path)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         _cleanup_saved_upload(dest_path)
         raise internal_error(logger, "LIBRARY_INDEX_ERROR", e)
+
+    try:
+        doc = await run_in_threadpool(schedule_processing, doc.id, background_tasks)
+    except Exception as e:
+        # Indexing succeeded: retain the source so an explicit retry is possible.
+        raise internal_error(logger, "LIBRARY_PROCESS_SCHEDULE_ERROR", e)
+    return UploadResponse(success=True, message=f"入库成功，材料处理中: {doc.title}", document=doc)
+
+
+@router.post("/documents/{doc_id}/process", response_model=LibraryDocument, status_code=202)
+async def process_library_document(doc_id: str, background_tasks: BackgroundTasks):
+    try:
+        return await run_in_threadpool(schedule_processing, doc_id, background_tasks)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="文档不存在")
+    except MaterialProcessingBusy:
+        raise HTTPException(status_code=409, detail={
+            "error_type": "MATERIAL_PROCESSING_BUSY", "message": "文档正在处理或删除，请稍后重试。",
+        })
+    except Exception as e:
+        raise internal_error(logger, "LIBRARY_PROCESS_SCHEDULE_ERROR", e)
 
 
 @router.get("/stats", response_model=LibraryStatsResponse)
@@ -129,6 +147,7 @@ async def get_documents(
     Set page_size=-1 (default) to return all documents.
     """
     result = list_documents(page=page, page_size=page_size)
+    result["items"] = await run_in_threadpool(documents_readiness, result["items"])
     return DocumentListResponse(**result)
 
 
@@ -138,7 +157,10 @@ async def get_single_document(doc_id: str):
     doc = get_document(doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="文档不存在")
-    return doc
+    try:
+        return await run_in_threadpool(document_readiness, doc)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="文档不存在")
 
 
 @router.get("/documents/{doc_id}/source-content", response_model=SourceDocumentContentResponse)
@@ -158,12 +180,12 @@ async def get_source_document_content(doc_id: str):
 @router.delete("/documents/{doc_id}", response_model=DeleteResponse)
 async def remove_document(doc_id: str):
     """Remove a document from the library index. Also cleans up embeddings."""
-    ok = delete_document(doc_id)
+    try:
+        ok = await run_in_threadpool(delete_material_document, doc_id)
+    except Exception as e:
+        raise internal_error(logger, "LIBRARY_DELETE_ERROR", e)
     if not ok:
         raise HTTPException(status_code=404, detail="文档不存在")
-    delete_embeddings(doc_id)  # clean up embedding file if exists
-    delete_cards(doc_id)       # clean up card file if exists
-    delete_style(doc_id)       # clean up style file if exists
     return DeleteResponse(success=True, message="已从资料库移除")
 
 
