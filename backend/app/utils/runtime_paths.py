@@ -96,3 +96,10 @@ def get_library_styles_dir() -> Path:
     styles = get_library_dir() / "styles"
     styles.mkdir(parents=True, exist_ok=True)
     return styles
+
+
+def get_library_material_assets_dir() -> Path:
+    """Document-scoped stable assets; created only when ingestion needs them."""
+    assets = get_library_dir() / "material_assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    return assets

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from datetime import datetime
 from pathlib import Path
 
@@ -11,8 +12,10 @@ import httpx
 
 from app.config import EmbeddingConfig, get_embedding_config as get_ec, get_settings
 from app.models.library import EmbeddingChunk
-from app.services.library.indexer import _index_path, get_document
-from app.services.retrieval.official_semantic_chunker import semantic_chunk_document
+from app.services.library.indexer import get_document, update_document, document_lock
+from app.services.library.semantic_preparation import (
+    PreparedSemanticChunks, prepare_semantic_chunks, source_fingerprint,
+)
 from app.utils.http_client import resolve_http_client_settings
 from app.utils.runtime_paths import get_library_embeddings_dir
 from app.utils.storage import atomic_write_text
@@ -207,6 +210,10 @@ def _call_embedding_api(emb_cfg: EmbeddingConfig, model: str, texts: list[str]) 
             data_items = payload["data"]
             data_items.sort(key=lambda item: item.get("index", 0))
             batch_vectors = [item["embedding"] for item in data_items]
+            if len(batch_vectors) != len(batch):
+                raise ValueError("Embedding batch vector count mismatch")
+            if [item.get("index") for item in data_items] != list(range(len(batch))):
+                raise ValueError("Embedding batch indices mismatch")
             all_vectors.extend(batch_vectors)
             if batch_vectors:
                 logger.info("EMBEDDING_VECTOR_DIM=%s", len(batch_vectors[0]))
@@ -312,60 +319,34 @@ def test_embedding_connection(config: EmbeddingConfig) -> dict:
 test_embedding_connection.__test__ = False
 
 
-def generate_embeddings(doc_id: str) -> dict:
+def generate_embeddings(doc_id: str, *, prepared: PreparedSemanticChunks | None = None) -> dict:
+    with document_lock(doc_id):
+        if get_document(doc_id) is None:
+            raise FileNotFoundError("文档不存在")
+        fields = {"has_embedding": False, "embedding_chunks": 0,
+                  "embedding_model": "", "embedded_at": ""}
+        update_document(doc_id, **fields)
+        delete_embeddings(doc_id)
+        try:
+            if prepared is None:
+                from app.services.library.material_ingestion import invalidate_readiness_for_embedding
+                invalidate_readiness_for_embedding(doc_id)
+            return _generate_embeddings(doc_id, prepared)
+        except Exception:
+            from app.services.library.material_ingestion import _fail
+            _fail(doc_id, "embedding", "EMBEDDING_FAILED")
+            raise
+
+
+def _generate_embeddings(doc_id: str, prepared: PreparedSemanticChunks | None) -> dict:
     doc = get_document(doc_id)
-    if doc is None:
-        raise ValueError(f"文档不存在: {doc_id}")
-
-    file_path = Path(doc.file_path)
-    if not file_path.exists():
-        raise FileNotFoundError(f"原始文件不存在: {doc.file_path}。请检查文件是否被移动或删除。")
-
-    ext = file_path.suffix.lower()
-    if ext == ".docx":
-        from app.services.parser.docx_parser import parse_docx_file
-
-        result = parse_docx_file(str(file_path))
-        full_text = result.get("content", "")
-    else:
-        from app.services.parser.txt_parser import parse_text_file
-
-        result = parse_text_file(str(file_path))
-        full_text = result.get("content", "")
-
-    semantic_chunks = semantic_chunk_document(
-        full_text,
-        document_id=doc_id,
-        source_file=file_path.name,
-        source_path=str(file_path.resolve()),
-        title=doc.title,
-        paragraphs=result.get("paragraphs"),
-    )
+    prepared = prepared or prepare_semantic_chunks(doc)
+    if prepared.document_id != doc_id or prepared.source_fingerprint != source_fingerprint(doc):
+        raise ValueError("材料与预处理分块不一致")
+    semantic_chunks = prepared.chunks
     chunks = [chunk["chunk_text"] for chunk in semantic_chunks]
     if not chunks:
-        logger.error("SEMANTIC_CHUNK_FAILED doc_id=%s reason=empty_content", doc_id)
         raise ValueError("文档内容为空，无法生成向量。")
-
-    missing_fields = sorted(
-        {
-            key
-            for chunk in semantic_chunks
-            for key in ("document_type", "level", "org_type", "business_domain", "writing_purpose")
-            if chunk.get(key) in (None, "", "未知", "unknown")
-        }
-    )
-    logger.info(
-        "SEMANTIC_CHUNK_READY doc_id=%s source_file=%s title=%s paragraphs=%s chunks=%s short_merges=%s "
-        "secondary_splits=%s missing_metadata=%s",
-        doc_id,
-        file_path.name,
-        doc.title,
-        len(result.get("paragraphs") or []),
-        len(semantic_chunks),
-        sum(bool(chunk.get("short_merged")) for chunk in semantic_chunks),
-        sum(bool(chunk.get("secondary_split")) for chunk in semantic_chunks),
-        ",".join(missing_fields) or "none",
-    )
 
     emb_cfg, model = _get_embedding_config()
     try:
@@ -379,6 +360,15 @@ def generate_embeddings(doc_id: str) -> dict:
     except httpx.RequestError as exc:
         error_type, error_summary = _classify_embedding_error(exc)
         raise ValueError(f"{error_summary}: {exc}") from exc
+
+    if len(vectors) != len(chunks):
+        raise ValueError("Embedding vector count does not match semantic chunk count")
+    if any(not vector for vector in vectors):
+        raise ValueError("Embedding returned an empty vector")
+    dimension = len(vectors[0])
+    if any(len(vector) != dimension or any(not math.isfinite(value) for value in vector)
+           for vector in vectors):
+        raise ValueError("Embedding returned invalid vector dimensions or values")
 
     embedding_chunks = [
         EmbeddingChunk(
@@ -402,19 +392,10 @@ def generate_embeddings(doc_id: str) -> dict:
         encoding="utf-8",
     )
 
-    doc.has_embedding = True
-    doc.embedding_chunks = len(embedding_chunks)
-    doc.embedding_model = model
-    doc.embedded_at = embedding_data["embedded_at"]
-    atomic_write_text(_index_path(doc_id), doc.model_dump_json(indent=2), encoding="utf-8")
-
-    logger.info(
-        "SEMANTIC_INDEX_SUCCESS doc_id=%s source_file=%s chunks=%s schema=%s",
-        doc_id,
-        file_path.name,
-        len(embedding_chunks),
-        semantic_chunks[0].get("schema_version", "unknown"),
-    )
+    update_document(doc_id, has_embedding=True, embedding_chunks=len(embedding_chunks),
+                    embedding_model=model, embedded_at=embedding_data["embedded_at"])
+    logger.info("SEMANTIC_INDEX_SUCCESS doc_id=%s chunks=%s schema=%s", doc_id,
+                len(embedding_chunks), semantic_chunks[0].get("schema_version", "unknown"))
 
     return {
         "success": True,
