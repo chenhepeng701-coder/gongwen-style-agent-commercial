@@ -3,6 +3,7 @@ import {
   deleteDocument,
   getDocument,
   listDocuments,
+  processLibraryDocument,
   searchDocuments,
   updateDocumentTags,
   uploadDocument,
@@ -16,6 +17,10 @@ import Modal from '../components/Modal'
 import StatusTag from '../components/StatusTag'
 import { collectDroppedFiles, collectLibraryFiles } from '../utils/dropFiles'
 import { batchUploadLibraryFiles, formatImportResultMessage } from '../utils/libraryUpload'
+import {
+  BACKFILL_CONFIRMATION, READINESS_UNAVAILABLE_MESSAGE, createLibraryReadiness,
+  formatBackfillResult, getDocumentStatus, getIngestionFailureMessage,
+} from '../utils/libraryReadiness'
 
 const PAGE_SIZE = 20
 const SUPPORTED_TYPES = '.docx,.txt,.md'
@@ -29,11 +34,6 @@ function formatDate(value) {
 function formatFileType(value) {
   if (!value) return '文件'
   return String(value).replace(/^\./, '').toUpperCase()
-}
-
-function getDocumentStatus(document) {
-  if (document?.has_embedding === true) return { label: '可用于写作', tone: 'success' }
-  return { label: '状态待确认', tone: 'neutral' }
 }
 
 export default function LibraryPage() {
@@ -56,8 +56,36 @@ export default function LibraryPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalDocs, setTotalDocs] = useState(0)
+  const [backfillProgress, setBackfillProgress] = useState(null)
+  const [processingIds, setProcessingIds] = useState(new Set())
+  const [readinessError, setReadinessError] = useState('')
+  const readinessRef = useRef(null)
+  const backfillRunningRef = useRef(false)
   const fileInputRef = useRef(null)
   const folderInputRef = useRef(null)
+
+  const updateReadiness = useCallback((document) => {
+    setDocuments((current) => current.map((item) => item.id === document.id ? { ...item, ...document } : item))
+    setSelectedDocument((current) => current?.id === document.id ? { ...current, ...document } : current)
+  }, [])
+
+  useEffect(() => {
+    const controller = createLibraryReadiness({
+      getDocument, processDocument: processLibraryDocument, listDocuments,
+      onDocument: updateReadiness,
+      onNotice: (message) => setModal({ type: 'info', title: '资料正在处理中', message }),
+      onPollingError: () => setReadinessError(READINESS_UNAVAILABLE_MESSAGE),
+    })
+    readinessRef.current = controller
+    return () => {
+      controller.dispose()
+      readinessRef.current = null
+    }
+  }, [updateReadiness])
+
+  useEffect(() => {
+    readinessRef.current?.observe([...documents, selectedDocument].filter(Boolean))
+  }, [documents, selectedDocument])
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
@@ -83,9 +111,10 @@ export default function LibraryPage() {
 
   useEffect(() => { fetchDocuments() }, [fetchDocuments])
 
+  const selectedTags = (selectedDocument?.scene_tags || []).join('、')
   useEffect(() => {
-    setTagDraft((selectedDocument?.scene_tags || []).join('、'))
-  }, [selectedDocument])
+    setTagDraft(selectedTags)
+  }, [selectedDocument?.id, selectedTags])
 
   const visibleDocuments = useMemo(() => {
     if (!filterKeyword.trim()) return documents
@@ -123,7 +152,11 @@ export default function LibraryPage() {
     }
     setUploading(true)
     try {
-      const result = await batchUploadLibraryFiles(files, { uploadFile: uploadDocument })
+      const result = await batchUploadLibraryFiles(files, { uploadFile: async (file) => {
+        const response = await uploadDocument(file)
+        if (response?.document) readinessRef.current?.observe([response.document])
+        return response
+      } })
       const notes = []
       if (ignoredUnsupported) notes.push('已忽略不支持的文件。')
       if (readFailed) notes.push('部分文件读取失败，请检查文件权限。')
@@ -217,6 +250,62 @@ export default function LibraryPage() {
     }
   }
 
+  const handleProcess = async (document) => {
+    const controller = readinessRef.current
+    if (!controller || backfillRunningRef.current) return
+    setReadinessError('')
+    setProcessingIds((current) => new Set(current).add(document.id))
+    try {
+      const outcome = await controller.process(document)
+      if (readinessRef.current !== controller) return
+      if (!outcome.skipped && outcome.document.ingestion_status !== 'READY') {
+        showModal('info', '资料处理未完成', getIngestionFailureMessage())
+      }
+    } catch (error) {
+      if (readinessRef.current === controller) setReadinessError(READINESS_UNAVAILABLE_MESSAGE)
+    } finally {
+      if (readinessRef.current === controller) setProcessingIds((current) => {
+        const next = new Set(current)
+        next.delete(document.id)
+        return next
+      })
+    }
+  }
+
+  const runBackfill = async () => {
+    const controller = readinessRef.current
+    if (!controller || backfillRunningRef.current) return
+    backfillRunningRef.current = true
+    setModal(null)
+    setReadinessError('')
+    setBackfillProgress({ completed: 0, total: 0, title: '正在读取待处理资料' })
+    try {
+      const result = await controller.backfill({ onProgress: setBackfillProgress })
+      if (readinessRef.current === controller) showModal('info', '历史资料处理完成', formatBackfillResult(result))
+    } catch (error) {
+      if (readinessRef.current === controller) setReadinessError(READINESS_UNAVAILABLE_MESSAGE)
+    } finally {
+      if (readinessRef.current === controller) {
+        backfillRunningRef.current = false
+        setBackfillProgress(null)
+      }
+    }
+  }
+
+  const confirmBackfill = () => setModal({
+    type: 'info', title: '处理已有资料', message: BACKFILL_CONFIRMATION,
+    cancelText: '取消', confirmText: '确认处理', onConfirm: runBackfill,
+  })
+
+  const processButton = (document) => {
+    const status = getDocumentStatus(document)
+    if (!status.action) return null
+    return <Button variant="secondary" size="sm"
+      disabled={!!backfillProgress || processingIds.has(document.id) || document.ingestion_status === 'PROCESSING'}
+      onClick={(event) => { event.stopPropagation(); handleProcess(document) }}
+    >{processingIds.has(document.id) ? '处理中' : status.action}</Button>
+  }
+
   return (
     <div className="core-page library-page" data-page-key="library">
       <Modal
@@ -250,10 +339,21 @@ export default function LibraryPage() {
           <p>集中管理本地写作资料，上传前请确认内容已经脱敏。</p>
         </div>
         <div className="core-heading-actions">
+          <Button variant="secondary" onClick={confirmBackfill} disabled={!!backfillProgress || uploading || processingIds.size > 0}>处理已有资料</Button>
           <Button variant="secondary" onClick={() => confirmBeforeUpload(() => folderInputRef.current?.click())} disabled={uploading}>导入文件夹</Button>
           <Button onClick={() => confirmBeforeUpload(() => fileInputRef.current?.click())} loading={uploading}>上传资料</Button>
         </div>
       </div>
+
+      {backfillProgress && <section className="core-panel library-detail-content" role="status" aria-live="polite">
+        <strong>正在处理已有资料 {backfillProgress.completed} / {backfillProgress.total}</strong>
+        <p>{backfillProgress.title}</p>
+        <p>离开页面后将停止安排后续资料，已开始的资料会继续处理。下次可继续处理剩余待处理资料。</p>
+      </section>}
+      {readinessError && <ErrorState title="资料状态暂时无法更新" error={readinessError} onRetry={() => {
+        setReadinessError('')
+        fetchDocuments()
+      }} />}
 
       <section
         className={`library-drop-zone ${dragOver ? 'is-drag-over' : ''}`}
@@ -339,6 +439,7 @@ export default function LibraryPage() {
                       <div className="library-document-meta"><span>{formatFileType(document.file_type)}</span><span>{formatDate(document.indexed_at || document.created_at)}</span>{Number.isFinite(document.word_count) && <span>{document.word_count.toLocaleString()} 字</span>}</div>
                       {!!document.scene_tags?.length && <div className="library-tags">{document.scene_tags.slice(0, 4).map((tag) => <span key={`${document.id}-${tag}`}>{tag}</span>)}</div>}
                     </div>
+                    {processButton(document)}
                     <Button variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); setPendingDelete(document) }}>移除</Button>
                   </article>
                 )
@@ -366,8 +467,9 @@ export default function LibraryPage() {
                 <div><dt>写作状态</dt><dd><StatusTag tone={getDocumentStatus(selectedDocument).tone}>{getDocumentStatus(selectedDocument).label}</StatusTag></dd></div>
                 <div><dt>入库时间</dt><dd>{formatDate(selectedDocument.indexed_at || selectedDocument.created_at)}</dd></div>
                 {Number.isFinite(selectedDocument.word_count) && <div><dt>字数</dt><dd>{selectedDocument.word_count.toLocaleString()} 字</dd></div>}
-                {selectedDocument.file_path && <div><dt>原文件</dt><dd className="core-break-text">{selectedDocument.file_path}</dd></div>}
               </dl>
+              {selectedDocument.ingestion_status === 'FAILED' && <p role="status">{getIngestionFailureMessage(selectedDocument)}</p>}
+              {processButton(selectedDocument)}
               <FormControl htmlFor="document-tags" label="分类与标签" description="使用顿号或逗号分隔">
                 <input id="document-tags" value={tagDraft} onChange={(event) => setTagDraft(event.target.value)} placeholder="例如：工作总结、基层治理" />
               </FormControl>

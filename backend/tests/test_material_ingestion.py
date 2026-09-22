@@ -400,5 +400,12 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "backend/app/services/library/card_extractor.py", "backend/app/services/library/style_extractor.py",
         "frontend"], cwd=root).decode().splitlines()
     for file in files:
+        # W3-8C-2B explicitly authorizes these readiness UI files (including new
+        # files once staged); their behavior has dedicated Node coverage.
+        # Keep every backend owner and all other frontend files protected.
+        if file in {"frontend/src/api.js", "frontend/src/pages/LibraryPage.jsx",
+                    "frontend/src/utils/libraryReadiness.js",
+                    "frontend/tests/utils/libraryReadiness.test.mjs"}:
+            continue
         before = subprocess.check_output(["git", "show", f"{base}:{file}"], cwd=root)
         assert (root / file).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), file
