@@ -410,7 +410,9 @@ def test_cache_io_failure_is_explicit(tmp_path):
 def test_production_files_unchanged_and_no_experiment_imports():
     for name in ("backend/app/routers/generation.py", "backend/app/services/generation/generator.py",
                  "backend/app/services/generation/atomic_evidence.py", "backend/app/services/generation/full_draft_material.py",
-                 "backend/app/services/generation/full_draft_generation.py", "backend/app/services/generation/official_document_drafting.py"):
+                 "backend/app/services/generation/official_document_drafting.py"):
+        # W3-8C-3 explicitly connects full_draft_generation to Task Assembly;
+        # that authorized boundary now has production-path contract coverage.
         old = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         assert (ROOT / name).read_text(encoding="utf-8") == old.replace("\r\n", "\n")
         assert "material_digest" not in old and "task_assembly" not in old
