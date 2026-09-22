@@ -1,8 +1,8 @@
-"""Offline experiment: current task + Digest -> unchanged Writer input contract.
+"""Current task + Digest -> unchanged Writer input contract.
 
 Exact-quote reading cards replace the live Brief call, not its literary synthesis.
 All admission, IDs, contextual state and permissions stay with existing owners.
-No production import, Provider, Writer invocation, fallback or persisted task state.
+Used by the explicit full_article_drafting route; no Provider, fallback or storage.
 """
 from dataclasses import asdict, dataclass
 import json
@@ -69,7 +69,8 @@ def _assemble_reading_brief(packet, digest):
                               "issue": canonical_json(finding),
                               "blocks_strong_conclusion": finding["blocks_strong_conclusion"]})
     value = {"version": "material-brief-stage2-1", "input_sha256": packet.brief_input_sha256,
-             "overview": (f"本次合法材料共{len(view)}条，按原文动作词形成{len(matters)}组阅读索引。"
+             "overview": ("本视图为确定性任务组装产物（deterministic_task_assembly），不是模型生成的材料摘要。"
+                          f"本次合法材料共{len(view)}条，按原文动作词形成{len(matters)}组阅读索引。"
                           "摘要保留原句；同组不表示同一事件、因果关系或写作章节。"
                           "状态、授权与限制以各条Evidence为准，取舍由Writer决定。"),
              "matters": matters, "uncertainties": uncertainties}
@@ -85,7 +86,7 @@ class TaskAssembly:
 
 
 def assemble_task_from_assets(request, retrieval, assets):
-    """Explicit offline composition entry; no complete chunk reaches Atomic.
+    """Shared production/offline composition; no complete chunk reaches Atomic.
 
 Assets may be precomputed without any task. Current retrieval still owns the
 authorized text and all roles, restrictions, ordering and admission context.

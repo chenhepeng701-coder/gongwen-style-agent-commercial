@@ -5,6 +5,7 @@ the response. Jobs are process-local (single-server deployment); an interrupted
 job becomes FAILED when queried and requires an explicit retry, never a scan of
 the user's library or an automatic external-call retry.
 """
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -162,6 +163,90 @@ def _validate_manifest(doc: LibraryDocument) -> dict:
                 or payload["chunk_id"] != chunk["metadata"]["chunk_id"]):
             raise ValueError("Asset does not match embedding chunk")
     return manifest
+
+
+@dataclass(frozen=True)
+class _SelectedMaterialAsset:
+    """In-memory read binding for retrieval's projection, not a new stable asset.
+
+    The persisted payload/key stay unchanged. Only the selected-source lookup
+    key differs, because retrieval projects/normalizes ingestion metadata.
+    """
+    asset: stable.StableMaterialAsset
+    source_json: str
+    selected_binding_json: str
+
+    @property
+    def cache_key(self):
+        return stable.text_sha(self.selected_binding_json)
+
+    def source_for(self, chunk):
+        if stable.canonical_json(stable._binding(chunk)) != self.selected_binding_json:
+            raise stable.FullArticleContractError("STABLE_MATERIAL_ASSET_INPUT_CHANGED")
+        return self.asset.source_for(json.loads(self.source_json))
+
+
+def read_selected_material_assets(retrieval):
+    """Read verified W3-8C-2A assets; never process, repair or change readiness.
+
+    Reuse the manifest validator and actual retrieval projection owners. Current
+    selected text/roles/limitations remain untouched and confer no new authority.
+    Source fingerprinting reads bytes for freshness; it does not parse the file.
+    """
+    from app.services.retrieval.retriever import _chunk_result
+    from app.services.retrieval.document_retriever import _selected_chunk
+
+    selected = retrieval.get("selected_chunks") or []
+    if not selected:
+        raise stable.FullArticleContractError("FULL_DRAFT_STABLE_ASSETS_REQUIRED")
+    documents = {}
+    try:
+        for chunk in selected:
+            doc_id = chunk["document_id"]
+            assets_directory(doc_id)  # Validate identity before index/path access.
+            if chunk.get("doc_id", doc_id) != doc_id:
+                raise ValueError("Conflicting document identity")
+            documents.setdefault(doc_id, []).append(chunk)
+        result = {}
+        for doc_id, chunks in documents.items():
+            with indexer.document_lock(doc_id):
+                doc = indexer.get_document(doc_id)
+                if doc is None or doc.ingestion_status != "READY":
+                    raise ValueError("Material is not READY")
+                manifest = _validate_manifest(doc)
+                entries = {entry["chunk_id"]: entry for entry in manifest["assets"]}
+                stored = {row["metadata"]["chunk_id"]: row
+                          for row in embedder.get_embedding_info(doc_id)["chunks"]}
+                for chunk in chunks:
+                    entry = entries[chunk["chunk_id"]]
+                    path = assets_directory(doc_id) / (entry["cache_key"] + ".json")
+                    raw = path.read_bytes()
+                    if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+                        raise ValueError("Asset changed during read")
+                    envelope = json.loads(raw)
+                    payload = envelope["payload"]
+                    if (set(envelope) != {"payload", "sha256"}
+                            or envelope["sha256"] != stable.text_sha(stable.canonical_json(payload))):
+                        raise ValueError("Asset checksum")
+                    source = {**payload["source_metadata"]["chunk"],
+                              "metadata": payload["source_metadata"]["metadata"],
+                              "document_id": payload["document_id"],
+                              "chunk_id": payload["chunk_id"], "chunk_text": payload["chunk_text"]}
+                    asset = stable.StableMaterialAsset(stable.canonical_json(payload), entry["cache_key"])
+                    asset.source_for(source)  # Validate schema, original key and current rule fingerprints.
+                    expected = _selected_chunk(
+                        _chunk_result(doc, doc_id, stored[chunk["chunk_id"]]),
+                        {"rank": chunk["document_rank"], "document_score": chunk["document_score"]},
+                        chunk["document_role"], chunk["raw_rank"])
+                    binding = stable.canonical_json(stable._binding(chunk))
+                    if (binding != stable.canonical_json(stable._binding(expected))
+                            or chunk["metadata"] != expected["metadata"]):
+                        raise ValueError("Selected source does not match ingestion")
+                    result[id(chunk)] = _SelectedMaterialAsset(
+                        asset, stable.canonical_json(source), binding)
+        return tuple(result[id(chunk)] for chunk in selected)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        raise stable.FullArticleContractError("FULL_DRAFT_STABLE_ASSETS_UNAVAILABLE") from exc
 
 
 def document_readiness(doc: LibraryDocument) -> LibraryDocument:

@@ -402,10 +402,13 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
     for file in files:
         # W3-8C-2B explicitly authorizes these readiness UI files (including new
         # files once staged); their behavior has dedicated Node coverage.
-        # Keep every backend owner and all other frontend files protected.
+        # W3-8C-3 additionally authorizes only the two generation wiring owners;
+        # their production contract is covered by test_production_task_assembly.
         if file in {"frontend/src/api.js", "frontend/src/pages/LibraryPage.jsx",
                     "frontend/src/utils/libraryReadiness.js",
-                    "frontend/tests/utils/libraryReadiness.test.mjs"}:
+                    "frontend/tests/utils/libraryReadiness.test.mjs",
+                    "backend/app/services/generation/full_draft_generation.py",
+                    "backend/app/services/generation/task_assembly.py"}:
             continue
         before = subprocess.check_output(["git", "show", f"{base}:{file}"], cwd=root)
         assert (root / file).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), file

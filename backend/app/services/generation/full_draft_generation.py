@@ -4,7 +4,6 @@ No Planner/SectionWriter/fallback and no public client-supplied registry. The
 normal entry obtains current RAG inputs. Frozen packets are service-level test
 inputs only, never a second public API or material library.
 """
-from dataclasses import asdict
 import json
 from pathlib import Path
 import time
@@ -12,8 +11,8 @@ import uuid
 
 from app.models.full_article import FullArticleContractError, canonical_json, text_sha
 from app.models.generation import ArticleGenBatchResult, ArticleGenRequest
-from app.services.generation.atomic_evidence import build_full_draft_anchor_input
-from app.services.generation.full_draft_material import FullDraftMaterialPacket
+from app.services.generation.task_assembly import assemble_task_from_assets
+from app.services.library.material_ingestion import read_selected_material_assets
 from app.services.generation.writing_reference_pack import load_writing_reference_pack, use_writing_reference_pack
 from app.services.generation.official_document_drafting import build_full_draft_prompt
 from app.services.generation.full_article_candidate_adapter import import_full_article, propose_exact_citations
@@ -32,13 +31,11 @@ from app.utils.runtime_paths import get_output_dir
 def prepare_full_draft_material(request):
     # Only the existing task normalization is reused from generator. In
     # particular prepare_flow3_v33_structured_generation is never entered.
-    from app.services.generation.generator import build_official_draft_task, derive_final_delivery_length_gate
+    from app.services.generation.generator import build_official_draft_task
     task = build_official_draft_task(request)
     retrieval = retrieve_documents(task, persist_trace=False)
-    inputs = build_full_draft_anchor_input(task, retrieval)
-    task_fields = {**asdict(task), "style": request.style, "scene": request.scene,
-                   "hard_max": derive_final_delivery_length_gate(task.target_words)["max_words"]}
-    return FullDraftMaterialPacket.from_authorized_input(task_fields, inputs)
+    assets = read_selected_material_assets(retrieval)
+    return assemble_task_from_assets(request, retrieval, assets).packet
 
 
 def _save_json(root, name, data):
@@ -52,6 +49,8 @@ async def generate_full_draft(request):
     started = time.perf_counter()
     reference_pack = load_writing_reference_pack()
     packet = prepare_full_draft_material(request)
+    if not packet.brief_json:
+        raise FullArticleContractError("FULL_DRAFT_TASK_ASSEMBLY_REQUIRED")
     provider = get_llm_provider()
     if not isinstance(provider, OpenAICompatibleProvider) or not provider.config.model.lower().startswith("qwen"):
         raise FullArticleContractError("FULL_DRAFT_CURRENT_QWEN_PROVIDER_REQUIRED")
@@ -62,6 +61,7 @@ async def generate_full_draft(request):
                   "model": provider.config.model, "writer_calls": 0, "material_brief_calls": 0,
                   "http_attempts": 0, "brief_http_attempts": 0, "writer_http_attempts": 0,
                   "retry_limit": 0, "fallback_used": False, "status": "PREPARED",
+                  "material_preparation": "deterministic_task_assembly",
                   "REFERENCE_PACK_SHA256": reference_pack.sha256}
     _save_json(root, "call_accounting.json", accounting)
 
@@ -71,31 +71,11 @@ async def generate_full_draft(request):
         _save_json(root, "call_accounting.json", accounting)
 
     try:
-        # Exactly the CASE32 material role. It makes no writing decisions and
-        # cannot create/replace source records or invoke a Planner.
-        if not packet.brief_json:
-            brief_prompt = packet.brief_prompt()
-            _save_json(root, "BRIEF_REQUEST.json", {"model": provider.config.model,
-                "messages": [{"role": "system", "content": brief_prompt["system"]},
-                             {"role": "user", "content": brief_prompt["user"]}],
-                "temperature": request.temperature, "retry": 0, "reasoning_effort": "none"})
-
-            def brief_attempted(attempt):
-                accounting.update(brief_http_attempts=attempt, http_attempts=attempt, status="BRIEF_RUNNING")
-                _save_json(root, "call_accounting.json", accounting)
-
-            accounting["material_brief_calls"] = 1
-            brief_raw = provider.generate_text(brief_prompt["user"], system_prompt=brief_prompt["system"],
-                temperature=request.temperature, retry_limit=0, preserve_whitespace=True, reasoning_effort="none",
-                on_http_request_attempt=brief_attempted)
-            (root / "BRIEF_RAW_RESPONSE.txt").write_bytes(brief_raw.encode("utf-8"))
-            try:
-                brief_value = json.loads(brief_raw)
-            except ValueError as exc:
-                raise FullArticleContractError("MATERIAL_BRIEF_RESPONSE_INVALID") from exc
-            packet = packet.with_brief(brief_value)
-        _save_json(root, "BRIEF_RESPONSE.json", json.loads(packet.brief_json))
-        _save_json(root, "MATERIAL_BRIEF_BOUND.json", packet.bound_brief())
+        # brief_json is a deterministic compatibility view, never an LLM response.
+        _save_json(root, "TASK_ASSEMBLY.json", {
+            "kind": "deterministic_task_assembly", "input_sha256": packet.brief_input_sha256,
+            "reading_view": json.loads(packet.brief_json),
+            "fact_authority": "UNCHANGED_FROZEN_REGISTRY"})
         _save_json(root, "DETERMINISTIC_FACT_REVIEW_OVERLAY.json", packet.overlay())
         _save_json(root, "material_packet.json", packet.__dict__)
         with use_writing_reference_pack(reference_pack):
