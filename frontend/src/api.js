@@ -14,6 +14,7 @@ const ERROR_CODE_MESSAGES = {
   FACT_SAFETY_BLOCKED: '模型生成内容包含无法由资料支持的事实，系统已停止交付。',
   FACT_VALIDATION_FAILED: '模型生成内容未通过事实安全校验，系统已停止交付。',
   INTERNAL_ERROR: '服务器内部错误，请稍后重试。',
+  MATERIAL_PROCESSING_BUSY: '资料正在处理中，请稍后查看。',
 }
 
 export function publicErrorMessage(error) {
@@ -117,6 +118,10 @@ export function listDocuments(page, pageSize) {
 
 export function getDocument(id) {
   return api.get(`/library/documents/${id}`)
+}
+
+export function processLibraryDocument(id) {
+  return api.post(`/library/documents/${encodeURIComponent(id)}/process`)
 }
 
 export function getSourceDocumentContent(id) {
