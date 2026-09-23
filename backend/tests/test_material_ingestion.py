@@ -404,11 +404,15 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         # files once staged); their behavior has dedicated Node coverage.
         # W3-8C-3 additionally authorizes only the two generation wiring owners;
         # their production contract is covered by test_production_task_assembly.
+        # WRITER-VIEW-01 adds only the two exact presentation paths; independent
+        # sent-string decoding and an AST check protect the unchanged contracts.
         if file in {"frontend/src/api.js", "frontend/src/pages/LibraryPage.jsx",
                     "frontend/src/utils/libraryReadiness.js",
                     "frontend/tests/utils/libraryReadiness.test.mjs",
                     "backend/app/services/generation/full_draft_generation.py",
-                    "backend/app/services/generation/task_assembly.py"}:
+                    "backend/app/services/generation/task_assembly.py",
+                    "backend/app/services/generation/full_draft_material.py",
+                    "backend/app/services/generation/writer_material_view.py"}:
             continue
         before = subprocess.check_output(["git", "show", f"{base}:{file}"], cwd=root)
         assert (root / file).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), file

@@ -24,6 +24,7 @@ from app.services.generation.full_draft_material import FullDraftMaterialPacket,
 from app.services.generation.generator import build_official_draft_task, derive_final_delivery_length_gate
 from app.services.generation.official_document_drafting import build_full_draft_prompt
 from test_source_substrate import sources
+from writer_material_view_decoder import decode_materials
 
 
 BASE_SHA = "54d0a88a07c0321ba0dab5e8ab2dcf3bc69ff285"
@@ -166,8 +167,11 @@ def test_abcdef_contract_and_metrics(tmp_path, committed, reference_pack, no_mod
     for name, result in zip("ABCD", (a, b, c, d)):
         with references.use_writing_reference_pack(reference_pack):
             prompt = build_full_draft_prompt(result.packet)
-        assert result.packet.brief_json in prompt["user"]
-        assert canonical_json(result.packet.evidence_writing_view()) in prompt["user"]
+        evidence_view, task_view = decode_materials(prompt["user"])
+        assert canonical_json(task_view) == result.packet.brief_json
+        assert canonical_json(evidence_view) == canonical_json(result.packet.evidence_writing_view())
+        assert result.packet.brief_json not in prompt["user"]
+        assert canonical_json(result.packet.evidence_writing_view()) not in prompt["user"]
         assert canonical_json(result.packet.overlay()) in prompt["user"]
         assert result.packet.restrictions_json in prompt["user"]
         assert result.packet.task_json in prompt["user"]
@@ -409,10 +413,12 @@ def test_cache_io_failure_is_explicit(tmp_path):
 
 def test_production_files_unchanged_and_no_experiment_imports():
     for name in ("backend/app/routers/generation.py", "backend/app/services/generation/generator.py",
-                 "backend/app/services/generation/atomic_evidence.py", "backend/app/services/generation/full_draft_material.py",
+                 "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/official_document_drafting.py"):
         # W3-8C-3 explicitly connects full_draft_generation to Task Assembly;
         # that authorized boundary now has production-path contract coverage.
+        # WRITER-VIEW-01 exempts only full_draft_material.py presentation;
+        # independent wire decoding and complete backend comparison cover it.
         old = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         assert (ROOT / name).read_text(encoding="utf-8") == old.replace("\r\n", "\n")
         assert "material_digest" not in old and "task_assembly" not in old
