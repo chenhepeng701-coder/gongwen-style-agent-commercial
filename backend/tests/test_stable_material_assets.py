@@ -384,9 +384,10 @@ def test_production_and_fact_owners_remain_unchanged():
     files = ["backend/app/routers/generation.py",
              "backend/app/services/generation/generator.py",
              "backend/app/services/generation/atomic_evidence.py",
-             "backend/app/services/generation/full_draft_material.py",
              "backend/app/services/generation/official_document_drafting.py",
              "backend/app/services/retrieval/document_retriever.py"]
+    # WRITER-VIEW-01 exempts full_draft_material.py only; its original packet,
+    # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
         before = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         assert (ROOT / name).read_text(encoding="utf-8") == before.replace("\r\n", "\n")

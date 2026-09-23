@@ -282,13 +282,15 @@ class FullDraftMaterialPacket:
                 "fact_authority": "UNCHANGED_FROZEN_REGISTRY"}
 
     def materials_markdown(self):
+        from app.services.generation.writer_material_view import build_writer_material_view
+
         self.bound_brief()  # Missing/invalid Brief must not silently select the old payload.
         unavailable = json.loads(self.unavailable_json)
         gaps = {"count": len(unavailable), "reasons": dict(Counter(r.get("reason", "UNKNOWN") for r in unavailable)),
                 "instruction": "不可用材料不是事实来源；不得据此补全具体事实。完整拒绝记录留后台复核。"}
         blocks = [
-            ("自动 Material Brief：只作阅读辅助，不是文章计划或事实授权", json.loads(self.brief_json)),
-            ("唯一事实来源：合法 Evidence / Anchor 必要写作视图；scope只界定权限", self.evidence_writing_view()),
+            ("统一写作材料视图：合法证据与任务阅读导航；不改变事实授权",
+             build_writer_material_view(self.evidence_writing_view(), json.loads(self.brief_json))),
             ("原时间风险 Overlay：不改时点、不裁决冲突", self.overlay()),
             ("S02主写法参考 / S05问题段参考：不是事实来源", case32_writing_references()),
             ("原始禁止推断和来源使用限制（原样保留）", json.loads(self.restrictions_json)),

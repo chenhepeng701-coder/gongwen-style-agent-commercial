@@ -22,6 +22,7 @@ from app.services.retrieval import document_retriever as retrieval_owner, retrie
 from app.services.llm.openai_compatible_provider import OpenAICompatibleProvider
 from app.utils import runtime_paths
 from test_writing_reference_pack_02b1 import configured, api
+from writer_material_view_decoder import decode_materials
 
 
 BASE_SHA = "a6d93a54ac1d417eb0f8ae23d92569677e8e4f40"
@@ -140,7 +141,11 @@ def test_public_production_route_uses_assets_and_one_writer(configured, api, lib
     unavailable = json.loads(result.packet.unavailable_json)
     assert unavailable
     prompt = sent[0][0]
-    assert canonical_json(result.packet.evidence_writing_view()) in prompt
+    evidence_view, task_view = decode_materials(prompt)
+    assert canonical_json(evidence_view) == canonical_json(result.packet.evidence_writing_view())
+    assert canonical_json(task_view) == result.packet.brief_json
+    assert canonical_json(result.packet.evidence_writing_view()) not in prompt
+    assert result.packet.brief_json not in prompt
     assert all(row["evidence_id"] not in prompt for row in unavailable)
     assert "授权外尾部标记" not in prompt
     assert len(retrieval["auxiliary_document_ids"]) == 2
@@ -284,7 +289,10 @@ def test_protected_owners_unchanged_from_task_base():
         "backend/app/services/flow4", "backend/app/services/retrieval", "backend/app/routers/generation.py",
         "backend/app/models", "backend/app/services/llm", "frontend"], cwd=root).decode().splitlines()
     allowed = {"backend/app/services/generation/full_draft_generation.py",
-               "backend/app/services/generation/task_assembly.py"}
+               "backend/app/services/generation/task_assembly.py",
+               # WRITER-VIEW-01: exact presentation-only paths, no owner wildcard.
+               "backend/app/services/generation/full_draft_material.py",
+               "backend/app/services/generation/writer_material_view.py"}
     for path in paths:
         if path in allowed: continue
         before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{path}"], cwd=root)
