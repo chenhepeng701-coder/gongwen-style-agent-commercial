@@ -86,10 +86,12 @@ async def generate_full_draft(request):
             **{k: v for k, v in prompt.items() if k not in {"system", "user"}},
             "REFERENCE_PACK_SHA256": reference_pack.sha256})
         accounting["writer_calls"] = 1
+        # Only the verified exact Flash model opts in; other Qwen calls stay unchanged.
+        writer_options = {"reasoning_effort": "low"} if provider.config.model == "qwen3.8-flash" else {}
         with observe_writer_call(root):
             raw = provider.generate_text(prompt["user"], system_prompt=prompt["system"],
                 temperature=request.temperature, retry_limit=0, preserve_whitespace=True,
-                on_http_request_attempt=attempted)
+                on_http_request_attempt=attempted, **writer_options)
         # First operation on a returned article: persist exact UTF-8 bytes,
         # before validation, Markdown indexing, citations, checks or export.
         (root / "RAW_WRITER_ARTICLE.md").write_bytes(raw.encode("utf-8"))
