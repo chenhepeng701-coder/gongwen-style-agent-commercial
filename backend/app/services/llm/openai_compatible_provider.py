@@ -417,8 +417,13 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         if reasoning_effort is not None:
             if reasoning_effort not in ("none", "low", "medium", "xhigh"):
                 raise ValueError("Unsupported reasoning_effort")
-            if (self._build_url() != "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-                    or self.config.model not in ("qwen3.8-max", "qwen3.8-max-0902", "qwen3.8-max-2026-09-02")):
+            if self._build_url() != "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions":
+                raise ValueError("reasoning_effort is not verified for this endpoint/model")
+            # NEXT-PERF-02 verifies only this exact Flash model/effort pair.
+            if self.config.model == "qwen3.8-flash":
+                if reasoning_effort != "low":
+                    raise ValueError("reasoning_effort is not verified for this endpoint/model")
+            elif self.config.model not in ("qwen3.8-max", "qwen3.8-max-0902", "qwen3.8-max-2026-09-02"):
                 raise ValueError("reasoning_effort is not verified for this endpoint/model")
             # W3-6E: none is enabled only for the current exact model;
             # retain the existing low/medium/xhigh capability boundary.
