@@ -24,6 +24,7 @@ from app.services.flow4.renderer import render_full_article
 from app.services.flow4.artifact_delivery import deliver_full_article_artifacts
 from app.services.llm.factory import get_llm_provider
 from app.services.llm.openai_compatible_provider import OpenAICompatibleProvider
+from app.services.llm.writer_observability import TRACE_FILENAME, observe_writer_call
 from app.services.retrieval.document_retriever import retrieve_documents
 from app.utils.runtime_paths import get_output_dir
 
@@ -62,6 +63,7 @@ async def generate_full_draft(request):
                   "http_attempts": 0, "brief_http_attempts": 0, "writer_http_attempts": 0,
                   "retry_limit": 0, "fallback_used": False, "status": "PREPARED",
                   "material_preparation": "deterministic_task_assembly",
+                  "run_id": root.name, "writer_trace": TRACE_FILENAME,
                   "REFERENCE_PACK_SHA256": reference_pack.sha256}
     _save_json(root, "call_accounting.json", accounting)
 
@@ -84,9 +86,10 @@ async def generate_full_draft(request):
             **{k: v for k, v in prompt.items() if k not in {"system", "user"}},
             "REFERENCE_PACK_SHA256": reference_pack.sha256})
         accounting["writer_calls"] = 1
-        raw = provider.generate_text(prompt["user"], system_prompt=prompt["system"],
-            temperature=request.temperature, retry_limit=0, preserve_whitespace=True,
-            on_http_request_attempt=attempted)
+        with observe_writer_call(root):
+            raw = provider.generate_text(prompt["user"], system_prompt=prompt["system"],
+                temperature=request.temperature, retry_limit=0, preserve_whitespace=True,
+                on_http_request_attempt=attempted)
         # First operation on a returned article: persist exact UTF-8 bytes,
         # before validation, Markdown indexing, citations, checks or export.
         (root / "RAW_WRITER_ARTICLE.md").write_bytes(raw.encode("utf-8"))

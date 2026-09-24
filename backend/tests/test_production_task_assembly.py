@@ -292,7 +292,11 @@ def test_protected_owners_unchanged_from_task_base():
                "backend/app/services/generation/task_assembly.py",
                # WRITER-VIEW-01: exact presentation-only paths, no owner wildcard.
                "backend/app/services/generation/full_draft_material.py",
-               "backend/app/services/generation/writer_material_view.py"}
+               "backend/app/services/generation/writer_material_view.py",
+               # NEXT-PERF-01: observation hooks only; baseline request/response
+               # parity and failure semantics are checked by test_writer_observability.
+               "backend/app/services/llm/openai_compatible_provider.py",
+               "backend/app/services/llm/writer_observability.py"}
     for path in paths:
         if path in allowed: continue
         before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{path}"], cwd=root)
