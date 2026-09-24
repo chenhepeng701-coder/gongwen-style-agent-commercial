@@ -11,6 +11,7 @@ import httpx
 
 from app.config import ProviderConfig
 from app.services.llm.base import BaseLLMProvider
+from app.services.llm.writer_observability import observe_writer
 from app.utils.http_client import get_httpx_request_kwargs
 from app.utils.runtime_paths import get_logs_dir
 
@@ -297,16 +298,20 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         """
         parts: list[str] = []
         started = time.monotonic()
+        response = None
 
         def consume_event(data: str) -> bool:
             if data.strip() == "[DONE]":
                 metadata["done"] = True
+                observe_writer("stream_end", termination="done")
                 return True
             metadata["chunk_count"] += 1
             try:
                 chunk = json.loads(data)
             except json.JSONDecodeError as exc:
+                observe_writer("sse", chunk=None)
                 raise SSEParseError("SSE parse error: invalid JSON") from exc
+            observe_writer("sse", chunk=chunk)
             if not isinstance(chunk, dict) or "error" in chunk:
                 raise SSEParseError("SSE parse error: invalid completion event")
             for source, target in (("model", "response_model"), ("id", "response_id")):
@@ -342,6 +347,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
 
         try:
             with httpx.stream("POST", **request_kwargs) as response:
+                observe_writer("response_headers", response=response)
                 self._raise_for_status(response, request_kwargs, metadata)
                 metadata["http_status"] = response.status_code
                 metadata["request_id"] = (
@@ -365,6 +371,8 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                     # SSE comments, event, id and retry fields carry no content.
                 if data_lines:
                     consume_event("\n".join(data_lines))
+                if not metadata["done"]:
+                    observe_writer("stream_end", termination="eof")
                 content = "".join(parts)
                 if content.strip() and not (metadata["done"] or metadata["finish_reason"]):
                     raise httpx.RemoteProtocolError(
@@ -380,6 +388,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             metadata["error_type"] = type(exc).__name__
             raise
         finally:
+            observe_writer("transport_summary", response=response)
             metadata["elapsed"] = round(time.monotonic() - started, 3)
             # Do not log raw exception messages or server-controlled metadata:
             # either can echo credentials, prompts or private evidence.
@@ -431,6 +440,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                 "chunk_count": 0, "received_character_count": 0,
             }
             self.last_response_metadata = metadata
+            observe_writer("writer_running", attempt=attempt)
             try:
                 if on_http_request_attempt is not None:
                     on_http_request_attempt(attempt)
@@ -453,9 +463,12 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                     request_kwargs["json"]["reasoning_effort"] = reasoning_effort
                 if self.config.stream:
                     request_kwargs["json"]["stream"] = True
+                    observe_writer("request_start", url=request_kwargs["url"], request_kwargs=request_kwargs)
                     payload, response_status_code = self._receive_stream(request_kwargs, metadata)
                 else:
+                    observe_writer("request_start", url=request_kwargs["url"], request_kwargs=request_kwargs)
                     response = httpx.post(**request_kwargs)
+                    observe_writer("response_headers", response=response)
             except Exception as exc:
                 if isinstance(exc, (httpx.HTTPStatusError, SSEParseError)):
                     raise
