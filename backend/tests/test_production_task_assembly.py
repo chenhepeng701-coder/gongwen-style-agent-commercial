@@ -297,7 +297,13 @@ def test_protected_owners_unchanged_from_task_base():
                # parity and failure semantics are checked by test_writer_observability.
                "backend/app/services/llm/openai_compatible_provider.py",
                "backend/app/services/llm/writer_observability.py"}
+    # FRONTEND-ROUTE-01 / PR #10 正式授权以下两个前端文件变化。
+    approved_refs = {
+        "frontend/src/utils/batchTaskParams.js": "bbe63b297ce60861b375ead5685dea457bb76f00",
+        "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
+    }
     for path in paths:
         if path in allowed: continue
-        before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{path}"], cwd=root)
+        approved_ref = approved_refs.get(path, BASE_SHA)
+        before = subprocess.check_output(["git", "show", f"{approved_ref}:{path}"], cwd=root)
         assert (root / path).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), path
