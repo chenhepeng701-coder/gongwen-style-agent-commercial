@@ -5,6 +5,10 @@ normal entry obtains current RAG inputs. Frozen packets are service-level test
 inputs only, never a second public API or material library.
 """
 import json
+import logging
+from collections import Counter
+from collections.abc import Mapping
+from contextvars import ContextVar
 from pathlib import Path
 import time
 import uuid
@@ -25,8 +29,139 @@ from app.services.flow4.artifact_delivery import deliver_full_article_artifacts
 from app.services.llm.factory import get_llm_provider
 from app.services.llm.openai_compatible_provider import OpenAICompatibleProvider
 from app.services.llm.writer_observability import TRACE_FILENAME, observe_writer_call
-from app.services.retrieval.document_retriever import retrieve_documents
+from app.services.retrieval.document_retriever import build_retrieval_trace, retrieve_documents
 from app.utils.runtime_paths import get_output_dir
+
+
+logger = logging.getLogger(__name__)
+RAG_TRACE_FILE = "RAG_RETRIEVAL_TRACE.json"
+ATOMIC_TRACE_FILE = "ATOMIC_EVIDENCE_TRACE.json"
+# Task-local observation channel, never part of the packet or Writer contract.
+_material_traces = ContextVar("full_draft_material_traces", default=None)
+
+
+def _build_full_draft_retrieval_trace(payload):
+    """Full-draft-only projection of this retrieval result, without re-querying.
+
+    Extend a fresh, source-free view; leave the shared retrieval sidecar and the
+    input object untouched. Raw candidates and filtered samples carry source
+    prose/metadata, so only explicit diagnostic fields may cross this boundary.
+    """
+    trace = build_retrieval_trace(payload)
+    raw_candidates = [{
+        "document_id": str(item.get("document_id") or item.get("doc_id") or "").strip(),
+        **{key: item[key] for key in (
+            "chunk_id", "chunk_index", "raw_rank", "score", "raw_similarity", "score_type",
+        ) if key in item},
+    } for item in payload.get("raw_chunk_candidates") or []]
+    source_diagnostics = payload.get("retrieval_diagnostics") or {}
+    diagnostics = {
+        **{key: source_diagnostics[key] for key in (
+            "raw_results_count", "rebuilt_doc_ids", "retrieval_mode",
+        ) if key in source_diagnostics},
+        "filtered_samples": [{key: item[key] for key in (
+            "doc_id", "chunk_id", "chunk_index", "score", "filtered", "filter_reason",
+        ) if key in item} for item in source_diagnostics.get("filtered_samples") or []],
+    }
+    for source, row in zip(
+        (item for item in payload.get("ranked_documents") or [] if isinstance(item, Mapping)),
+        trace["ranked_documents"],
+    ):
+        row.update({
+            "score_components": {key: value for key, value in
+                (source.get("score_components") or {}).items()
+                if key in {
+                    "max_chunk_similarity", "top3_mean_similarity", "semantic_aggregate",
+                    "title_topic_match", "content_topic_match", "document_type_match",
+                    "business_domain_match", "source_role_compatibility", "auxiliary_match",
+                    "negative_title_match",
+                }},
+            "passed_primary_gate": source.get("passed_primary_gate"),
+            "gate_reasons": list(source.get("gate_reasons") or []),
+        })
+    trace.update({
+        "trace_schema_version": "full-draft-retrieval-trace-redacted-1",
+        "raw_chunk_candidates": raw_candidates,
+        "raw_candidate_count": len(raw_candidates),
+        "retrieval_mode": diagnostics.get("retrieval_mode"),
+        "retrieval_diagnostics": diagnostics,
+        "insufficient_reason": str(payload.get("insufficient_reason") or "").strip(),
+    })
+    return trace
+
+
+def _build_atomic_trace(assembly):
+    """Project existing post-validation decisions; never rebuild or validate.
+
+    Accepted/discarded rows retain identity, state and hashes, not source prose.
+    The existing material_packet.json remains the exact Writer-input artifact.
+    """
+    anchors = json.loads(assembly.anchor_input_json)
+    pack = anchors["atomic_evidence"]
+    row_fields = ("evidence_id", "document_id", "chunk_id", "source_span_sha256",
+                  "document_role", "evidence_type", "fact_status", "semantic_state",
+                  "semantic_state_contract_version", "reason", "status")
+
+    def rows(values):
+        return [{key: item[key] for key in row_fields if key in item} for item in values]
+
+    accepted = rows(pack.get("evidence") or [])
+    discarded = rows(pack.get("discarded_evidence") or [])
+    unavailable = rows(anchors.get("unavailable") or [])
+    source_report = anchors["atomic_report"]
+    report = {key: source_report[key] for key in (
+        "flow3_v3_status", "passed", "hard_issue_count", "warning_count", "evidence_count",
+        "discarded_evidence_count", "contains_complete_document", "contains_complete_chunk",
+        "contains_source_title_or_heading", "contains_copied_20_han",
+        "contains_oversized_source_copy", "web_tail_clean", "isolated_count",
+        "isolated_evidence_ids", "isolation_reason", "remaining_atom_count",
+        "local_isolation_limit", "local_isolation_status", "local_isolation_candidate_count",
+    ) if key in source_report}
+    report["evidence_type_distribution"] = {key: value for key, value in
+        source_report.get("evidence_type_distribution", {}).items()
+        if key in {"context", "risk", "action", "mechanism", "scene", "result", "expression"}}
+    for field in ("hard_issues", "warnings"):
+        # Free-text detail (including nested objects) is intentionally omitted;
+        # upstream producers do not define this diagnostic privacy boundary.
+        report[field] = [{key: item[key] for key in (
+            "rule", "evidence_id", "field", "length",
+        ) if key in item} for item in source_report.get(field) or []]
+    return {
+        "trace_schema_version": "atomic-evidence-trace-redacted-1",
+        "redacted": True, "contains_source_text": False,
+        "accepted_evidence": accepted, "accepted_count": len(accepted),
+        "discarded_evidence": discarded, "discarded_count": len(discarded),
+        "discard_reason_counts": dict(Counter(item.get("reason", "") for item in discarded)),
+        "registry_count": len(anchors["registry"]),
+        "registry_evidence_ids": list(anchors["registry"]),
+        "registry_sha256": anchors["registry_sha256"],
+        "unavailable": unavailable, "unavailable_count": len(unavailable),
+        "unavailable_reason_counts": dict(Counter(item.get("reason", "") for item in unavailable)),
+        "atomic_report": report, "packet_digest": assembly.packet.digest,
+        "writer_input_artifact": "material_packet.json",
+    }
+
+
+def _capture_material_traces(retrieval, assembly):
+    traces = _material_traces.get()
+    if traces is None:
+        return
+    for name, build in (
+        (RAG_TRACE_FILE, lambda: _build_full_draft_retrieval_trace(retrieval)),
+        (ATOMIC_TRACE_FILE, lambda: _build_atomic_trace(assembly)),
+    ):
+        try:
+            traces[name] = build()
+        except Exception as exc:
+            logger.warning("MATERIAL_TRACE_BUILD_FAILED file=%s error_type=%s", name, type(exc).__name__)
+
+
+def _persist_material_traces(root, traces):
+    for name, data in traces.items():
+        try:
+            _save_json(root, name, data)
+        except Exception as exc:
+            logger.warning("MATERIAL_TRACE_PERSIST_FAILED file=%s error_type=%s", name, type(exc).__name__)
 
 
 def prepare_full_draft_material(request):
@@ -36,7 +171,9 @@ def prepare_full_draft_material(request):
     task = build_official_draft_task(request)
     retrieval = retrieve_documents(task, persist_trace=False)
     assets = read_selected_material_assets(retrieval)
-    return assemble_task_from_assets(request, retrieval, assets).packet
+    assembly = assemble_task_from_assets(request, retrieval, assets)
+    _capture_material_traces(retrieval, assembly)
+    return assembly.packet
 
 
 def _save_json(root, name, data):
@@ -49,7 +186,12 @@ async def generate_full_draft(request):
         raise FullArticleContractError("FULL_DRAFT_EXPLICIT_ROUTE_REQUIRED")
     started = time.perf_counter()
     reference_pack = load_writing_reference_pack()
-    packet = prepare_full_draft_material(request)
+    traces = {}
+    token = _material_traces.set(traces)
+    try:
+        packet = prepare_full_draft_material(request)
+    finally:
+        _material_traces.reset(token)
     if not packet.brief_json:
         raise FullArticleContractError("FULL_DRAFT_TASK_ASSEMBLY_REQUIRED")
     provider = get_llm_provider()
@@ -57,6 +199,7 @@ async def generate_full_draft(request):
         raise FullArticleContractError("FULL_DRAFT_CURRENT_QWEN_PROVIDER_REQUIRED")
     root = Path(get_output_dir()) / "full-draft" / uuid.uuid4().hex
     root.mkdir(parents=True, exist_ok=False)
+    _persist_material_traces(root, traces)
     _save_json(root, "material_packet.json", packet.__dict__)
     accounting = {"route": "full_article_drafting", "provider": "OpenAICompatibleProvider",
                   "model": provider.config.model, "writer_calls": 0, "material_brief_calls": 0,

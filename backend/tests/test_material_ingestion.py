@@ -399,6 +399,11 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "backend/app/services/retrieval", "backend/app/routers/generation.py",
         "backend/app/services/library/card_extractor.py", "backend/app/services/library/style_extractor.py",
         "frontend"], cwd=root).decode().splitlines()
+    # FRONTEND-ROUTE-01 / PR #10 正式授权以下两个前端文件变化。
+    approved_refs = {
+        "frontend/src/utils/batchTaskParams.js": "bbe63b297ce60861b375ead5685dea457bb76f00",
+        "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
+    }
     for file in files:
         # W3-8C-2B explicitly authorizes these readiness UI files (including new
         # files once staged); their behavior has dedicated Node coverage.
@@ -414,5 +419,6 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
                     "backend/app/services/generation/full_draft_material.py",
                     "backend/app/services/generation/writer_material_view.py"}:
             continue
-        before = subprocess.check_output(["git", "show", f"{base}:{file}"], cwd=root)
+        approved_ref = approved_refs.get(file, base)
+        before = subprocess.check_output(["git", "show", f"{approved_ref}:{file}"], cwd=root)
         assert (root / file).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), file
