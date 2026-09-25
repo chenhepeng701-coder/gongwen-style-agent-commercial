@@ -131,3 +131,77 @@ test('reference scope labels map to stable API modes', () => {
   assert.equal(referenceModeFromScope('优先参考搜索结果'), 'search')
   assert.equal(referenceScopeFromMode('recent'), '优先参考最近上传资料')
 })
+
+test('single work summary explicitly selects the full article drafting route', () => {
+  const payload = buildTaskGenerationPayload({
+    title: '2026年安全生产工作总结',
+    document_type: '工作总结',
+    count: 1,
+  })
+
+  assert.equal(payload.article_mode, 'official_draft')
+  assert.equal(payload.generation_route, 'full_article_drafting')
+  assert.equal(payload.count, 1)
+})
+
+test('multiple work summaries explicitly keep the current route', () => {
+  for (const count of [2, 3, 10]) {
+    const payload = buildTaskGenerationPayload({ document_type: '工作总结', count })
+
+    assert.equal(payload.generation_route, 'current')
+    assert.equal(payload.count, count)
+  }
+})
+
+test('other document types explicitly keep the current route for one article', () => {
+  for (const document_type of ['党课讲稿', '领导讲话稿', '工作汇报', '调研报告', '']) {
+    const payload = buildTaskGenerationPayload({ document_type, count: 1 })
+
+    assert.equal(payload.generation_route, 'current')
+    assert.equal(payload.document_type, document_type)
+    assert.equal(payload.count, 1)
+  }
+})
+
+test('work summary routing uses the same defaulted count as the payload', () => {
+  for (const task of [{}, { count: undefined }, { count: null }, { count: 0 }]) {
+    const payload = buildTaskGenerationPayload({ document_type: '工作总结', ...task })
+
+    assert.equal(payload.count, 1)
+    assert.equal(payload.generation_route, 'full_article_drafting')
+  }
+})
+
+test('explicit routing preserves all existing generation parameters', () => {
+  const payload = buildTaskGenerationPayload({
+    title: '  2026年安全生产工作总结  ',
+    document_type: '工作总结',
+    level: '县区',
+    org_type: '党政机关',
+    business_domain: '安全生产',
+    writing_purpose: '总结复盘',
+    target_length: 1800,
+    reference_mode: 'recent',
+    scene: '历史场景值',
+    style: '突出问题和下一步安排',
+    count: 1,
+  }, { temperature: 0, export_format: 'txt' })
+
+  assert.deepEqual(payload, {
+    title: '2026年安全生产工作总结',
+    document_type: '工作总结',
+    level: '县区',
+    org_type: '党政机关',
+    business_domain: '安全生产',
+    writing_purpose: '总结复盘',
+    target_length: 1800,
+    reference_mode: 'recent',
+    scene: '历史场景值',
+    style: '突出问题和下一步安排',
+    article_mode: 'official_draft',
+    generation_route: 'full_article_drafting',
+    temperature: 0,
+    count: 1,
+    export_format: 'txt',
+  })
+})
