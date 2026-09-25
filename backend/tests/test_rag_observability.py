@@ -172,14 +172,14 @@ def test_existing_retrieval_trace_persistence_unchanged(monkeypatch, tmp_path):
 
 
 def test_retrieval_business_code_and_protected_owners_unchanged():
-    from p2_admission_approval import ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence
+    from p3a_semantic_approval import ATOMIC_EVIDENCE_PATH, assert_p3a_atomic_evidence
 
     for path in ("backend/app/services/retrieval/document_retriever.py",
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/task_assembly.py",
                  "backend/app/services/generation/full_draft_material.py"):
         if path == ATOMIC_EVIDENCE_PATH:
-            assert_p2_atomic_evidence(ROOT)
+            assert_p3a_atomic_evidence(ROOT)
             continue
         if path == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(ROOT)

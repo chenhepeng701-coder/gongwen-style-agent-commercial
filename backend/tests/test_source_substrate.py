@@ -9,6 +9,8 @@ import types
 
 import pytest
 
+from p3a_semantic_approval import historical_atomic_with_p3a_recognition
+
 from app.models.full_article import FullArticleContractError, canonical_json, text_sha
 from app.models.generation import ArticleGenRequest
 from app.services.generation import atomic_evidence as atomic
@@ -27,7 +29,7 @@ def baseline():
         "git", "show", pre_p2 + ":backend/app/services/generation/atomic_evidence.py"], cwd=root)
     module = types.ModuleType("committed_atomic_evidence")
     # Pin the original pre-P2 owner; admit only the explicit P2 contract delta.
-    exec(compile(historical_atomic_with_p2_admission(source), pre_p2 + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p3a_recognition(historical_atomic_with_p2_admission(source)), pre_p2 + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 

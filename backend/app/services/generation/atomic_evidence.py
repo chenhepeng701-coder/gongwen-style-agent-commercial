@@ -187,8 +187,36 @@ SEMANTIC_STATES = {state.value for state in SemanticState}
 
 # Ordered deterministic signals. Longer directional expressions are matched
 # before their shorter action words; this is not a free-standing blacklist.
+_STATE_PREDICATE = (
+    r"(?:组织|召开|完成|建成|建立|开展|推进|实施|形成|实现|达到|落实|"
+    r"整改|完善|建设|提升|加强|改进|纳入|明确|取得|获得)"
+)
+_PREDICATE_MODIFIERS = (
+    r"(?:进一步|常态化|严格|全面|全部|圆满|顺利|有效|切实|积极|及时|"
+    r"认真|深入|扎实|稳步|持续|不断)*"
+)
+# License an unsegmented 要 only at an explicit clause/token boundary or after
+# an independently recognized subject head. An arbitrary Han prefix is not a
+# subject boundary: e.g. 提要 and a longer compound ending in 提要 remain intact.
+# These are positive, domain-independent nominal heads, not word exclusions.
+_REQUIREMENT_SUBJECT_HEADS = (
+    "我们", "你们", "他们", "大家", "部门", "单位", "机构", "机关",
+    "公司", "企业", "团队", "人员", "负责人", "责任人",
+    "工作", "任务", "台账", "清单", "机制", "制度", "方案", "计划", "项目",
+)
+_YAO_PREDICATE_BOUNDARY = (
+    r"(?:(?<!\w)|"
+    + "|".join(r"(?<=" + re.escape(head) + r")" for head in _REQUIREMENT_SUBJECT_HEADS)
+    + r")要"
+)
+_REQUIREMENT_PREFIX = (
+    r"(?:必须|应当|应予|需要|需进一步|" + _YAO_PREDICATE_BOUNDARY + r")"
+    + _PREDICATE_MODIFIERS
+)
+_PURPOSE_PREFIX = r"(?<![认作成行因])(?:为(?:了)?|以)" + _PREDICATE_MODIFIERS
+_PURPOSE_SIGNAL = _PURPOSE_PREFIX + r"(?:完成|实现|达到)"
 _PLAN_SIGNAL_RE = re.compile(
-    r"下一步(?:将|拟|计划)?|今后(?:将|拟|计划)?|后续(?:将|拟|计划)?|未来(?:将|拟|计划)?|"
+    _PURPOSE_SIGNAL + r"|下一步(?:将|拟|计划)?|今后(?:将|拟|计划)?|后续(?:将|拟|计划)?|未来(?:将|拟|计划)?|"
     r"计划(?:于|在|开展|实施|推进|完善|建设|完成)?|拟(?:于|将|开展|实施|推进|完善|建设)|"
     r"力争|争取|预计|预期|目标(?:是|为|到|在)|"
     r"(?:\d{4}年(?:底|末)?|年底|年末|本年度|未来\d+年)(?:之)?前|"
@@ -196,6 +224,7 @@ _PLAN_SIGNAL_RE = re.compile(
     r"将(?:组织|召开|建立|开展|推进|实施|落实|整改|完善|建设|完成|提升|加强|改进|纳入)"
 )
 _RECOMMENDATION_SIGNAL_RE = re.compile(
+    _REQUIREMENT_PREFIX + r"(?=" + _STATE_PREDICATE + r")|"
     r"需要进一步|建议|应当|应予|仍需|亟待|有待|需进一步|"
     r"需要(?=[\u3400-\u9fff]{0,6}(?:完善|推进|落实|加强|改进|提升|建立|完成))|"
     r"应(?=[\u3400-\u9fff]{1,8}(?:完善|推进|落实|加强|改进|提升|建立|完成))"
@@ -235,9 +264,8 @@ _NEGATIVE_RESULT_SIGNAL_RE = re.compile(
     r"(?:未|没有)(?:发生|出现)[^，。；]{0,8}(?:事故|案件|事件)"
 )
 _COMPLETED_SIGNAL_RE = re.compile(
-    r"已经(?:组织|召开|完成|建成|建立|开展|推进|实施|形成|实现|达到|落实|整改|完善|建设|提升|取得)|"
-    r"已(?:组织|召开|完成|建成|建立|开展|推进|实施|形成|实现|达到|落实|整改|完善|建设|提升|取得)|"
-    r"完成(?:了)?|建成(?:了)?|形成(?:了)?|实现(?:了)?|达到(?:了)?"
+    r"(?:已经|已)" + _PREDICATE_MODIFIERS + _STATE_PREDICATE + r"|"
+    r"(?:完成|建成|形成|实现|达到)了"
 )
 _NEGATION_MARKER_RE = re.compile(
     r"频次不够高|频次不高|频次不足|落实不到位|存在明显差距|存在差距|"
@@ -245,16 +273,27 @@ _NEGATION_MARKER_RE = re.compile(
     r"没有|不够|不充分|不到位|不完善|不足"
 )
 _MODALITY_MARKER_RE = re.compile(
+    _PLAN_SIGNAL_RE.pattern + r"|" + _RECOMMENDATION_SIGNAL_RE.pattern + r"|"
     r"下一步|今后|后续|未来|将要|将继续|将进一步|计划|拟|建议|应当|应予|"
     r"力争|争取|预计|预期|目标(?:是|为|到|在)|"
     r"(?:\d{4}年(?:底|末)?|年底|年末|本年度|未来\d+年)(?:之)?前|"
     r"需要进一步|仍需|亟待|有待|正在|持续|逐步|尚处于|部分"
 )
 _COMPLETION_MARKER_RE = re.compile(
-    r"已经(?:组织|召开|完成|建成|建立|开展|推进|实施|形成|实现|达到|落实|整改|完善|建设|提升|取得)|"
-    r"已(?:组织|召开|完成|建成|建立|开展|推进|实施|形成|实现|达到|落实|整改|完善|建设|提升|取得)|"
-    r"完成|建成|形成|实现|达到|"
-    r"取得|得到(?:明显|显著|有效)?(?:提升|改善|增强|提高)"
+    _COMPLETED_SIGNAL_RE.pattern + r"|" + _RESULT_SIGNAL_RE.pattern
+)
+_NON_COMPLETION_PREFIX_RE = re.compile(
+    _PLAN_SIGNAL_RE.pattern + r"|" + _RECOMMENDATION_SIGNAL_RE.pattern + r"|"
+    r"尚未|仍未|未能|没有|未|正在|持续|逐步|部分"
+)
+_LOCAL_STATE_PREFIX_RE = re.compile(
+    r"(?:" + _REQUIREMENT_PREFIX + r"|" + _PURPOSE_PREFIX + r"|"
+    r"(?:仍未|尚未|未能|没有|未|已经|已|正在|持续|将继续|将要|将)"
+    + _PREDICATE_MODIFIERS + r")$"
+)
+_STATE_CLAUSE_BOUNDARY_RE = re.compile(
+    r"[，,。；;、]|(?:并且?|同时|随后|继而|之后|再)(?="
+    + _COMPLETION_MARKER_RE.pattern + r")"
 )
 _DIRECTIONAL_COMPLETION_RE = re.compile(
     r"(?:已经|已)(?:全面|全部|圆满|顺利|有效|明显|显著)?"
@@ -403,12 +442,36 @@ def normalize_semantic_state(value: Any) -> str:
         return SemanticState.UNKNOWN.value
 
 
+def _completion_signal_matches(pattern: re.Pattern[str], text: str) -> list[str]:
+    """Require asserted aspect/result predicates in their own modal scope.
+
+    A bare action lexeme has no completion force by itself: without aspect it
+    may name an object, metric or nominalized event. Do not guess that boundary
+    from _verb_positions or from a growing list of noun suffixes. Leave such
+    ambiguous text to the existing UNKNOWN/evidence_type fallback contract.
+    """
+    boundaries = [match.end() for match in _STATE_CLAUSE_BOUNDARY_RE.finditer(text)]
+    matches: list[str] = []
+    for match in pattern.finditer(text):
+        marker = match.group(0)
+        local_start = max((end for end in boundaries if end <= match.start()), default=0)
+        local = text[local_start:match.end()]
+        if _NON_COMPLETION_PREFIX_RE.search(local):
+            continue
+        marker = marker[:18]
+        if marker not in matches:
+            matches.append(marker)
+        if len(matches) >= 4:
+            break
+    return matches
+
+
 def classify_semantic_state(text: str, *, evidence_type: str = "") -> dict[str, Any]:
     """Classify source state conservatively using ordered local signals only."""
     compact = _compact(text)
     negation_markers = _signal_matches(_NEGATION_MARKER_RE, compact)
     modality_markers = _signal_matches(_MODALITY_MARKER_RE, compact)
-    completion_markers = _signal_matches(_COMPLETION_MARKER_RE, compact)
+    completion_markers = _completion_signal_matches(_COMPLETION_MARKER_RE, compact)
 
     ordered_rules = (
         (SemanticState.PLAN, _PLAN_SIGNAL_RE),
@@ -427,7 +490,8 @@ def classify_semantic_state(text: str, *, evidence_type: str = "") -> dict[str, 
     state = SemanticState.UNKNOWN
     state_evidence: list[str] = []
     for candidate, pattern in ordered_rules:
-        matches = _signal_matches(pattern, compact)
+        matches = (_completion_signal_matches(pattern, compact)
+                   if candidate is SemanticState.COMPLETED else _signal_matches(pattern, compact))
         if matches:
             state = candidate
             state_evidence = matches
@@ -683,12 +747,9 @@ def _predicate_start(clause: str, verb_start: int) -> tuple[int, str]:
     """Keep a local state marker attached to the predicate it modifies."""
 
     before = clause[:verb_start]
-    for marker in (
-        "仍未", "尚未", "未能", "没有", "未", "已经", "已",
-        "正在", "持续", "将继续", "将",
-    ):
-        if before.endswith(marker):
-            return verb_start - len(marker), marker
+    match = _LOCAL_STATE_PREFIX_RE.search(before)
+    if match:
+        return match.start(), match.group(0)
     return verb_start, ""
 
 

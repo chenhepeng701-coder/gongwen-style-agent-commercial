@@ -9,6 +9,10 @@ import types
 
 import pytest
 
+from p3a_semantic_approval import historical_atomic_with_p3a_recognition
+
+from p3a_semantic_approval import assert_p3a_atomic_evidence
+
 from app.models.full_article import FullArticleContractError, canonical_json, text_sha
 from app.models.generation import ArticleGenRequest
 from app.services.generation import atomic_evidence as atomic
@@ -20,7 +24,7 @@ from test_material_digest_task_assembly import no_models, reference_pack
 from app.services.generation import writing_reference_pack
 from app.services.generation.official_document_drafting import build_full_draft_prompt
 from writer_material_view_decoder import decode_materials
-from p2_admission_approval import assert_p2_atomic_evidence, historical_atomic_with_p2_admission
+from p2_admission_approval import historical_atomic_with_p2_admission
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +37,7 @@ OLD_REASON = "auxiliary_does_not_fill_primary_type_gap"
 def baseline():
     source = subprocess.check_output(["git", "show", f"{BASE_SHA}:{OWNER_PATH}"], cwd=ROOT)
     module = types.ModuleType("p2_unmodified_baseline")
-    exec(compile(source, BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p3a_recognition(source), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 
@@ -237,11 +241,16 @@ def test_auxiliary_reaches_real_registry_packet_and_writer_view_without_source_e
     }))
 
 
-def test_production_delta_is_only_the_two_type_exclusions_and_dead_state():
+def test_p2_historical_delta_and_exact_p3a_current_approval():
     before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{OWNER_PATH}"], cwd=ROOT)
     after = (ROOT / OWNER_PATH).read_bytes().replace(b"\r\n", b"\n")
-    assert after == historical_atomic_with_p2_admission(before)
-    assert_p2_atomic_evidence(ROOT)
+    p2 = subprocess.check_output(["git", "show", f"72af33cf4e6283c04c18ab87a30e2b506471feaa:{OWNER_PATH}"], cwd=ROOT)
+    assert p2 == historical_atomic_with_p2_admission(before)
+    from hashlib import sha256
+    from p2_admission_approval import P2_ATOMIC_EVIDENCE_SHA256
+    assert sha256(p2).hexdigest() == P2_ATOMIC_EVIDENCE_SHA256
+    assert after == historical_atomic_with_p3a_recognition(p2)
+    assert_p3a_atomic_evidence(ROOT)
     assert b"primary_types" not in after and b"auxiliary_overlap" not in after
     assert OLD_REASON.encode() not in after
 
@@ -263,5 +272,5 @@ def test_every_protected_guard_rejects_future_atomic_changes(monkeypatch, module
 
     # Simulate a one-byte edit in memory; never modify the approved production file.
     monkeypatch.setattr(Path, "read_bytes", changed)
-    with pytest.raises(AssertionError, match="differs from the exact P2-approved content"):
+    with pytest.raises(AssertionError, match="differs from the exact P3-A-approved content"):
         guard()
