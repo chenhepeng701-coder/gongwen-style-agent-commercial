@@ -394,7 +394,7 @@ def test_each_api_batch_checks_count_before_concatenation(local, monkeypatch, di
 
 def test_protected_generation_retrieval_and_legacy_owners_unchanged():
     from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
-    from p2_admission_approval import ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence
+    from p3a_semantic_approval import ATOMIC_EVIDENCE_PATH, assert_p3a_atomic_evidence
 
     root = Path(__file__).resolve().parents[2]
     base = "90b5a2141580610e9c60e1805db7a034affb57b5"
@@ -423,7 +423,7 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
                     "backend/app/services/generation/writer_material_view.py"}:
             continue
         if file == ATOMIC_EVIDENCE_PATH:
-            assert_p2_atomic_evidence(root)
+            assert_p3a_atomic_evidence(root)
             continue
         if file == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(root)

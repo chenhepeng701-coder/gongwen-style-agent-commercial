@@ -8,6 +8,10 @@ import types
 
 import pytest
 
+from p3a_semantic_approval import historical_atomic_with_p3a_recognition
+
+from p3a_semantic_approval import assert_p3a_atomic_evidence
+
 from app.models.full_article import FullArticleContractError, canonical_json, text_sha
 from app.models.generation import ArticleGenRequest
 from app.services.generation import atomic_evidence as atomic
@@ -20,7 +24,7 @@ from app.services.generation.generator import build_official_draft_task, derive_
 from test_material_digest_task_assembly import no_models  # real-call failure sentinels
 from test_source_substrate import sources
 from p2_admission_approval import (
-    ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence, historical_atomic_with_p2_admission,
+    ATOMIC_EVIDENCE_PATH, historical_atomic_with_p2_admission,
 )
 
 
@@ -33,7 +37,7 @@ def committed():
     source = subprocess.check_output([
         "git", "show", BASE_SHA + ":backend/app/services/generation/atomic_evidence.py"], cwd=ROOT)
     module = types.ModuleType("w3_8c_1_committed_atomic")
-    exec(compile(historical_atomic_with_p2_admission(source), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p3a_recognition(historical_atomic_with_p2_admission(source)), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 
@@ -395,7 +399,7 @@ def test_production_and_fact_owners_remain_unchanged():
     # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
         if name == ATOMIC_EVIDENCE_PATH:
-            assert_p2_atomic_evidence(ROOT)
+            assert_p3a_atomic_evidence(ROOT)
             continue
         if name == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(ROOT)

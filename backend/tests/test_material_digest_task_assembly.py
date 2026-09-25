@@ -13,6 +13,10 @@ import types
 
 import pytest
 
+from p3a_semantic_approval import historical_atomic_with_p3a_recognition
+
+from p3a_semantic_approval import assert_p3a_atomic_evidence
+
 from app import config
 from app.models.full_article import FullArticleContractError, canonical_json, text_sha
 from app.models.generation import ArticleGenRequest
@@ -26,7 +30,7 @@ from app.services.generation.official_document_drafting import build_full_draft_
 from test_source_substrate import sources
 from writer_material_view_decoder import decode_materials
 from p2_admission_approval import (
-    ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence, historical_atomic_with_p2_admission,
+    ATOMIC_EVIDENCE_PATH, historical_atomic_with_p2_admission,
 )
 
 
@@ -39,7 +43,7 @@ def committed():
     source = subprocess.check_output([
         "git", "show", BASE_SHA + ":backend/app/services/generation/atomic_evidence.py"], cwd=ROOT)
     module = types.ModuleType("w3_8b_committed_atomic")
-    exec(compile(historical_atomic_with_p2_admission(source), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p3a_recognition(historical_atomic_with_p2_admission(source)), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 
@@ -429,7 +433,7 @@ def test_production_files_unchanged_and_no_experiment_imports():
         # independent wire decoding and complete backend comparison cover it.
         old = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         if name == ATOMIC_EVIDENCE_PATH:
-            assert_p2_atomic_evidence(ROOT)
+            assert_p3a_atomic_evidence(ROOT)
         else:
             assert (ROOT / name).read_text(encoding="utf-8") == old.replace("\r\n", "\n")
         assert "material_digest" not in old and "task_assembly" not in old
