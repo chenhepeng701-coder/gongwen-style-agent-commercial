@@ -318,14 +318,18 @@ def _aggregate_documents(
             _meaningful_ngrams(concept) for concept in negative_concepts
         )) if negative_concepts else set()
         negative_title_conflict = bool(negative_terms & _meaningful_ngrams(title))
+        # Topic relevance leads: preserve the four existing topic weights.
+        # Role/type/auxiliary preferences span at most 0.05 in total, so they
+        # can resolve close matches but cannot overturn a larger topic gap.
+        # Negative-title exclusion remains a separate, unchanged gate.
         document_score = (
             0.625 * semantic_aggregate
             + 0.180 * title_topic_match
             + 0.060 * content_topic_match
-            + 0.080 * source_role_compatibility
-            + 0.020 * document_type_match
             + 0.015 * business_domain_match
-            + 0.020 * auxiliary_match
+            + 0.020 * source_role_compatibility
+            + 0.005 * document_type_match
+            + 0.005 * auxiliary_match
             - 0.350 * negative_title_match
         )
         positive_support = (
@@ -340,12 +344,6 @@ def _aggregate_documents(
             gate_reasons.append("negative_title_conflict")
         if not positive_support:
             gate_reasons.append("insufficient_topic_support")
-        lexical_topic_support = title_topic_match >= 0.08 or content_topic_match >= 0.10
-        source_role_priority = (
-            2 if source_role_compatibility > 0 and lexical_topic_support
-            else 1 if source_role_compatibility == 0 and lexical_topic_support
-            else 0
-        )
         documents.append({
             "document_id": doc_id,
             "source_title": title,
@@ -367,13 +365,11 @@ def _aggregate_documents(
             "passed_primary_gate": not gate_reasons,
             "gate_reasons": gate_reasons,
             "candidate_chunk_count": len(chunks),
-            "_source_role_priority": source_role_priority,
             "_requested_source_role": requested_source_role,
             "_candidate_source_role": candidate_source_role,
             "_chunks": relevance_order,
         })
     documents.sort(key=lambda item: (
-        -item["_source_role_priority"],
         -item["document_score"],
         -item["score_components"]["semantic_aggregate"],
         -item["score_components"]["max_chunk_similarity"],

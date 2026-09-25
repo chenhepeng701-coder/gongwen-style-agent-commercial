@@ -21,6 +21,7 @@ from app.services.retrieval import document_retriever as retrieval_owner
 from test_production_task_assembly import library, REQUEST, ARTICLE
 from test_source_substrate import sources, task
 from test_writing_reference_pack_02b1 import configured
+from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
 
 
 BASE_SHA = "7b86df5084bbd81d1fc442316c4e98059bfbc426"
@@ -75,9 +76,20 @@ def test_committed_baseline_parity(configured, library, monkeypatch, tmp_path, m
     assert calls == {"search": 1, "assembly": 1, "writer": 1} and len(builds) == 2
     old_retrieval, old = assembled[0]
     new_retrieval, new = assembled[1]
+    # P1 authorizes only the score delta here; this same-topic fixture keeps
+    # its ordering, selected identities, chunks, Writer input and all contracts.
+    expected_retrieval = copy.deepcopy(old_retrieval)
+    components = {row["document_id"]: row["score_components"]
+                  for row in old_retrieval["ranked_documents"]}
+    for field in ("ranked_documents", "rejected_documents", "selected_chunks"):
+        for row in expected_retrieval[field]:
+            c = components[row["document_id"]]
+            row["document_score"] = round(row["document_score"]
+                - .060 * c["source_role_compatibility"]
+                - .015 * c["document_type_match"] - .015 * c["auxiliary_match"], 6)
     for field in ("raw_chunk_candidates", "ranked_documents", "primary_document_id",
                   "auxiliary_document_ids", "selected_chunks", "retrieval_diagnostics"):
-        assert old_retrieval[field] == new_retrieval[field], field
+        assert expected_retrieval[field] == new_retrieval[field], field
     assert old.anchor_input_json == new.anchor_input_json  # includes accepted/discarded
     assert old.packet == new.packet
     assert old.packet.registry_sha256 == new.packet.registry_sha256
@@ -164,6 +176,9 @@ def test_retrieval_business_code_and_protected_owners_unchanged():
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/task_assembly.py",
                  "backend/app/services/generation/full_draft_material.py"):
+        if path == DOCUMENT_RETRIEVER_PATH:
+            assert_p1_document_retriever(ROOT)
+            continue
         before = subprocess.check_output(["git", "show", BASE_SHA + ":" + path], cwd=ROOT)
         assert before.replace(b"\r\n", b"\n") == (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
 
