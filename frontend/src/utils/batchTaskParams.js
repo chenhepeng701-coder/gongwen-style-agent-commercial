@@ -51,6 +51,10 @@ export function buildTaskGenerationPayload(task, shared) {
   const safeShared = shared || {}
   const hasExplicitScene = Object.prototype.hasOwnProperty.call(safeTask, 'scene')
   const hasExplicitStyle = Object.prototype.hasOwnProperty.call(safeTask, 'style')
+  const count = safeTask.count || 1
+  const generationRoute = safeTask.document_type === '工作总结' && count === 1
+    ? 'full_article_drafting'
+    : 'current'
   return {
     title: String(safeTask.title || '').trim(),
     document_type: safeTask.document_type,
@@ -63,8 +67,9 @@ export function buildTaskGenerationPayload(task, shared) {
     scene: hasExplicitScene ? safeTask.scene : null,
     ...(hasExplicitStyle ? { style: safeTask.style } : {}),
     article_mode: 'official_draft',
+    generation_route: generationRoute,
     temperature: safeShared.temperature ?? 0.7,
-    count: safeTask.count || 1,
+    count,
     export_format: safeShared.export_format || 'docx',
   }
 }
