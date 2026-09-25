@@ -393,6 +393,8 @@ def test_each_api_batch_checks_count_before_concatenation(local, monkeypatch, di
 
 
 def test_protected_generation_retrieval_and_legacy_owners_unchanged():
+    from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
+
     root = Path(__file__).resolve().parents[2]
     base = "90b5a2141580610e9c60e1805db7a034affb57b5"
     files = subprocess.check_output(["git", "ls-files", "backend/app/services/generation",
@@ -418,6 +420,9 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
                     "backend/app/services/generation/task_assembly.py",
                     "backend/app/services/generation/full_draft_material.py",
                     "backend/app/services/generation/writer_material_view.py"}:
+            continue
+        if file == DOCUMENT_RETRIEVER_PATH:
+            assert_p1_document_retriever(root)
             continue
         approved_ref = approved_refs.get(file, base)
         before = subprocess.check_output(["git", "show", f"{approved_ref}:{file}"], cwd=root)

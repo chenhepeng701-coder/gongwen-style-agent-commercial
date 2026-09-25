@@ -379,6 +379,8 @@ def test_admission_failures_and_task_restrictions_match_committed(tmp_path, comm
 
 
 def test_production_and_fact_owners_remain_unchanged():
+    from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
+
     # W3-8C-3 authorizes full_draft_generation wiring; its behavior and the
     # remaining protected owners are also checked against the W3-8C-3 base.
     files = ["backend/app/routers/generation.py",
@@ -389,5 +391,8 @@ def test_production_and_fact_owners_remain_unchanged():
     # WRITER-VIEW-01 exempts full_draft_material.py only; its original packet,
     # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
+        if name == DOCUMENT_RETRIEVER_PATH:
+            assert_p1_document_retriever(ROOT)
+            continue
         before = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         assert (ROOT / name).read_text(encoding="utf-8") == before.replace("\r\n", "\n")

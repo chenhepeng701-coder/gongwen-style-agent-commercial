@@ -23,6 +23,7 @@ from app.services.llm.openai_compatible_provider import OpenAICompatibleProvider
 from app.utils import runtime_paths
 from test_writing_reference_pack_02b1 import configured, api
 from writer_material_view_decoder import decode_materials
+from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
 
 
 BASE_SHA = "a6d93a54ac1d417eb0f8ae23d92569677e8e4f40"
@@ -304,6 +305,9 @@ def test_protected_owners_unchanged_from_task_base():
     }
     for path in paths:
         if path in allowed: continue
+        if path == DOCUMENT_RETRIEVER_PATH:
+            assert_p1_document_retriever(root)
+            continue
         approved_ref = approved_refs.get(path, BASE_SHA)
         before = subprocess.check_output(["git", "show", f"{approved_ref}:{path}"], cwd=root)
         assert (root / path).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), path
