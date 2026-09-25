@@ -1046,7 +1046,6 @@ def build_atomic_evidence_pack(task: Any, retrieval_payload: dict[str, Any], *,
     chunks = [item for item in (retrieval_payload.get("selected_chunks") or []) if str(item.get("document_id") or item.get("doc_id") or "") in selected_ids]
     primary_chunks = [item for item in chunks if str(item.get("document_id") or item.get("doc_id") or "") == primary_id]
     auxiliary_chunks = [item for item in chunks if item not in primary_chunks]
-    primary_types: set[str] = set()
 
     for chunk in primary_chunks + auxiliary_chunks:
         document_id = str(chunk.get("document_id") or chunk.get("doc_id") or "")
@@ -1143,13 +1142,6 @@ def build_atomic_evidence_pack(task: Any, retrieval_payload: dict[str, Any], *,
                 )
                 atom["planner_business_block"] = planner_block
                 atom["source_content_role"] = source_content_role
-                if role == "auxiliary" and atom["evidence_type"] in primary_types:
-                    discarded.append({
-                        "document_id": document_id, "chunk_id": chunk_id,
-                        "source_span_sha256": atom["source_span_sha256"],
-                        "reason": "auxiliary_does_not_fill_primary_type_gap",
-                    })
-                    continue
                 key = tuple(str(atom.get(name) or "") for name in (
                     "document_id", "evidence_type", "subject", "action", "object", "result",
                     "semantic_state", "state_qualifier",
@@ -1168,8 +1160,6 @@ def build_atomic_evidence_pack(task: Any, retrieval_payload: dict[str, Any], *,
                 seen.add(key)
                 evidence.append(atom)
                 accepted_from_chunk += 1
-                if role == "primary":
-                    primary_types.add(atom["evidence_type"])
                 if accepted_from_chunk >= MAX_ATOMS_PER_CHUNK:
                     discarded.append({
                         "document_id": document_id,
@@ -1317,12 +1307,6 @@ def _validate_atomic_evidence_pack_once(
             hard_issues.append({"rule": "source_title", "detail": _sha(title)})
     if any(len(source) >= 40 and _compact(source) in _compact(serialized_visible) for source in sources):
         hard_issues.append({"rule": "complete_chunk"})
-    roles_by_type: dict[str, set[str]] = {}
-    for item in evidence:
-        roles_by_type.setdefault(item["evidence_type"], set()).add(item["document_role"])
-    for evidence_type, roles in roles_by_type.items():
-        if roles == {"primary", "auxiliary"}:
-            hard_issues.append({"rule": "auxiliary_overlap", "detail": evidence_type})
     type_distribution = dict(sorted(Counter(item.get("evidence_type") for item in evidence).items()))
     report = {
         "flow3_v3_status": "PASS" if not hard_issues else "BLOCKED_INVALID_ATOMIC_EVIDENCE",

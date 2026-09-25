@@ -172,10 +172,15 @@ def test_existing_retrieval_trace_persistence_unchanged(monkeypatch, tmp_path):
 
 
 def test_retrieval_business_code_and_protected_owners_unchanged():
+    from p2_admission_approval import ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence
+
     for path in ("backend/app/services/retrieval/document_retriever.py",
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/task_assembly.py",
                  "backend/app/services/generation/full_draft_material.py"):
+        if path == ATOMIC_EVIDENCE_PATH:
+            assert_p2_atomic_evidence(ROOT)
+            continue
         if path == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(ROOT)
             continue
@@ -194,7 +199,8 @@ def test_actual_discard_reasons_and_atomic_redaction():
     ])
     anchors = atomic.build_full_draft_anchor_input(task(), retrieval)
     expected = Counter(row["reason"] for row in anchors["atomic_evidence"]["discarded_evidence"])
-    for reason in ("auxiliary_does_not_fill_primary_type_gap", "duplicate_proposition",
+    assert expected["auxiliary_does_not_fill_primary_type_gap"] == 0
+    for reason in ("duplicate_proposition",
                    "source_title_residue", "missing_source_identity_or_text", "chunk_atom_safety_limit"):
         assert expected[reason] > 0, (reason, expected)
     # Sensitive extras never leak from nested objects, reports, registry or atoms.

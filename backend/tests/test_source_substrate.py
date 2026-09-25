@@ -15,16 +15,19 @@ from app.services.generation import atomic_evidence as atomic
 from app.services.generation import source_substrate as cache
 from app.services.generation.full_draft_material import FullDraftMaterialPacket
 from app.services.generation.generator import build_official_draft_task
+from p2_admission_approval import historical_atomic_with_p2_admission
 
 
 @pytest.fixture(scope="module")
 def baseline():
     # Execute the actual committed owner, not a copied/reimplemented algorithm.
     root = Path(__file__).resolve().parents[2]
+    pre_p2 = "8c7b57130a897c8b51e0b432a344abd0cbc08675"
     source = subprocess.check_output([
-        "git", "show", "HEAD:backend/app/services/generation/atomic_evidence.py"], cwd=root)
+        "git", "show", pre_p2 + ":backend/app/services/generation/atomic_evidence.py"], cwd=root)
     module = types.ModuleType("committed_atomic_evidence")
-    exec(compile(source, "HEAD/atomic_evidence.py", "exec"), module.__dict__)
+    # Pin the original pre-P2 owner; admit only the explicit P2 contract delta.
+    exec(compile(historical_atomic_with_p2_admission(source), pre_p2 + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 

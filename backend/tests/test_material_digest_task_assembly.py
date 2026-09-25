@@ -25,6 +25,9 @@ from app.services.generation.generator import build_official_draft_task, derive_
 from app.services.generation.official_document_drafting import build_full_draft_prompt
 from test_source_substrate import sources
 from writer_material_view_decoder import decode_materials
+from p2_admission_approval import (
+    ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence, historical_atomic_with_p2_admission,
+)
 
 
 BASE_SHA = "54d0a88a07c0321ba0dab5e8ab2dcf3bc69ff285"
@@ -36,7 +39,7 @@ def committed():
     source = subprocess.check_output([
         "git", "show", BASE_SHA + ":backend/app/services/generation/atomic_evidence.py"], cwd=ROOT)
     module = types.ModuleType("w3_8b_committed_atomic")
-    exec(compile(source, BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p2_admission(source), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 
@@ -261,11 +264,16 @@ def test_task_state_is_never_reused(tmp_path, committed, change):
     else:
         after, _ = compare(committed, request(), retrieval, second, tmp_path, "after")
         if change == "selection":
-            # This fixture's auxiliary atoms already fail primary-type-gap
-            # admission. Removing them changes the selection/rejection record,
-            # correctly leaving the authorized packet unchanged in BOTH paths.
+            # P2 admits same-type auxiliary facts. Removing their document must
+            # remove exactly those IDs, while all remaining records stay intact.
             assert before.anchor_input_json != after.anchor_input_json
-            assert before.packet == after.packet
+            old_registry = json.loads(before.packet.registry_json)
+            new_registry = json.loads(after.packet.registry_json)
+            auxiliary_ids = {eid for eid, row in old_registry.items()
+                             if row["source_scope"]["document_id"] == "synthetic-aux"}
+            assert auxiliary_ids
+            assert new_registry == {eid: row for eid, row in old_registry.items() if eid not in auxiliary_ids}
+            assert before.packet != after.packet
         elif change != "order":
             assert before.packet != after.packet
 
@@ -420,5 +428,8 @@ def test_production_files_unchanged_and_no_experiment_imports():
         # WRITER-VIEW-01 exempts only full_draft_material.py presentation;
         # independent wire decoding and complete backend comparison cover it.
         old = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
-        assert (ROOT / name).read_text(encoding="utf-8") == old.replace("\r\n", "\n")
+        if name == ATOMIC_EVIDENCE_PATH:
+            assert_p2_atomic_evidence(ROOT)
+        else:
+            assert (ROOT / name).read_text(encoding="utf-8") == old.replace("\r\n", "\n")
         assert "material_digest" not in old and "task_assembly" not in old

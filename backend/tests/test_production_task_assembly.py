@@ -24,6 +24,7 @@ from app.utils import runtime_paths
 from test_writing_reference_pack_02b1 import configured, api
 from writer_material_view_decoder import decode_materials
 from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
+from p2_admission_approval import ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence
 
 
 BASE_SHA = "a6d93a54ac1d417eb0f8ae23d92569677e8e4f40"
@@ -305,6 +306,9 @@ def test_protected_owners_unchanged_from_task_base():
     }
     for path in paths:
         if path in allowed: continue
+        if path == ATOMIC_EVIDENCE_PATH:
+            assert_p2_atomic_evidence(root)
+            continue
         if path == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(root)
             continue
