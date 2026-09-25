@@ -19,6 +19,9 @@ from app.services.generation.full_draft_material import FullDraftMaterialPacket
 from app.services.generation.generator import build_official_draft_task, derive_final_delivery_length_gate
 from test_material_digest_task_assembly import no_models  # real-call failure sentinels
 from test_source_substrate import sources
+from p2_admission_approval import (
+    ATOMIC_EVIDENCE_PATH, assert_p2_atomic_evidence, historical_atomic_with_p2_admission,
+)
 
 
 BASE_SHA = "87711c3c63e5ab280b31c4eaacfd43a7f2914ee7"
@@ -30,7 +33,7 @@ def committed():
     source = subprocess.check_output([
         "git", "show", BASE_SHA + ":backend/app/services/generation/atomic_evidence.py"], cwd=ROOT)
     module = types.ModuleType("w3_8c_1_committed_atomic")
-    exec(compile(source, BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
+    exec(compile(historical_atomic_with_p2_admission(source), BASE_SHA + "/atomic_evidence.py", "exec"), module.__dict__)
     return module
 
 
@@ -391,6 +394,9 @@ def test_production_and_fact_owners_remain_unchanged():
     # WRITER-VIEW-01 exempts full_draft_material.py only; its original packet,
     # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
+        if name == ATOMIC_EVIDENCE_PATH:
+            assert_p2_atomic_evidence(ROOT)
+            continue
         if name == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(ROOT)
             continue

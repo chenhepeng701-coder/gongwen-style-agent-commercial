@@ -267,13 +267,21 @@ def test_unrelated_expression_features_are_not_emitted():
     assert not any(item["evidence_type"] == "expression" for item in pack["evidence"])
 
 
-def test_auxiliary_is_limited_to_two_and_only_fills_missing_type():
+def test_auxiliary_is_limited_to_two_and_same_type_facts_are_allowed():
     payload = _retrieval(auxiliary=True)
     payload["auxiliary_document_ids"].append("ignored-third")
+    payload["selected_chunks"].append(
+        _chunk("ignored-third", "ignored-third:c1", "其他单位组织设备检查。", "auxiliary")
+    )
     pack = build_atomic_evidence_pack(_task(), payload)
     assert pack["auxiliary_document_ids"] == ["aux-doc", "aux-doc-2"]
     primary_types = {item["evidence_type"] for item in pack["evidence"] if item["document_role"] == "primary"}
-    assert all(item["evidence_type"] not in primary_types for item in pack["evidence"] if item["document_role"] == "auxiliary")
+    auxiliary = [item for item in pack["evidence"] if item["document_role"] == "auxiliary"]
+    assert {item["document_id"] for item in auxiliary} == {"aux-doc", "aux-doc-2"}
+    assert all(item["evidence_type"] in primary_types for item in auxiliary)
+    assert not any(item["document_id"] == "ignored-third" for item in pack["evidence"])
+    assert not any(item["reason"] == "auxiliary_does_not_fill_primary_type_gap"
+                   for item in pack["discarded_evidence"])
 
 
 def test_prompt_is_new_draft_task_driven_and_contains_no_source_structure_or_long_text():
