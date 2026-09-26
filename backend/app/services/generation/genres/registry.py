@@ -77,7 +77,8 @@ def retrieval_profile_for(document_type: str | None):
 # Only this composition root imports concrete implementations. Adding an
 # adapter requires registration here, without editing the shared pipeline.
 from .work_summary import WORK_SUMMARY_ADAPTER
-from .report import REPORT_ADAPTER
+from .upstream_adapters import UPSTREAM_ADAPTERS
 
 GENRE_REGISTRY.register(WORK_SUMMARY_ADAPTER)
-GENRE_REGISTRY.register(REPORT_ADAPTER)
+for _adapter in UPSTREAM_ADAPTERS:
+    GENRE_REGISTRY.register(_adapter)

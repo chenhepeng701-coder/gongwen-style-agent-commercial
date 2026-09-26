@@ -155,14 +155,19 @@ def test_second_adapter_registration_runs_complete_offline_chain_without_core_ed
     retrieval = retrieve_documents(task, search_fn=offline_search, persist_trace=False,
                                    retrieval_profile=adapter.retrieval_profile)
     assert len(searches) == 1
-    assert {row["coverage_role"] for row in retrieval["selected_chunks"]} == set(adapter.structure_contract.section_roles)
+    # This original Foundation fixture covers three roles. The upstream
+    # presentation contract additionally distinguishes progress/achievement.
+    assert {row["coverage_role"] for row in retrieval["selected_chunks"]} == {
+        "situation", "issues", "recommendations"}
+    assert {row["coverage_role"] for row in retrieval["selected_chunks"]} < set(adapter.structure_contract.section_roles)
     assets = tuple(load_stable_material_asset(row, tmp_path / "synthetic-assets").asset
                    for row in retrieval["selected_chunks"])
     assembly = assemble_task_from_assets(request, retrieval, assets)
     evidence_snapshot = assembly.packet.registry_json
     prompt = build_full_draft_prompt(assembly.packet)
     assert prompt["ruleset_id"] == adapter.drafting_rules.ruleset_id
-    assert "基本情况—需要说明的问题—意见建议" in prompt["system"]
+    assert "<!-- PINNED_UPSTREAM_ORIGINAL_BEGIN -->" in prompt["system"]
+    assert "汇报材料（presentation）" in prompt["user"]
     assert "S02主写法参考" not in prompt["user"]
     assert "工作总结（summary）" not in prompt["user"]
     # Intentional unsupported completion tests P3 + Must-Deliver under the

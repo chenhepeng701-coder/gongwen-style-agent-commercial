@@ -105,7 +105,7 @@ def test_offline_report_profile_is_not_selected_by_current_production_route(base
     offline_profile = resolve_genre(request.document_type, purpose="offline").retrieval_profile
     explicit_offline, _ = run(owner, rows, current_task, offline_profile)
     assert {row["coverage_role"] for row in explicit_offline["selected_chunks"]} == {
-        "situation", "issues", "recommendations"}
+        "context", "progress", "issues", "recommendations"}
     assert explicit_offline["selected_chunks"] != default["selected_chunks"]
 
 
@@ -135,8 +135,12 @@ def test_report_profile_changes_coverage_without_changing_shared_document_rankin
     assert report["primary_document_id"] == summary["primary_document_id"]
     assert report["auxiliary_document_ids"] == summary["auxiliary_document_ids"]
     assert {row["coverage_role"] for row in report["selected_chunks"]} == {
-        "situation", "issues", "recommendations"}
-    assert len(report["selected_chunks"]) != len(summary["selected_chunks"])
+        "context", "progress", "issues", "recommendations"}
+    # Genre reading semantics need not change the shared chunk-count budget.
+    # The adopted upstream profile changes coverage/reading order, while the
+    # existing P1 document ranking above remains identical.
+    assert [row["chunk_id"] for row in report["selected_chunks"]] != [
+        row["chunk_id"] for row in summary["selected_chunks"]]
 
 
 def test_report_source_role_policy_applies_chunk_preference_without_changing_document_score():

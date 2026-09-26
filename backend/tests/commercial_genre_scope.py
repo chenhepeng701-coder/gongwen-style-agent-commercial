@@ -81,6 +81,11 @@ def commercial_base_source(root: Path, path: str) -> bytes:
 
 def assert_commercial_genre_content(root: Path, path: str, *, message="") -> None:
     content = (root / path).read_bytes().replace(b"\r\n", b"\n")
+    from upstream_suite_scope import UPSTREAM_SUITE_MIGRATIONS, assert_upstream_suite_content
+    if path in UPSTREAM_SUITE_MIGRATIONS and sha256(content).hexdigest() != COMMERCIAL_GENRE_CONTENT_SHA256.get(path):
+        assert_upstream_suite_content(root, path,
+            message=message or path + " differs from exact MULTI-GENRE-COMMERCIAL-INFRASTRUCTURE content")
+        return
     assert (path in COMMERCIAL_GENRE_CONTENT_SHA256
             and path not in PROTECTED_OWNER_PATHS
             and sha256(content).hexdigest() == COMMERCIAL_GENRE_CONTENT_SHA256[path]), (
@@ -92,6 +97,10 @@ def assert_commercial_protected_owners_unchanged(root: Path) -> None:
     assert not set(PROTECTED_OWNER_PATHS) & set(COMMERCIAL_GENRE_CONTENT_SHA256)
     for path in PROTECTED_OWNER_PATHS:
         actual = (root / path).read_bytes().replace(b"\r\n", b"\n")
+        from upstream_suite_scope import UPSTREAM_SUITE_MIGRATIONS, assert_upstream_suite_content
+        if path in UPSTREAM_SUITE_MIGRATIONS and actual != commercial_base_source(root, path):
+            assert_upstream_suite_content(root, path, message="Protected owner changed: " + path)
+            continue
         assert actual == commercial_base_source(root, path), "Protected owner changed: " + path
 
 
