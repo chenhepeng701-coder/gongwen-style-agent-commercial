@@ -131,6 +131,7 @@ def validate_full_article_handoff(handoff):
     quality = json.loads(value.quality_report.result_json)
     units = article_units(candidate.content)
     rows = facts.get("units", [])
+    registry = json.loads(candidate.evidence_json)
     proposals = {p.unit_id: p for p in citations.proposals}
     if len(proposals) != len(citations.proposals) or set(proposals) - {u.unit_id for u in units}:
         raise FullArticleContractError("CITATION_LOCATION_INVALID")
@@ -141,10 +142,22 @@ def validate_full_article_handoff(handoff):
                 or row.get("observed_text") != candidate.content[unit.start:unit.end]):
             raise FullArticleContractError("FACT_LOCATION_INVALID")
         proposal = proposals.get(unit.unit_id)
+        # Citation identity stays exact/supplied-only. A separate canonical
+        # safety receipt may support a unique discovered span without creating
+        # a citation. This is transport validation, not a second fact checker.
+        candidate_ids = row.get("candidate_evidence_ids", [])
+        candidate_checks = row.get("candidate_checks", [])
+        discovered_support = bool(
+            not proposal and row.get("binding_origin") == "DETERMINISTIC_CANDIDATE"
+            and len(candidate_ids) == 1 and candidate_ids[0] in registry
+            and row.get("candidate_scope_id") == registry[candidate_ids[0]]["section_id"]
+            and candidate_checks == [{"evidence_id": candidate_ids[0], "result": row.get("result")}]
+            and not row.get("risk_codes")
+            and row.get("result", {}).get("passed") is True)
         if (row.get("evidence_ids") != (list(proposal.evidence_ids) if proposal else [])
                 or row.get("scope_id") != (proposal.scope_id if proposal else None)
                 or (row.get("status") == "SUPPORTED") != (row.get("result", {}).get("passed") is True)
-                or (not proposal and row.get("status") == "SUPPORTED")):
+                or (not proposal and row.get("status") == "SUPPORTED" and not discovered_support)):
             raise FullArticleContractError("FACT_CITATION_REPORT_INCONSISTENT")
     unresolved = sum(row.get("status") not in {"SUPPORTED", "NON_FACTUAL"} for row in rows)
     if (facts.get("unresolved_count") != unresolved

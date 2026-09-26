@@ -424,6 +424,7 @@ def test_cache_io_failure_is_explicit(tmp_path):
 
 
 def test_production_files_unchanged_and_no_experiment_imports():
+    from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     for name in ("backend/app/routers/generation.py", "backend/app/services/generation/generator.py",
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/official_document_drafting.py"):
@@ -431,6 +432,9 @@ def test_production_files_unchanged_and_no_experiment_imports():
         # that authorized boundary now has production-path contract coverage.
         # WRITER-VIEW-01 exempts only full_draft_material.py presentation;
         # independent wire decoding and complete backend comparison cover it.
+        if name in P3B_CONTENT_SHA256:
+            assert_p3b_content(ROOT, name)
+            continue
         old = subprocess.check_output(["git", "show", BASE_SHA + ":" + name], cwd=ROOT).decode("utf-8")
         if name == ATOMIC_EVIDENCE_PATH:
             assert_p3a_atomic_evidence(ROOT)

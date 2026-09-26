@@ -410,6 +410,8 @@ def full_article_review_result(render_result, manifest=None):
             description="该原文片段尚未获得充分事实支持，请人工复核。", section_id=row["block_id"]),
             "start": row["start"], "end": row["end"], "line": row["line"],
             "observed_text": row["observed_text"], "unit_id": row["unit_id"],
+            "risk_codes": row.get("risk_codes", []),
+            "boundary_findings": row["result"].get("boundary_findings", []),
             "review_suggestion": row["review_suggestion"]})
     for check in quality["checks"]:
         if check["required"] and check["check_result"] != "PASS":

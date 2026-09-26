@@ -1905,6 +1905,15 @@ def _bound_state_check(anchor: dict[str, Any], text: str, source: str) -> dict[s
     # not Candidate/Evidence text or the upstream semantic-state contract.
     probe = re.sub(r"完成(?:时限|期限|时间|要求|目标)", "任务期限", text)
     result = check_semantic_state_consistency(anchor, probe)
+    # P3-A is the classifier authority. Its modal predicate markers distinguish
+    # purpose/requirements from actual completion; the legacy consumer's broad
+    # directional regex must not turn "为完成" or "必须完成" into an outcome.
+    classified = classify_semantic_state(probe)
+    if (result["source_state"] == classified["semantic_state"]
+            and classified["semantic_state"] in {"PLAN", "RECOMMENDATION"}
+            and classified.get("modality_markers") and not classified.get("completion_markers")
+            and not _result_claim_signatures(probe)):
+        result.update(passed=True, completion_upgrade=False)
     without_connector = lambda s: re.sub(r"^(?:但|当前|目前)+", "", _norm(s))
     if source and without_connector(text) == without_connector(source):
         result.update(passed=True, candidate_state=result['source_state'], completion_upgrade=False)
@@ -1947,6 +1956,8 @@ def _hard_value_supported(value: str, category: str, source_text: str) -> bool:
     source_norm = _norm(source_text)
     if value_norm and value_norm in source_norm:
         return True
+    if category == "place" and _consumer_surface(value) in _consumer_surface(source_text):
+        return True
     source_values = _hard_fact_values(source_text).get(category) or []
     if (
         category == "strong_outcome"
@@ -1977,13 +1988,16 @@ _RESULT_SIGNATURE_PATTERNS = {
     "completed_state": re.compile(
         r"(?:已经|已|全面|全部|圆满|顺利)[^，。；]{0,12}"
         r"(?:完成|实现|建成|形成|达到|落实)|"
-        r"(?:完成|实现|建成|形成|达到|落实)了"
+        r"(?:完成|实现|建成|形成|达到|落实)了|"
+        r"完成(?:整改|整治|销号)|(?:实现|达到)[^，。；]{0,12}目标|"
+        r"(?:已|已经|全部)[^，。；]{0,10}解决"
     ),
     "measured_effect": re.compile(
         r"(?:得到|获得)(?:明显|显著|有效|持续|大幅|进一步)?"
         r"(?:提升|提高|增强|改善|下降|增长)|"
-        r"(?:明显|显著|有效|持续|大幅|进一步)"
+        r"(?:明显|显著|有效|持续|大幅|进一步|有所)"
         r"(?:提升|提高|增强|改善|下降|增长)|"
+        r"(?:上升|下降|增长)|"
         r"保持(?:较高|稳定|良好)(?:水平|状态|态势)?"
     ),
     "directional_transition": re.compile(
@@ -1991,12 +2005,13 @@ _RESULT_SIGNATURE_PATTERNS = {
         r"(?:实现|完成|推动)[^，。；]{0,24}(?:转变|转型)"
     ),
     "achievement": re.compile(
-        r"取得(?:明显|显著|积极|阶段性|初步|良好)?"
+        r"取得了?(?:明显|显著|积极|阶段性|初步|良好)?"
         r"(?:成效|成果|效果|进展)"
     ),
     "causal_outcome": re.compile(
-        r"(?:从而|进而|因此|因而|使得?|促使|带动)[^，。；]{2,36}"
+        r"(?:从而|进而|因此|因而|使得?|促使|带动|导致|有力推动)[^，。；]{2,36}"
     ),
+    "absence_outcome": re.compile(r"(?:未发生|没有发生|无)[^，。；]{0,20}(?:事故|事件|伤亡|损失)"),
 }
 _RESULT_SIGNATURE_NOISE_RE = re.compile(
     r"已经|已|全面|全部|圆满|顺利|得到|获得|实现|完成|建成|形成|达到|落实|"
@@ -2011,6 +2026,10 @@ def _result_claim_signatures(text: str) -> list[dict[str, str]]:
     for clause in re.split(r"[，,；;。！？!?]+", str(text or "")):
         compact_clause = _norm(clause)
         if not compact_clause:
+            continue
+        state = classify_semantic_state(clause)
+        if (state["semantic_state"] in {"PLAN", "RECOMMENDATION", "CONDITIONAL", "NOT_IMPLEMENTED"}
+                and not state.get("completion_markers")):
             continue
         for kind, pattern in _RESULT_SIGNATURE_PATTERNS.items():
             if not pattern.search(compact_clause):
@@ -2068,6 +2087,8 @@ def _safe_surface_equivalent(candidate: str, source: str) -> bool:
         return False
     if candidate_surface == source_surface:
         return True
+    if _consumer_surface(candidate) == _consumer_surface(source):
+        return True
     candidate_equivalent = _equivalence_normalized(candidate_surface)
     source_equivalent = _equivalence_normalized(source_surface)
     if candidate_equivalent == source_equivalent:
@@ -2080,6 +2101,119 @@ def _safe_surface_equivalent(candidate: str, source: str) -> bool:
         and shorter in longer
         and len(shorter) / max(1, len(longer)) >= 0.72
     )
+
+
+def _consumer_surface(text: str) -> str:
+    """Finite comparison-only paraphrases; never similarity-based entailment.
+
+    Preserve numbers, negation, subjects, modal force and all result predicates.
+    The only plan expansion admitted is a team's own named inspection activity.
+    The evidence/claim/body are never modified by this support probe.
+    """
+    value = _norm(text).replace("已经", "已").replace("和", "与").replace("的", "")
+    value = re.sub(r"(?<=明确)了", "", value)
+    value = re.sub(r"(?:是|为)(?=本辖区)", "是", value)
+    if classify_semantic_state(text)["semantic_state"] == "PLAN":
+        value = re.sub(r"^下一步", "", value)
+        value = re.sub(r"(?<=组织)多个", "", value)
+        value = re.sub(r"(检查|巡查|调查|审查|督查)组(?:开展|进行)\1", r"\1组", value)
+    return value
+
+
+# Institutional families and administrative levels are domain-independent.
+# Task type/level are context constraints, never proof of the source's actor.
+_ORGANIZATION_FAMILIES = {
+    "enterprise": ("公司", "企业", "集团"), "school": ("学校", "学院", "大学"),
+    "hospital": ("医院", "卫生院"), "government": ("政府", "机关", "党委"),
+}
+_JURISDICTION_LEVELS = {"国家": 5, "全国": 5, "省": 4, "市": 3, "县": 2, "区": 2,
+                        "乡镇": 1, "乡": 1, "镇": 1, "街道": 1, "村": 0, "社区": 0}
+_LEVEL_PATTERN = "|".join(sorted(_JURISDICTION_LEVELS, key=len, reverse=True))
+_ACTOR_RE = re.compile(r"(?:^|[，,；;。]|动员|护航|为)(?P<actor>[^，,；;。]{0,16}?(?:部门|单位|公司|企业|集团|医院|学校|学院|大学|政府|中心|委员会|局))(?=已|将|正在|必须|应|要|开展|组织|完成|推进|上下|产业|$)")
+
+
+def _subject_scope_findings(text: str, source: str, anchor: dict, task: dict, metadata: dict | None = None) -> list[str]:
+    """Conservative source/claim compatibility, including implicit task actor."""
+    codes = []
+    own = _responsible_subject(anchor.get("canonical_subject") or "")
+    source_actors = {m["actor"] for m in _ACTOR_RE.finditer(source)}
+    claim_actors = {m["actor"] for m in _ACTOR_RE.finditer(text)}
+    if own and own in source and re.search(r"部门|公司|医院|学校|政府|局$|委员会$", own):
+        source_actors.add(own)
+    if source_actors and claim_actors and not source_actors.intersection(claim_actors):
+        codes.append("SUBJECT_SCOPE_MISMATCH")
+    def families(value):
+        return {family for family, words in _ORGANIZATION_FAMILIES.items() if any(w in value for w in words)}
+    source_families = families(source)
+    explicit_families = families(text)
+    source_levels = set(re.findall(r"(?:我|本|全)(" + _LEVEL_PATTERN + r")", source))
+    claim_levels = set(re.findall(r"(?:我|本|全)(" + _LEVEL_PATTERN + r")", text))
+    preserved_local_actor = bool(source_levels & claim_levels)
+    local_reference = bool(re.search(r"(?:我|本|全)(?:单位|部门|公司|校|院|省|市|县|区|镇|乡|街道|村)", text))
+    task_families = families(str(task.get("org_type") or ""))
+    metadata = metadata or {}
+    metadata_families = families(" ".join(str(metadata.get(k) or "") for k in ("org_type", "organization", "canonical_subject")))
+    attributed = bool(source_actors & claim_actors)
+    if metadata_families and task_families and not metadata_families & task_families and not attributed:
+        codes.append("SUBJECT_SCOPE_MISMATCH")
+    if metadata.get("scope_metadata_conflict"):
+        codes.append("SUBJECT_SCOPE_UNCERTAIN")
+    if re.search(r"我们|我单位|本单位", source) and not source_actors:
+        source_identity = str(metadata.get("organization") or metadata.get("canonical_subject") or "")
+        task_identity = str(task.get("organization") or task.get("canonical_subject") or "")
+        if not source_identity or (source_identity not in text and source_identity != task_identity):
+            codes.append("SUBJECT_SCOPE_UNCERTAIN")
+    if (source_families and local_reference and task_families and not source_families & task_families
+            and not preserved_local_actor):
+        codes.append("SUBJECT_SCOPE_MISMATCH")
+    if source_families and explicit_families and not source_families & explicit_families:
+        codes.append("SUBJECT_SCOPE_MISMATCH")
+    if source_levels and claim_levels and not source_levels & claim_levels:
+        codes.append("SUBJECT_SCOPE_MISMATCH")
+    task_levels = [_JURISDICTION_LEVELS[m] for m in re.findall(_LEVEL_PATTERN, str(task.get("level") or ""))]
+    if task_levels and claim_levels and any(_JURISDICTION_LEVELS[level] != max(task_levels) for level in claim_levels):
+        codes.append("JURISDICTION_SCOPE_MISMATCH")
+    metadata_levels = [_JURISDICTION_LEVELS[m] for m in re.findall(_LEVEL_PATTERN, str(metadata.get("level") or ""))]
+    if task_levels and metadata_levels and max(task_levels) != max(metadata_levels) and not attributed:
+        codes.append("JURISDICTION_SCOPE_MISMATCH")
+    governed = re.findall(r"对各(" + _LEVEL_PATTERN + r")", text)
+    # Explicit attribution to another actor stays available for ordinary source
+    # validation. Without it, a peer/higher territorial audience is not local work.
+    if governed and not claim_actors:
+        if task_levels and any(_JURISDICTION_LEVELS[g] >= max(task_levels) for g in governed):
+            codes.append("JURISDICTION_SCOPE_MISMATCH")
+        elif not task_levels:
+            codes.append("SUBJECT_SCOPE_UNCERTAIN")
+    return list(dict.fromkeys(codes))
+
+
+def _claim_boundary_findings(text: str, anchor: dict, source: str, task: dict, metadata: dict | None = None) -> list[dict]:
+    """Specific diagnostics inside the canonical owner; never grant support."""
+    findings = [{"code": code, "claim": text} for code in _subject_scope_findings(text, source, anchor, task, metadata)]
+    state = _bound_state_check(anchor, text, source)
+    source_state = state["source_state"]
+    candidate_state = state["candidate_state"]
+    protected = {"PLAN", "RECOMMENDATION", "ONGOING", "PARTIAL", "NOT_IMPLEMENTED", "PROBLEM", "GAP", "UNKNOWN", "CONTEXT"}
+    modality_lost = (source_state in {"PLAN", "RECOMMENDATION", "ONGOING", "PARTIAL", "NOT_IMPLEMENTED", "PROBLEM", "GAP"}
+                     and candidate_state not in {source_state, "PLAN", "RECOMMENDATION", "CONDITIONAL"})
+    predicate_state = classify_semantic_state(text)["semantic_state"]
+    strong = bool(_result_claim_signatures(text)) or predicate_state in {"COMPLETED", "RESULT"}
+    if (source_state in protected and ((not state["passed"] and (modality_lost or strong))
+                                      or predicate_state in {"COMPLETED", "RESULT"})
+            and _source_related(text, source, anchor, set())):
+        findings.append({"code": "SEMANTIC_STATE_UPGRADE", "claim": text,
+                         "source_state": source_state, "candidate_state": candidate_state})
+    # A completed action is not a measured result. A literal signature alone
+    # cannot promote UNKNOWN/CONTEXT/COMPLETED into legal Result Evidence.
+    if source_state != "RESULT":
+        for signature in _result_claim_signatures(text):
+            if signature["kind"] not in {"completed_state", "causal_outcome"}:
+                findings.append({"code": "UNSUPPORTED_RESULT", "claim": signature["claim"]})
+    for detail in _unsupported_hard_details(text, source):
+        if detail["category"] in {"strong_outcome", "result_state_or_causality"}:
+            causal = any(s["kind"] == "causal_outcome" for s in _result_claim_signatures(detail["value"]))
+            findings.append({"code": "UNSUPPORTED_CAUSALITY" if causal else "UNSUPPORTED_RESULT", "claim": detail["value"]})
+    return findings
 
 
 def _unsupported_hard_details(text: str, source_text: str) -> list[dict[str, str]]:
@@ -2380,10 +2514,55 @@ def evaluate_full_article_facts(candidate, sidecar):
             or sidecar.evidence_sha256 != candidate.evidence_sha256):
         raise FullArticleContractError("STALE_CITATION_SIDECAR")
     registry = json.loads(candidate.evidence_json)
+    from app.services.generation.full_article_candidate_adapter import discover_safety_candidates
+    discovered = discover_safety_candidates(candidate)
+    task = json.loads(candidate.task_json).get("user_task", {})
     anchors = {eid: row["anchor"] for eid, row in registry.items()}
     sources = {eid: {**row["source_scope"], "source_available": True,
         "source_sentence": row["source_scope"]["source_span"],
+        "trusted_context": {**row.get("input_constraints", {}).get("metadata", {}),
+                            **row.get("input_constraints", {}).get("source", {}),
+                            "scope_metadata_conflict": any(
+                                row.get("input_constraints", {}).get("metadata", {}).get(k)
+                                and row.get("input_constraints", {}).get("source", {}).get(k)
+                                and row["input_constraints"]["metadata"][k] != row["input_constraints"]["source"][k]
+                                for k in ("org_type", "level", "organization", "canonical_subject"))},
         "source_span_binding_valid": True} for eid, row in registry.items()}
+
+    binding_checks = {}
+
+    def check_binding(text, scope_id, evidence_ids):
+        key = (text, scope_id, tuple(evidence_ids))
+        if key in binding_checks:
+            return binding_checks[key]
+        draft = {"sections": [{"section_id": scope_id,
+            "sentences": [{"sentence_type": "FACT", "text": text, "evidence_ids": list(evidence_ids)}]}]}
+        checked = _evaluate_evidence_safety_fact(draft, scope_id, 0, anchors=anchors,
+            source_support=sources, strict_multi_evidence_binding=True, claim_boundary_context=task)
+        restricted, limitations = [], []
+        for eid in evidence_ids:
+            if eid not in registry:
+                continue
+            row = registry[eid]
+            writable = row["fact"].get("writability", {})
+            if writable.get("status") != "WRITABLE" or writable.get("usage") != "INDEPENDENT_OR_SUPPORTING":
+                restricted.append(eid)
+            objects = [row, row["fact"], row["anchor"], row["source_scope"],
+                       row.get("input_constraints", {}).get("atomic", {}),
+                       row.get("input_constraints", {}).get("source", {}),
+                       row.get("input_constraints", {}).get("metadata", {})]
+            if (any(obj.get(k) for obj in objects for k in ("limitation", "limitations"))
+                    or row["fact"].get("semantic_state") != row["anchor"].get("semantic_state")):
+                limitations.append(eid)
+        if restricted or limitations:
+            checked = {**checked, "passed": False,
+                "reason": "EVIDENCE_LIMITATION_REQUIRES_REVIEW" if limitations else "EVIDENCE_USAGE_REQUIRES_REVIEW",
+                "risk_class": (FactSafetyRiskClass.A_HARD_BLOCK.value
+                    if checked.get("risk_class") == FactSafetyRiskClass.A_HARD_BLOCK.value
+                    else FactSafetyRiskClass.D_REVIEW_REQUIRED.value),
+                "restricted_evidence_ids": limitations or restricted}
+        binding_checks[key] = checked
+        return checked
     units = article_units(candidate.content)
     by_unit = {}
     for proposal in sidecar.proposals:
@@ -2403,13 +2582,19 @@ def evaluate_full_article_facts(candidate, sidecar):
     for unit in units:
         text = candidate.content[unit.start:unit.end]
         proposal = by_unit.get(unit.unit_id)
+        candidate_ids = list(proposal.evidence_ids) if proposal else discovered[unit.unit_id]
+        evidence_ids = list(proposal.evidence_ids) if proposal else []
+        scope_id = proposal.scope_id if proposal else (registry[candidate_ids[0]]["section_id"] if len(candidate_ids) == 1 else None)
+        candidate_checks = []
+        findings = []
+        risk_codes = []
         checked = {"passed": False, "reason": "UNBOUND_OR_UNCLASSIFIED",
                    "risk_class": "D_REVIEW_REQUIRED"}
         non_factual = False
         # Only plain advisory clauses can enter existing ANALYSIS validation.
         # Headings, signatures, unknown prose and factual qualifiers stay under
         # review. Absence of a binding alone never proves NON_FACTUAL.
-        if (not proposal and not blocks[unit.block_id].level
+        if (not candidate_ids and not blocks[unit.block_id].level
                 and classify_fact_sentence(text) == "general_analysis"
                 and not any(_specifics(text).values())
                 and not re.search(r"已|正在|目前|实际|取得|成效|结果|导致|证明|表明", text)
@@ -2423,34 +2608,45 @@ def evaluate_full_article_facts(candidate, sidecar):
                 checked = {"passed": False, "reason": "NON_FACTUAL", "analysis_validation": analysis,
                            "risk_class": None}
         if proposal:
-            draft = {"sections": [{"section_id": proposal.scope_id,
-                "sentences": [{"sentence_type": "FACT", "text": text,
-                               "evidence_ids": list(proposal.evidence_ids)}]}]}
-            checked = _evaluate_evidence_safety_fact(draft, proposal.scope_id, 0,
-                anchors=anchors, source_support=sources, strict_multi_evidence_binding=True)
-            restricted = [eid for eid in proposal.evidence_ids if eid in registry and (
-                registry[eid]["fact"].get("writability", {}).get("status") != "WRITABLE"
-                or registry[eid]["fact"].get("writability", {}).get("usage")
-                not in {"INDEPENDENT_OR_SUPPORTING"})]
-            if restricted:
-                checked = {**checked, "passed": False, "reason": "EVIDENCE_USAGE_REQUIRES_REVIEW",
-                           "risk_class": (FactSafetyRiskClass.A_HARD_BLOCK.value
-                               if checked.get("risk_class") == FactSafetyRiskClass.A_HARD_BLOCK.value
-                               else FactSafetyRiskClass.D_REVIEW_REQUIRED.value),
-                           "restricted_evidence_ids": restricted}
-            # Uninterpreted limitations never become implicit permission. All
-            # original fields remain in the immutable registry and bindings.
-            limitations = [eid for eid in proposal.evidence_ids if eid in registry and (
-                any(registry[eid].get(k) for k in ("limitation", "limitations"))
-                or any(registry[eid][part].get(k) for part in ("fact", "anchor", "source_scope")
-                       for k in ("limitation", "limitations"))
-                or registry[eid]["fact"].get("semantic_state") != registry[eid]["anchor"].get("semantic_state"))]
-            if limitations:
-                checked = {**checked, "passed": False, "reason": "EVIDENCE_LIMITATION_REQUIRES_REVIEW",
-                           "risk_class": (FactSafetyRiskClass.A_HARD_BLOCK.value
-                               if checked.get("risk_class") == FactSafetyRiskClass.A_HARD_BLOCK.value
-                               else FactSafetyRiskClass.D_REVIEW_REQUIRED.value),
-                           "restricted_evidence_ids": limitations}
+            checked = check_binding(text, scope_id, evidence_ids)
+        elif len(candidate_ids) == 1:
+            checked = check_binding(text, scope_id, candidate_ids)
+            candidate_checks.append({"evidence_id": candidate_ids[0], "result": checked})
+        elif candidate_ids:
+            # Never select one candidate because it scored/passed better. Even
+            # duplicate-looking sources may differ in authority or limitations.
+            checked = {"passed": False, "reason": "AMBIGUOUS_EVIDENCE",
+                       "risk_class": FactSafetyRiskClass.D_REVIEW_REQUIRED.value}
+            risk_codes.append("AMBIGUOUS_EVIDENCE")
+            candidate_checks = [{"evidence_id": eid,
+                "result": check_binding(text, registry[eid]["section_id"], [eid])} for eid in candidate_ids]
+        findings.extend(checked.get("boundary_findings", []))
+        # Diagnostic clause probes cannot split the support claim, assign scope,
+        # combine evidence, or grant support. They make unbound risks specific.
+        for clause in (s.strip() for s in re.split(r"[，,；;。！？!?]+", text) if s.strip()):
+            if checked["passed"]:
+                break  # the complete claim already passed all member checks
+            related = [eid for eid in candidate_ids if eid in registry and
+                       _source_related(clause, sources[eid]["source_span"], anchors[eid], set())]
+            clause_supported = any(check_binding(clause, registry[eid]["section_id"], [eid])["passed"] for eid in related)
+            if clause_supported:
+                # Diagnostic exclusion only, never support of the whole unit or
+                # selection among ambiguous candidates / different scopes.
+                continue
+            for eid in related:
+                member_findings = _claim_boundary_findings(clause, anchors[eid], sources[eid]["source_span"], task,
+                                                         sources[eid]["trusted_context"])
+                findings.extend({**f, "candidate_evidence_id": eid} for f in member_findings
+                                if f["code"] not in {"UNSUPPORTED_RESULT", "UNSUPPORTED_CAUSALITY"})
+            for signature in _result_claim_signatures(clause):
+                findings.append({"code": "UNSUPPORTED_CAUSALITY" if signature["kind"] == "causal_outcome" else "UNSUPPORTED_RESULT",
+                                 "claim": clause})
+        risk_codes = list(dict.fromkeys([*risk_codes, *(f["code"] for f in findings)]))
+        if risk_codes:
+            non_factual = False
+            checked = {**checked, "passed": False, "risk_codes": risk_codes, "boundary_findings": findings}
+            if checked["reason"] == "UNBOUND_OR_UNCLASSIFIED":
+                checked.update(reason=risk_codes[0], risk_class=FactSafetyRiskClass.A_HARD_BLOCK.value)
         validation_result = ("NON_FACTUAL" if non_factual else "SUPPORTED" if checked["passed"] else
             "HARD_BLOCK" if checked.get("risk_class") == FactSafetyRiskClass.A_HARD_BLOCK.value
             else "REVIEW_REQUIRED")
@@ -2458,15 +2654,17 @@ def evaluate_full_article_facts(candidate, sidecar):
             "article_version": candidate.version, "article_hash": candidate.content_sha256,
             "article_section": article_sections[unit.block_id],
             "observed_text": text, "scope_id": proposal.scope_id if proposal else None,
-            "evidence_ids": list(proposal.evidence_ids) if proposal else [],
-            "candidate_evidence_ids": list(proposal.evidence_ids) if proposal else [],
-            "binding_origin": proposal.origin if proposal else "NO_BINDING",
+            "candidate_scope_id": scope_id,
+            "evidence_ids": evidence_ids,
+            "candidate_evidence_ids": candidate_ids, "candidate_checks": candidate_checks,
+            "risk_codes": risk_codes,
+            "binding_origin": proposal.origin if proposal else "DETERMINISTIC_CANDIDATE" if candidate_ids else "NO_BINDING",
             "bindings": [{"evidence_id": eid, "scope": registry[eid]["section_id"],
                 "source": registry[eid]["source_scope"], "anchor": registry[eid]["anchor"],
-                "fact": registry[eid]["fact"]} for eid in (proposal.evidence_ids if proposal else ())
+                "fact": registry[eid]["fact"]} for eid in candidate_ids
                 if eid in registry],
             "validation_result": validation_result,
-            "classification": "ANALYSIS" if non_factual else "CANDIDATE_FACT" if proposal else "UNCLASSIFIED",
+            "classification": "ANALYSIS" if non_factual else "CANDIDATE_FACT" if candidate_ids or risk_codes else "UNCLASSIFIED",
             "result": checked, "status": "NON_FACTUAL" if non_factual else "SUPPORTED" if checked["passed"] else "REVIEW_REQUIRED",
             "review_suggestion": "结合相邻原文、原始资料核对主体、动作、对象、时间和状态；引用存在不等于支持。"})
     unresolved = [row for row in rows if row["status"] not in {"SUPPORTED", "NON_FACTUAL"}]
@@ -2498,6 +2696,7 @@ def _evaluate_evidence_safety_fact(
     anchors: dict[str, dict[str, Any]],
     source_support: dict[str, dict[str, Any]],
     strict_multi_evidence_binding: bool = False,
+    claim_boundary_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Use existing source, Semantic State, and FACT validators for one atom."""
 
@@ -2566,7 +2765,8 @@ def _evaluate_evidence_safety_fact(
         _fact_at(probe, section_id, sentence_index)['text'] = text[topic.end():]
         checked = _evaluate_evidence_safety_fact(probe, section_id, sentence_index,
             anchors=anchors, source_support=source_support,
-            strict_multi_evidence_binding=strict_multi_evidence_binding)
+            strict_multi_evidence_binding=strict_multi_evidence_binding,
+            claim_boundary_context=claim_boundary_context)
         if checked['passed']:
             return {**checked, 'retained_topic_context': topic[0]}
     discourse = _DISCOURSE_PREFIX_RE.match(text)
@@ -2578,7 +2778,8 @@ def _evaluate_evidence_safety_fact(
         _fact_at(probe, section_id, sentence_index)['text'] = text[prefix_end:]
         checked = _evaluate_evidence_safety_fact(probe, section_id, sentence_index,
             anchors=anchors, source_support=source_support,
-            strict_multi_evidence_binding=strict_multi_evidence_binding)
+            strict_multi_evidence_binding=strict_multi_evidence_binding,
+            claim_boundary_context=claim_boundary_context)
         if checked['passed']:
             return {**checked, 'retained_discourse_context': text[:prefix_end]}
 
@@ -2603,6 +2804,39 @@ def _evaluate_evidence_safety_fact(
             evidence_ids, declared_anchors, declared_sources, materialization_sources
         )
     ]
+
+    if claim_boundary_context is not None:
+        if len(evidence_ids) > 1 and any(not item["materialized"] for item in result["evidence_alignment"]):
+            result.update(reason="declared_evidence_not_materialized", hard_contract_failure=True,
+                          risk_class=FactSafetyRiskClass.A_HARD_BLOCK.value, veto_fact=True)
+            return result
+        findings = []
+        for bound_anchor, bound_source, support in zip(declared_anchors, declared_sources, materialization_sources):
+            member_text = (_member_claim_text(text, bound_anchor, support, set())
+                           if len(evidence_ids) > 1 else text)
+            findings.extend(_claim_boundary_findings(member_text, bound_anchor, support, claim_boundary_context,
+                                                    bound_source.get("trusted_context")))
+        result["boundary_findings"] = findings
+        if findings:
+            result.update(reason=findings[0]["code"], risk_codes=list(dict.fromkeys(f["code"] for f in findings)),
+                          risk_class=FactSafetyRiskClass.A_HARD_BLOCK.value, veto_fact=True)
+            return result
+        # A discovered/supplied full-article claim must have a conservative
+        # surface proof, in addition to all canonical checks below. Relatedness
+        # or high n-gram overlap alone cannot authorize it.
+        for bound_anchor, support in zip(declared_anchors, materialization_sources):
+            member_text = (_member_claim_text(text, bound_anchor, support, set())
+                           if len(evidence_ids) > 1 else text)
+            if _consumer_surface(member_text) != _consumer_surface(support):
+                result.update(reason="source_surface_not_entailed")
+                return result
+        if len(evidence_ids) > 1:
+            member_surfaces = {_consumer_surface(support) for support in materialization_sources}
+            uncovered = [clause.strip() for clause in re.split(r"[，,；;。！？!?]+", text)
+                         if clause.strip() and _consumer_surface(clause) not in member_surfaces]
+            if uncovered:
+                result.update(reason="undeclared_claim_not_supported", uncovered_claims=uncovered)
+                return result
 
     if len(evidence_ids) > 1:
         source_texts = [
