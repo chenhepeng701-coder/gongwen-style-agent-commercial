@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator, model_serializer
+from pydantic import AliasChoices, BaseModel, Field, ValidationInfo, field_validator, model_validator, model_serializer
 from app.models.full_article import FullArticleProjection, CanonicalArticleBody
 
 
@@ -83,7 +83,7 @@ class ArticleGenRequest(BaseModel):
 
     title: str = Field(..., min_length=1, description="文章标题/主题")
     generation_route: Literal["current", "full_article_drafting"] = Field(
-        default="current", description="显式受控整篇工作总结起草；默认保持当前生产路径")
+        default="current", description="显式受控整篇起草；仅支持已注册且通过正式验收的文种")
     scene: str | None = Field(default=None, description="指定场景，不指定则自动识别")
     style: str | None = Field(default=None, description="指定写作风格")
     article_mode: str = Field(
@@ -119,10 +119,18 @@ class ArticleGenRequest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_full_draft_route(self):
+    def validate_full_draft_route(self, info: ValidationInfo):
         if self.generation_route == "full_article_drafting":
-            if self.article_mode != "official_draft" or self.document_type != "工作总结":
-                raise ValueError("full_article_drafting requires official_draft and explicit 工作总结")
+            from app.services.generation.genres.registry import resolve_genre
+            if self.article_mode != "official_draft":
+                raise ValueError("full_article_drafting requires official_draft")
+            # Only trusted in-process fixture validation can request offline
+            # capability. JSON fields cannot enable it; production revalidates.
+            purpose = "offline" if (info.context or {}).get("genre_purpose") == "offline" else "production"
+            adapter = resolve_genre(self.document_type, purpose=purpose)
+            if self.export_format.strip().lower() not in adapter.capabilities.export_formats:
+                raise ValueError("GENRE_EXPORT_FORMAT_UNSUPPORTED")
+            self.document_type = adapter.document_type
             if self.count != 1:
                 raise ValueError("full_article_drafting currently requires count=1")
         return self

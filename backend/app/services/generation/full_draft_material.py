@@ -283,8 +283,10 @@ class FullDraftMaterialPacket:
 
     def materials_markdown(self):
         from app.services.generation.writer_material_view import build_writer_material_view
+        from app.services.generation.genres.registry import resolve_genre
 
         self.bound_brief()  # Missing/invalid Brief must not silently select the old payload.
+        adapter = resolve_genre(json.loads(self.task_json).get("document_type", ""), purpose="inspection")
         unavailable = json.loads(self.unavailable_json)
         gaps = {"count": len(unavailable), "reasons": dict(Counter(r.get("reason", "UNKNOWN") for r in unavailable)),
                 "instruction": "不可用材料不是事实来源；不得据此补全具体事实。完整拒绝记录留后台复核。"}
@@ -292,10 +294,13 @@ class FullDraftMaterialPacket:
             ("统一写作材料视图：合法证据与任务阅读导航；不改变事实授权",
              build_writer_material_view(self.evidence_writing_view(), json.loads(self.brief_json))),
             ("原时间风险 Overlay：不改时点、不裁决冲突", self.overlay()),
-            ("S02主写法参考 / S05问题段参考：不是事实来源", case32_writing_references()),
             ("原始禁止推断和来源使用限制（原样保留）", json.loads(self.restrictions_json)),
             ("未获授权材料的缺口概况", gaps),
         ]
+        if adapter.drafting_rules.reference_policy == "case32":
+            blocks.insert(2, ("S02主写法参考 / S05问题段参考：不是事实来源", case32_writing_references()))
+        elif adapter.drafting_rules.reference_policy != "none":
+            raise FullArticleContractError("GENRE_DRAFTING_POLICY_UNSUPPORTED")
         return "\n\n".join("## " + name + "\n\n```json\n" + canonical_json(value) + "\n```" for name, value in blocks)
 
     def candidate_input(self):

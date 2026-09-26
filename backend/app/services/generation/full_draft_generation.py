@@ -1,4 +1,4 @@
-"""Explicit whole-summary route using existing Evidence, Provider and delivery.
+"""Registered whole-article route using shared Evidence, Provider and delivery.
 
 No Planner/SectionWriter/fallback and no public client-supplied registry. The
 normal entry obtains current RAG inputs. Frozen packets are service-level test
@@ -9,6 +9,7 @@ import logging
 from collections import Counter
 from collections.abc import Mapping
 from contextvars import ContextVar
+from contextlib import nullcontext
 from pathlib import Path
 import time
 import uuid
@@ -21,7 +22,8 @@ from app.services.generation.writing_reference_pack import load_writing_referenc
 from app.services.generation.official_document_drafting import build_full_draft_prompt
 from app.services.generation.full_article_candidate_adapter import import_full_article, propose_exact_citations
 from app.services.generation.flow3_v3_trace import evaluate_full_article_facts
-from app.services.generation.work_summary_quality_gate import evaluate_full_article_quality
+from app.services.generation.full_article_quality import evaluate_full_article_quality
+from app.services.generation.genres.registry import resolve_genre
 from app.services.generation.delivery_decision import full_article_review_result, full_article_unchecked_result
 from app.services.flow4.handoff import build_full_article_handoff
 from app.services.flow4.renderer import render_full_article
@@ -185,7 +187,10 @@ async def generate_full_draft(request):
     if request.generation_route != "full_article_drafting":
         raise FullArticleContractError("FULL_DRAFT_EXPLICIT_ROUTE_REQUIRED")
     started = time.perf_counter()
-    reference_pack = load_writing_reference_pack()
+    genre = resolve_genre(request.document_type, purpose="production")
+    reference_pack = (load_writing_reference_pack()
+                      if genre.drafting_rules.reference_policy == "case32" else None)
+    reference_hash = reference_pack.sha256 if reference_pack else ""
     traces = {}
     token = _material_traces.set(traces)
     try:
@@ -207,7 +212,7 @@ async def generate_full_draft(request):
                   "retry_limit": 0, "fallback_used": False, "status": "PREPARED",
                   "material_preparation": "deterministic_task_assembly",
                   "run_id": root.name, "writer_trace": TRACE_FILENAME,
-                  "REFERENCE_PACK_SHA256": reference_pack.sha256}
+                  "REFERENCE_PACK_SHA256": reference_hash}
     _save_json(root, "call_accounting.json", accounting)
 
     def attempted(attempt):
@@ -223,11 +228,11 @@ async def generate_full_draft(request):
             "fact_authority": "UNCHANGED_FROZEN_REGISTRY"})
         _save_json(root, "DETERMINISTIC_FACT_REVIEW_OVERLAY.json", packet.overlay())
         _save_json(root, "material_packet.json", packet.__dict__)
-        with use_writing_reference_pack(reference_pack):
+        with use_writing_reference_pack(reference_pack) if reference_pack else nullcontext():
             prompt = build_full_draft_prompt(packet)
         _save_json(root, "prompt_manifest.json", {
             **{k: v for k, v in prompt.items() if k not in {"system", "user"}},
-            "REFERENCE_PACK_SHA256": reference_pack.sha256})
+            "REFERENCE_PACK_SHA256": reference_hash})
         accounting["writer_calls"] = 1
         # Only the verified exact Flash model opts in; other Qwen calls stay unchanged.
         writer_options = {"reasoning_effort": "low"} if provider.config.model == "qwen3.8-flash" else {}
@@ -243,7 +248,7 @@ async def generate_full_draft(request):
                       "host_boundary_hash": prompt["host_boundary_hash"], "raw_article_hash": text_sha(raw),
                       "material_packet_hash": packet.digest, "provider": accounting["provider"],
                       "model": accounting["model"], "run_id": root.name, "normalization": "NONE",
-                      "REFERENCE_PACK_SHA256": reference_pack.sha256}
+                      "REFERENCE_PACK_SHA256": reference_hash}
         candidate = import_full_article(raw, packet.candidate_input(), provenance)
         _save_json(root, "candidate.json", candidate.model_dump())
         identity = {"raw_article_hash": text_sha(raw), "candidate_article_hash": candidate.content_sha256,

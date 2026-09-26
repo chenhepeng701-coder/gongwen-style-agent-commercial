@@ -173,6 +173,7 @@ def test_existing_retrieval_trace_persistence_unchanged(monkeypatch, tmp_path):
 
 def test_retrieval_business_code_and_protected_owners_unchanged():
     from p3a_semantic_approval import ATOMIC_EVIDENCE_PATH, assert_p3a_atomic_evidence
+    from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
 
     for path in ("backend/app/services/retrieval/document_retriever.py",
                  "backend/app/services/generation/atomic_evidence.py",
@@ -183,6 +184,9 @@ def test_retrieval_business_code_and_protected_owners_unchanged():
             continue
         if path == DOCUMENT_RETRIEVER_PATH:
             assert_p1_document_retriever(ROOT)
+            continue
+        if path in MULTI_GENRE_CONTENT_SHA256:
+            assert_multi_genre_content(ROOT, path)
             continue
         before = subprocess.check_output(["git", "show", BASE_SHA + ":" + path], cwd=ROOT)
         assert before.replace(b"\r\n", b"\n") == (ROOT / path).read_bytes().replace(b"\r\n", b"\n")

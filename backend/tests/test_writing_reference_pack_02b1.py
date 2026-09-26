@@ -170,7 +170,7 @@ def synthetic_packet():
                      "资料背景仅供合成测试定位核验，以下文字用于保持测试来源片段与原子记录的区别。"
                      "这些句子由测试编写者虚构，不用于证明文章质量，也不描述任何真实机关的工作结果。")}]}
     anchors = build_full_draft_anchor_input(task, retrieval)
-    packet = FullDraftMaterialPacket.from_authorized_input({"title": request.title, "target_words": 1200,
+    packet = FullDraftMaterialPacket.from_authorized_input({"title": request.title, "document_type": "工作总结", "target_words": 1200,
         "hard_max": 1500, "level": "合成", "org_type": "测试"}, anchors)
     ids = list(anchors["registry"])
     return packet.with_brief({"version": "material-brief-stage2-1", "input_sha256": packet.brief_input_sha256,
