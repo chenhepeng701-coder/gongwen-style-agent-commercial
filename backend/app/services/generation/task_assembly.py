@@ -17,6 +17,9 @@ from app.services.generation.material_digest import MaterialDigest
 
 
 def _assemble_reading_brief(packet, digest):
+    from app.services.generation.commercial_genre_runtime import reading_group_key
+
+    document_type = json.loads(packet.task_json).get("document_type")
     index = digest.reading_index()
     registry = json.loads(packet.registry_json)
     legal_ids = registry.keys()
@@ -36,7 +39,7 @@ def _assemble_reading_brief(packet, digest):
             raise FullArticleContractError("TASK_ASSEMBLY_DIGEST_SPAN_MISSING")
         # Lexical navigation only: never claim equal action words mean the same
         # event, object, causal chain or article section. No Evidence is selected out.
-        key = tuple(dict.fromkeys(action["text"] for action in unit["actions"]))
+        key = reading_group_key(document_type, tuple(action["text"] for action in unit["actions"]))
         groups.setdefault(key, []).append((row, unit))
     matters = []
     for position, (actions, rows) in enumerate(groups.items(), 1):

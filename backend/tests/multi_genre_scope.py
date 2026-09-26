@@ -84,13 +84,23 @@ def migration_base_source(root: Path, path: str) -> bytes:
 
 def assert_multi_genre_content(root: Path, path: str, *, message="") -> None:
     content = (root / path).read_bytes().replace(b"\r\n", b"\n")
-    assert path in MULTI_GENRE_CONTENT_SHA256 and sha256(content).hexdigest() == MULTI_GENRE_CONTENT_SHA256[path], (
-        message or path + " differs from exact MULTI-GENRE-FOUNDATION migration content"
-    )
+    if path in MULTI_GENRE_CONTENT_SHA256 and sha256(content).hexdigest() == MULTI_GENRE_CONTENT_SHA256[path]:
+        return
+    # Keep the Foundation pins unchanged. This task separately proves those
+    # pins against its merge BASE and permits only exact commercial wiring.
+    from commercial_genre_scope import assert_commercial_genre_content
+    assert_commercial_genre_content(root, path,
+        message=message or path + " differs from exact MULTI-GENRE-FOUNDATION migration content")
 
 
 def assert_shared_core_unchanged(root: Path) -> None:
     for path in SHARED_CORE_UNCHANGED:
+        from commercial_genre_scope import COMMERCIAL_DISPATCH_MIGRATIONS, assert_commercial_genre_content
+        if path in COMMERCIAL_DISPATCH_MIGRATIONS:
+            current = (root / path).read_bytes().replace(b"\r\n", b"\n")
+            if current != migration_base_source(root, path):
+                assert_commercial_genre_content(root, path)
+            continue
         assert (root / path).read_bytes().replace(b"\r\n", b"\n") == migration_base_source(root, path), path
 
 

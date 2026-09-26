@@ -286,6 +286,7 @@ def test_writer_failure_is_not_retried_or_fallen_back(configured, library, monke
 
 
 def test_protected_owners_unchanged_from_task_base():
+    from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, assert_commercial_genre_content
     from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
     root = Path(__file__).resolve().parents[2]
@@ -307,6 +308,9 @@ def test_protected_owners_unchanged_from_task_base():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for path in paths:
+        if path in COMMERCIAL_GENRE_CONTENT_SHA256:
+            assert_commercial_genre_content(root, path)
+            continue
         if path in P3B_CONTENT_SHA256:
             assert_p3b_content(root, path)
             continue

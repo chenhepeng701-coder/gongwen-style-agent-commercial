@@ -106,7 +106,7 @@ def test_adapter_has_no_evidence_or_fact_authority_switch():
     assert {field.name for field in fields(GenreAdapter)} == {
         "genre_id", "document_type", "aliases", "retrieval_profile", "drafting_rules",
         "structure_contract", "quality_contract_id", "quality_evaluator", "capabilities",
-        "fact_policy_extensions",
+        "fact_policy_extensions", "commercial",
     }
     for extension in ("BYPASS_FACT_SAFETY", "ALLOW_UNKNOWN", "CROSS_SCOPE", "EXPAND_EVIDENCE"):
         with pytest.raises(ValueError, match="GENRE_FACT_POLICY_EXTENSION_UNSUPPORTED"):
