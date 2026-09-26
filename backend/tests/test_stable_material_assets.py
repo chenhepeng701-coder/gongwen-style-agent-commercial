@@ -386,6 +386,7 @@ def test_admission_failures_and_task_restrictions_match_committed(tmp_path, comm
 
 
 def test_production_and_fact_owners_remain_unchanged():
+    from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
 
     # W3-8C-3 authorizes full_draft_generation wiring; its behavior and the
@@ -398,6 +399,9 @@ def test_production_and_fact_owners_remain_unchanged():
     # WRITER-VIEW-01 exempts full_draft_material.py only; its original packet,
     # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
+        if name in P3B_CONTENT_SHA256:
+            assert_p3b_content(ROOT, name)
+            continue
         if name == ATOMIC_EVIDENCE_PATH:
             assert_p3a_atomic_evidence(ROOT)
             continue

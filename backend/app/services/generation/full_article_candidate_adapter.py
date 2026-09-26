@@ -52,3 +52,28 @@ def propose_exact_citations(candidate: FullArticleCandidate) -> CitationSidecar:
                 scope_id=registry[eid]["section_id"], evidence_ids=(eid,), origin="EXACT_WHOLE_UNIT"))
     return CitationSidecar(candidate_digest=candidate.digest,
         evidence_sha256=candidate.evidence_sha256, proposals=tuple(proposals))
+
+
+def discover_safety_candidates(candidate: FullArticleCandidate) -> dict[str, list[str]]:
+    """Discover ALL related legal spans, never a citation, ranking or verdict.
+
+    Clauses are probes only; the original whole unit remains the support claim.
+    No Top1, cross-scope merging, embeddings or newly fabricated evidence IDs.
+    Ambiguity is deliberately left to the FACT owner to fail closed.
+    """
+    import re
+    from app.services.generation.flow3_v3_trace import _norm, _source_related
+
+    registry = json.loads(candidate.evidence_json)
+    found = {}
+    for unit in article_units(candidate.content):
+        text = candidate.content[unit.start:unit.end]
+        # Short discourse fragments (e.g. 下一步) have too little content to
+        # discover an Evidence predicate. Their shared bigram "一步" otherwise
+        # matches unrelated sources containing "进一步". They still receive
+        # normal whole-unit review coverage and unsupported-result scanning.
+        clauses = [s.strip() for s in re.split(r"[，,；;。！？!?]+", text) if len(_norm(s)) >= 4]
+        found[unit.unit_id] = [eid for eid, row in registry.items() if any(
+            _source_related(clause, row["source_scope"]["source_span"], row["anchor"], set())
+            for clause in clauses)]
+    return found

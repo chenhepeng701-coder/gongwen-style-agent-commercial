@@ -393,6 +393,7 @@ def test_each_api_batch_checks_count_before_concatenation(local, monkeypatch, di
 
 
 def test_protected_generation_retrieval_and_legacy_owners_unchanged():
+    from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
     from p3a_semantic_approval import ATOMIC_EVIDENCE_PATH, assert_p3a_atomic_evidence
 
@@ -408,6 +409,9 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for file in files:
+        if file in P3B_CONTENT_SHA256:
+            assert_p3b_content(root, file)
+            continue
         # W3-8C-2B explicitly authorizes these readiness UI files (including new
         # files once staged); their behavior has dedicated Node coverage.
         # W3-8C-3 additionally authorizes only the two generation wiring owners;
