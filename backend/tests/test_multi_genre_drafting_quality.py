@@ -90,8 +90,8 @@ def test_report_uses_own_rules_and_never_loads_summary_private_references(summar
     assert prompt["ruleset_id"] == adapter.drafting_rules.ruleset_id
     assert prompt["ruleset_hash"] == adapter.drafting_rules.ruleset_hash
     assert load_official_drafting_rules(adapter) in prompt["system"]
-    assert "PINNED_HOST_GENRE_RULES_BEGIN" in prompt["system"]
-    assert "目标文种：汇报材料（report/offline-proof）" in prompt["user"]
+    assert "PINNED_UPSTREAM_ORIGINAL_BEGIN" in prompt["system"]
+    assert "目标文种：汇报材料（presentation）" in prompt["user"]
     assert "S02主写法参考" not in prompt["user"]
     assert packet.registry_json == summary_packet.registry_json
 

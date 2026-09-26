@@ -1,0 +1,1458 @@
+{
+  "build": {
+    "artifact_key": "system_prompt.md",
+    "artifact_origin": "Exact pinned dist/offline/default/doc-types/*/system_prompt.md bytes; checked against pinned offline builder",
+    "builder_path": "src/adapters/offline/build.py",
+    "builder_source_paths": [
+      "src/adapters/doc_types.py",
+      "src/adapters/offline/build.py",
+      "src/adapters/paths.py",
+      "src/adapters/profiles.py",
+      "src/adapters/rendering.py",
+      "src/adapters/shared.py"
+    ],
+    "function": "build_doc_type_prompt_bundle",
+    "include_examples": false,
+    "profile": "default",
+    "renderer_path": "src/adapters/rendering.py",
+    "runtime_execution": false
+  },
+  "catalog_evidence_paths": [
+    "prompts/doc-types/*/meta.toml",
+    "tests/test_offline_build.py",
+    "dist/offline/default/doc-types/*/system_prompt.md"
+  ],
+  "copyright_notice": "Copyright (c) 2026 official-document-drafting contributors",
+  "excluded_font_binary_paths": [
+    "assets/fonts/仿宋_GB2312.ttf",
+    "assets/fonts/方正小标宋简.TTF",
+    "assets/fonts/楷体_GB2312.ttf",
+    "assets/fonts/黑体公文字体.ttf"
+  ],
+  "exclusions": [
+    "All binary assets",
+    "Upstream runtime/model/network/agent execution",
+    "Upstream standalone DOCX exporter",
+    "Upstream skill runtime",
+    "Upstream user_prompt_template and combined prompt artifacts"
+  ],
+  "files": [
+    {
+      "git_blob_sha1": "b0f0ee2485a0932be91cee9e9149df1070aa096c",
+      "path": "LICENSE",
+      "role": "license",
+      "sha256": "2d8ba6968842d2d058a2f1f02f8a5252603e32124d79b684edf2ca119acd6a38",
+      "size": 1331
+    },
+    {
+      "git_blob_sha1": "6e2c6c73cc40e9c4df97b9fb9395690b05c8e61c",
+      "path": "assets/fonts/README.md",
+      "role": "font_metadata_only",
+      "sha256": "4e03d9de819bda9c99a88091bf9c5a8c26d94d0f920687e912572ba86173b830",
+      "size": 1132
+    },
+    {
+      "git_blob_sha1": "0e958fb8b67ee222ee783cc7c9061030b22291a9",
+      "path": "assets/fonts/catalog.toml",
+      "role": "font_metadata_only",
+      "sha256": "5f0e2207bfc2356496cb5484e362a5c1dfe6a0da773b243e184caf11d29ad206",
+      "size": 1688
+    },
+    {
+      "git_blob_sha1": "bedb1ff7f5a46a97d9148524d0b15d8e1806dc22",
+      "path": "assets/templates/announcement.md",
+      "role": "upstream_source",
+      "sha256": "7909a5f9eff3e83774e669306e4ca0533518387e3adea90c3b34a1e5b8dfe4ff",
+      "size": 514
+    },
+    {
+      "git_blob_sha1": "682f1882474dc1cc9b344612dec6f804ddecf09a",
+      "path": "assets/templates/approval.md",
+      "role": "upstream_source",
+      "sha256": "f10693bf613de5eb0a783c0f128eb8887f81a56ef741363564d5def4477a0af5",
+      "size": 361
+    },
+    {
+      "git_blob_sha1": "2833c1d36ee7c71d0a3f82ec246b4c1cf6eeed42",
+      "path": "assets/templates/briefing.md",
+      "role": "upstream_source",
+      "sha256": "29a4a1ebf2828bc353a88a2810e460ac886dadd7e5a6638bdb9c295b35d7f47d",
+      "size": 552
+    },
+    {
+      "git_blob_sha1": "5cbd95ccf0f50361730960519a306327a05de6b1",
+      "path": "assets/templates/circular.md",
+      "role": "upstream_source",
+      "sha256": "ffcff5dcd38d3bc87d15943fc74e0c0a201f4f9fc22fc041d88b302c8fa13f75",
+      "size": 371
+    },
+    {
+      "git_blob_sha1": "58a069ea4ba5d011ec48c1ad7bbc3c88dad347d1",
+      "path": "assets/templates/communique.md",
+      "role": "upstream_source",
+      "sha256": "48947e99cfdbc7d39bdc46cf340687c4e00a8bd4b90d9a176e05ae6aa5c5b180",
+      "size": 371
+    },
+    {
+      "git_blob_sha1": "8c766d46b1ccebb42818328928ec36219dd2a3b8",
+      "path": "assets/templates/decision.md",
+      "role": "upstream_source",
+      "sha256": "6e4c66cf8b40d683eb91ed770fa50d3ac1738727760bb342fb17823a604f2040",
+      "size": 400
+    },
+    {
+      "git_blob_sha1": "3f65def4b668486d924cf97deb772de27da6c73d",
+      "path": "assets/templates/draft-request.md",
+      "role": "upstream_source",
+      "sha256": "3e5194fb59ad9fff47dfe429dfd72db1ae4021beddbd93c8d06ef8d75368ff63",
+      "size": 2581
+    },
+    {
+      "git_blob_sha1": "52692316d35493b7dbd52a71e20bc603377a0e62",
+      "path": "assets/templates/letter.md",
+      "role": "upstream_source",
+      "sha256": "0b8a7597bed48a6b75f8109c8afaa4695b564c23024a06a4852a653404caaf8b",
+      "size": 484
+    },
+    {
+      "git_blob_sha1": "d3bb9a497d72aa4a307f92d8b41e75ea061332fd",
+      "path": "assets/templates/minutes.md",
+      "role": "upstream_source",
+      "sha256": "9067aff9149c492a998f56be12573ef969c7203f572a7a7df3baf1016d636884",
+      "size": 786
+    },
+    {
+      "git_blob_sha1": "c91095b6e2972b32bb1f405fe562bd3f48927a18",
+      "path": "assets/templates/motion.md",
+      "role": "upstream_source",
+      "sha256": "a47dd8f18e7d63fc9587611631fe31794b25347808dda73ca462f4b3dad602a7",
+      "size": 323
+    },
+    {
+      "git_blob_sha1": "e1625f1e363f25663506a18bd637359bcc8b628a",
+      "path": "assets/templates/notice.md",
+      "role": "upstream_source",
+      "sha256": "17765b5a395d708b1f3c9cd2df9eef33f968f3437109e89568412fe73aead604",
+      "size": 648
+    },
+    {
+      "git_blob_sha1": "211ef30635bd9b354593ae02462e10ba6707183c",
+      "path": "assets/templates/official-types-outline.md",
+      "role": "upstream_source",
+      "sha256": "fa7a8c9f42fbc52ca8ceac31ea2853912efbcab76e6d90453af9eff1c15c8d2b",
+      "size": 4746
+    },
+    {
+      "git_blob_sha1": "3c005687b01e4a7c5f66e5b59b18ba41e8457fb8",
+      "path": "assets/templates/opinion.md",
+      "role": "upstream_source",
+      "sha256": "c4140f044655526e9be5cca6dd0f529e04f0bb0152587edb33c78373ae45f006",
+      "size": 483
+    },
+    {
+      "git_blob_sha1": "6da52389e498f384e9601fd93ee27d5619c0cc00",
+      "path": "assets/templates/order.md",
+      "role": "upstream_source",
+      "sha256": "949b5f0f0646798f72b220dbe26e69649c38f5fe557ba6232b5f19ebb47d026f",
+      "size": 371
+    },
+    {
+      "git_blob_sha1": "d180ca386f083a08980a25d85ba0479579856b51",
+      "path": "assets/templates/presentation.md",
+      "role": "upstream_source",
+      "sha256": "3d5797d0e7e35f65974ad9de6cc27eec71e3c396ad77af75cf361a9e6776a275",
+      "size": 678
+    },
+    {
+      "git_blob_sha1": "74c2f4ea4907ff6e03ca7ec7b50a1311a7d8cf8a",
+      "path": "assets/templates/public-notice.md",
+      "role": "upstream_source",
+      "sha256": "b90f67ded430f117650109fa69919bb2598a38b27039605b44602b0575125b32",
+      "size": 603
+    },
+    {
+      "git_blob_sha1": "e0edc3cfcc9e86f0ee1116ffabad179fb46b244f",
+      "path": "assets/templates/reply.md",
+      "role": "upstream_source",
+      "sha256": "5c4faaa8c244c1dfd5ca1fdd9e45dea1a588b01de66fce57ce48460b84daa9a4",
+      "size": 516
+    },
+    {
+      "git_blob_sha1": "0e31c13146fac1e03fc21286c6327224e125e068",
+      "path": "assets/templates/report.md",
+      "role": "upstream_source",
+      "sha256": "90fdeca0927acd7449aec3b2a51d35daf57f60afdf0890d1963a70cc68c85185",
+      "size": 681
+    },
+    {
+      "git_blob_sha1": "2de55e62f54a47699f5fa48bfc44ba8e67592bce",
+      "path": "assets/templates/request.md",
+      "role": "upstream_source",
+      "sha256": "48b10bde53932ec8ff1b19253f3871cc0352fc7d4a9f2e6e067513bc8f6d47fa",
+      "size": 498
+    },
+    {
+      "git_blob_sha1": "4fdb592d1b236cfd8b23206891cd89ca7ee0720f",
+      "path": "assets/templates/resolution.md",
+      "role": "upstream_source",
+      "sha256": "ad22b885cbe105ee9b7ae84b58b16c7024642f613f82dc8a387d1cc419d42006",
+      "size": 427
+    },
+    {
+      "git_blob_sha1": "fcfa85355fccad0d8b54414ffb20e94356639ebe",
+      "path": "assets/templates/special-report.md",
+      "role": "upstream_source",
+      "sha256": "bbb023c652a53d98c21a51ae99c9adfb446d85b15816b0dac11096eb83f6c071",
+      "size": 627
+    },
+    {
+      "git_blob_sha1": "d697af15848c86266db5bbf2fdee6a0eafed871f",
+      "path": "assets/templates/speech.md",
+      "role": "upstream_source",
+      "sha256": "b648b9dfc1c7d536ac28c32a045be5d48432abc93ea5a88da7a48c77b2aa867a",
+      "size": 513
+    },
+    {
+      "git_blob_sha1": "a46b8e5bd78cf2af662cf91b36209a4db9bd3a68",
+      "path": "assets/templates/summary.md",
+      "role": "upstream_source",
+      "sha256": "020ed53ead9fb81a7fae51746da43e44ea77c97f03eaf355e4bc94d7f071084c",
+      "size": 598
+    },
+    {
+      "git_blob_sha1": "dbdd31df66eb780747c86917446fc88d3f92c3c6",
+      "path": "assets/templates/work-plan.md",
+      "role": "upstream_source",
+      "sha256": "669b8cb77f068d34889e257bf2fd29f6d4ac3c04924acdc328a4752b146c4f53",
+      "size": 798
+    },
+    {
+      "git_blob_sha1": "3dc6adf043d55a54defb9094c04e7a0b1d51181e",
+      "path": "dist/offline/default/doc-types/announcement-公告/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "7d2796e18e437c9c12e733aabe080c09b53d4ce5c807bd495fc41d6d4e07f56c",
+      "size": 44297
+    },
+    {
+      "git_blob_sha1": "810ce2f435d682d0efd46c128db5413eccb2e2af",
+      "path": "dist/offline/default/doc-types/approval-批复/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "9714cdd0bc9fd8375f94bd0812de539dbc983eba139101f192d38f37df3c0a83",
+      "size": 44077
+    },
+    {
+      "git_blob_sha1": "a07dfe92e3371375d628f76a3c84c068fc15dae0",
+      "path": "dist/offline/default/doc-types/briefing-简报/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "6ea7ec2a8aa16d675440593d1bd4aae0a60c37cd31f564cc425b60336ef575f2",
+      "size": 44206
+    },
+    {
+      "git_blob_sha1": "47e4e531e50952de38e34e8c8acb5aa894aa507c",
+      "path": "dist/offline/default/doc-types/circular-通报/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "9a0e183d6c6eb2e5297c10d3767684d96d70e8d7358509adb572b8b65f4a9012",
+      "size": 44140
+    },
+    {
+      "git_blob_sha1": "69e4b5fdc4212fc63dc75177566a037f178ecd74",
+      "path": "dist/offline/default/doc-types/communique-公报/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "d5cdc525b7d5249a42a3bbf523f4398c7861149dd878d3f9942d9622a3a92318",
+      "size": 44509
+    },
+    {
+      "git_blob_sha1": "cae4b222cd7a0ac5e32532b9f67fef72eee20f36",
+      "path": "dist/offline/default/doc-types/decision-决定/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "95e5fb38d0d68569f899a29716bc8e1c863b99954a3d3f4ab4a2f51e85c6a546",
+      "size": 44568
+    },
+    {
+      "git_blob_sha1": "2b0cbcc41c59dcd8f4f4569b9797198d687835c9",
+      "path": "dist/offline/default/doc-types/letter-函/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "0c4805b4e9e6f20b5af135105fdbe440d6b8f562b98df45033b59af495da0f0f",
+      "size": 44261
+    },
+    {
+      "git_blob_sha1": "f047862ebebdf5af77b70ed5c9fcd47309cee0a4",
+      "path": "dist/offline/default/doc-types/minutes-纪要/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "f6dcf578df85d86bec32c94da267a4d72dd1972c4dbd24d07c2471171daa954d",
+      "size": 54716
+    },
+    {
+      "git_blob_sha1": "9b490834c72de6e3eab215b1281b9d7aa7c29f3e",
+      "path": "dist/offline/default/doc-types/motion-议案/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "9f9262003ffe89512ee2da434de9f3ebf3a9b6020701e8a5fd4e742dec096efb",
+      "size": 43538
+    },
+    {
+      "git_blob_sha1": "2cc80d0699bd477552b023ecdcaf3476cf538481",
+      "path": "dist/offline/default/doc-types/notice-通知/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "f590f3a5249d422c7bebb0aa80c464baa1f93b2e347e76e87fea537c272e74bf",
+      "size": 45138
+    },
+    {
+      "git_blob_sha1": "f4bccee24c294c6f5cbc8338e998b0fed1c62151",
+      "path": "dist/offline/default/doc-types/opinion-意见/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "944ed82db73e2832f134b684d5db37ef7cad1680f4f2a9a850cefb4a0f6ba3ad",
+      "size": 43997
+    },
+    {
+      "git_blob_sha1": "faaadd808346443ee38b676c588933a57f4e0beb",
+      "path": "dist/offline/default/doc-types/order-命令（令）/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "38c304e0a809194a2490a78d921a570c0135d875a4ffaf0e83584b6dfcf62857",
+      "size": 44660
+    },
+    {
+      "git_blob_sha1": "e47fe1d2288b5ab43c2228225afc1d17dc0aa238",
+      "path": "dist/offline/default/doc-types/presentation-汇报材料/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "b19ad7ba4def1ee2c5008a2d35d4d03d967c747464e9d841efb9577bb492ad0e",
+      "size": 44805
+    },
+    {
+      "git_blob_sha1": "8b124dcd0741a3734da396c88298cda688f0cdc4",
+      "path": "dist/offline/default/doc-types/public-notice-通告/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "4e4e26b0202dd3402553b79eb1c584bb79390b0806ddb379afa7a21e86634848",
+      "size": 44297
+    },
+    {
+      "git_blob_sha1": "068cfe6f52add933e6112aa72677e08ced08dc30",
+      "path": "dist/offline/default/doc-types/reply-回复函/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "cb967faff0033650843fee645246dd61d0e236afd35fa7497e933eb857f402ad",
+      "size": 43994
+    },
+    {
+      "git_blob_sha1": "1f5b2508fef92b12dbca123b369037088e274006",
+      "path": "dist/offline/default/doc-types/report-报告/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "78ce0ecca0a495dbdeda594b08d4909bee1d6c1f6476a90bf105f1e97a6861a2",
+      "size": 45430
+    },
+    {
+      "git_blob_sha1": "34c9759c685ff3496346844db0c39db6613dc35f",
+      "path": "dist/offline/default/doc-types/request-请示/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "f9bbaca88e69057fc12d185a7399008540a03f93882fbc481b951a33c4cf42cc",
+      "size": 43709
+    },
+    {
+      "git_blob_sha1": "4dd9a13da7bac48cce98c02a9c5ee1805dae403b",
+      "path": "dist/offline/default/doc-types/resolution-决议/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "4a0ebc131bb61d37bd0a083a1648622ea870d0aa7ecb43179b05560cbb508960",
+      "size": 43697
+    },
+    {
+      "git_blob_sha1": "d18e700c1b3d33547401fcd03e1b795849f3dafb",
+      "path": "dist/offline/default/doc-types/special-report-情况专报/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "76c35c2769002b80b906444f628983cf11b82b9a2d5fec6e88779b8ffcf9ba40",
+      "size": 44928
+    },
+    {
+      "git_blob_sha1": "0651c26978602e75c84ce10811b770ae308877d2",
+      "path": "dist/offline/default/doc-types/speech-讲话稿/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "b35a5426196f576f5bf323352ddd905766525f704f2527d06f16b13ec9fe178c",
+      "size": 44224
+    },
+    {
+      "git_blob_sha1": "5663cde219c536b2e05cfb4390377255c8ecc574",
+      "path": "dist/offline/default/doc-types/summary-工作总结/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "80c99367127e6eabca3a5329ec745bcd5bad46734b10aa577a478f4627f858b1",
+      "size": 43977
+    },
+    {
+      "git_blob_sha1": "cf151d71c6f3a8d4478eb3af2d7dff728e8bcb2b",
+      "path": "dist/offline/default/doc-types/work-plan-工作方案/system_prompt.md",
+      "role": "generated_system_prompt",
+      "sha256": "1cb1cf8437562a603f6546f25d568fdb46adca74deae5e53ac45683de0aaee2c",
+      "size": 44890
+    },
+    {
+      "git_blob_sha1": "41d05025b1eb1e3f337c2d3738d3e35781e16a18",
+      "path": "prompts/core/doc-type-guardrails.md",
+      "role": "upstream_source",
+      "sha256": "08844a1b326c6740989291722bd304465f2d833f6407880a7b02bd99401b9bd0",
+      "size": 1503
+    },
+    {
+      "git_blob_sha1": "10737928ada5935011537d5498df3998a2e2eb8d",
+      "path": "prompts/core/drafting-thinking.md",
+      "role": "upstream_source",
+      "sha256": "e44b4a92fd14ca69a6d1f17b869f7454d6fb88f19ee865a43f282d6da2238ed6",
+      "size": 11180
+    },
+    {
+      "git_blob_sha1": "211ef30635bd9b354593ae02462e10ba6707183c",
+      "path": "prompts/core/fallback-template.md",
+      "role": "upstream_source",
+      "sha256": "fa7a8c9f42fbc52ca8ceac31ea2853912efbcab76e6d90453af9eff1c15c8d2b",
+      "size": 4746
+    },
+    {
+      "git_blob_sha1": "9f913ee5e802ae5de9d4e55c516e0f4de10ca670",
+      "path": "prompts/core/layout.md",
+      "role": "upstream_source",
+      "sha256": "09be745b989220840afa63d7bdb55ef3410b42e49e741a66c1182e0365c8f504",
+      "size": 3842
+    },
+    {
+      "git_blob_sha1": "3ebe467962ffe3066e005026720ccef1a757ab50",
+      "path": "prompts/core/policy.md",
+      "role": "upstream_source",
+      "sha256": "4a19acacff8584c3dd8d26cad0bad4d3cbbebcae5d9d4994438e17e26988ec43",
+      "size": 1985
+    },
+    {
+      "git_blob_sha1": "95a7ecfad8f1c2273764ba84bacb74e261209a37",
+      "path": "prompts/core/style.md",
+      "role": "upstream_source",
+      "sha256": "3c80e2c4d3b4b713a1356bff5fe2f41a853cf6c5ab25472aebf1a7024dbce738",
+      "size": 7553
+    },
+    {
+      "git_blob_sha1": "eaaf93ede6a4a87dd0621aa3f04170a2fba8d2b5",
+      "path": "prompts/core/workflow.md",
+      "role": "upstream_source",
+      "sha256": "e39febdcab87f9f20293881d061d6e638c4210ba928d10efa21f1dec589f2897",
+      "size": 8574
+    },
+    {
+      "git_blob_sha1": "8adfe88510cb606b3bd4265aaa0e9b1ba7d844b4",
+      "path": "prompts/doc-types/announcement-公告/examples.md",
+      "role": "upstream_source",
+      "sha256": "6692d54ce58a8eedb21e79fc8024e1465ff3ede2bf9813590122e4eda87094fb",
+      "size": 2695
+    },
+    {
+      "git_blob_sha1": "010efcef8a982ffb93350c3a3ac06915969ec01b",
+      "path": "prompts/doc-types/announcement-公告/meta.toml",
+      "role": "upstream_source",
+      "sha256": "b03c395ce910193635fb96863531a49cab2a348f3d4cb935582e1e853206b334",
+      "size": 269
+    },
+    {
+      "git_blob_sha1": "63acb4938a6c0e1cfb25cb324b14ba6e53bca816",
+      "path": "prompts/doc-types/announcement-公告/spec.md",
+      "role": "upstream_source",
+      "sha256": "fca75f28c1fd5aa41747692ab1f86b2374c71fc0c66c1d18ed9b1de79e11ebe1",
+      "size": 5598
+    },
+    {
+      "git_blob_sha1": "7303867eb3e4afb3fb6f1ba0079ec4643743a96a",
+      "path": "prompts/doc-types/approval-批复/examples.md",
+      "role": "upstream_source",
+      "sha256": "918940f6f199a2fcdc82fc460cd99da64939455785ef9b49a3b4aa9a9e980bf2",
+      "size": 5044
+    },
+    {
+      "git_blob_sha1": "003d1389399e04dfc2606108f785d46e5e940c6c",
+      "path": "prompts/doc-types/approval-批复/meta.toml",
+      "role": "upstream_source",
+      "sha256": "490c998fcdc6a9f56c965b06dee4f2be4ac5ee6b885887469afabfd1dcff5d2f",
+      "size": 253
+    },
+    {
+      "git_blob_sha1": "d14add302946a130169747e0fb0316be3682c10b",
+      "path": "prompts/doc-types/approval-批复/spec.md",
+      "role": "upstream_source",
+      "sha256": "6223fa612bc377fd2eac89f1f46e70cfb18ea51633df88ad0f71f8994b55cc6c",
+      "size": 5410
+    },
+    {
+      "git_blob_sha1": "46ad077ca81dff074bf73f5065fe7108fd68631e",
+      "path": "prompts/doc-types/briefing-简报/examples.md",
+      "role": "upstream_source",
+      "sha256": "eb9128bce53046da78e1c3d08f09f62dff573bb7816224f0980183dd6f9abcf8",
+      "size": 2633
+    },
+    {
+      "git_blob_sha1": "f90fb3015c374a961604cd2ba971fe28951ba011",
+      "path": "prompts/doc-types/briefing-简报/meta.toml",
+      "role": "upstream_source",
+      "sha256": "7ad53e781044431e08163f2287faa25650d30e6c9c3200d2c40f62798622c014",
+      "size": 324
+    },
+    {
+      "git_blob_sha1": "204bedd1ed4143c301a1793766ce346d2984af54",
+      "path": "prompts/doc-types/briefing-简报/spec.md",
+      "role": "upstream_source",
+      "sha256": "b7bd4db63a179b89c6abded75cd5af4dad2f1f8a9d07c3971ed964632932cf16",
+      "size": 5712
+    },
+    {
+      "git_blob_sha1": "7b79016c202e3071125c41df42e82ce850d537bd",
+      "path": "prompts/doc-types/circular-通报/examples.md",
+      "role": "upstream_source",
+      "sha256": "633a9b59f88c8790d5caf09f09be44449d252bf78522e55db912f7191aa231d1",
+      "size": 6225
+    },
+    {
+      "git_blob_sha1": "39201b14d9a2a68c2265d5778bca5750e255b455",
+      "path": "prompts/doc-types/circular-通报/meta.toml",
+      "role": "upstream_source",
+      "sha256": "0747d96aacb1c7f9be6973dc6f4e88afa98b0c45eb759bdbab0f559d1c97df1a",
+      "size": 271
+    },
+    {
+      "git_blob_sha1": "5b1f8883789305f115fad5d5858c52e73c876d26",
+      "path": "prompts/doc-types/circular-通报/spec.md",
+      "role": "upstream_source",
+      "sha256": "7b03a8ada497d44edfd64cae8fabf616f87d9093161fc27967d529d5b6b41d2e",
+      "size": 5518
+    },
+    {
+      "git_blob_sha1": "36bd71e25ac64b8658381b2f0e445914ca15138d",
+      "path": "prompts/doc-types/communique-公报/examples.md",
+      "role": "upstream_source",
+      "sha256": "4ecbfcfb824414e7db2951a42b97a74d528e59f91a3ef5b63e155b723cdb9027",
+      "size": 2533
+    },
+    {
+      "git_blob_sha1": "fbb229ce87d7ef060d80f859a058087f409a3b03",
+      "path": "prompts/doc-types/communique-公报/meta.toml",
+      "role": "upstream_source",
+      "sha256": "ed872cf06b3bc1b460c30a63bf4ede1705166c44b973c274602502a5ec74b090",
+      "size": 279
+    },
+    {
+      "git_blob_sha1": "463b9ebee2f41c4794d7f2c8b350b5b0c09ee40c",
+      "path": "prompts/doc-types/communique-公报/spec.md",
+      "role": "upstream_source",
+      "sha256": "50cae51575af0fda21797ca2596dbbc87cb729d32b84bfb5bcfff7b2cf05f613",
+      "size": 5871
+    },
+    {
+      "git_blob_sha1": "7cba4a57a428f7fc149a94f36c091c8b3b13721f",
+      "path": "prompts/doc-types/decision-决定/examples.md",
+      "role": "upstream_source",
+      "sha256": "ba60903eefe361f85f34e45aca7062b586606efee47066b232bb4782e69d6754",
+      "size": 4047
+    },
+    {
+      "git_blob_sha1": "54c7f5768676cec5ba96b7a1087a1d94afdb28be",
+      "path": "prompts/doc-types/decision-决定/meta.toml",
+      "role": "upstream_source",
+      "sha256": "41732f04e9417e7f55e2c71702f6b53363be60bc28abe80a62cecb173443897b",
+      "size": 271
+    },
+    {
+      "git_blob_sha1": "c3d3345b2d7842803a5db91591ba4d9a1aaf8ec7",
+      "path": "prompts/doc-types/decision-决定/spec.md",
+      "role": "upstream_source",
+      "sha256": "1706179d591d1834e9ac2e8a59cb2c8798a5292faf56439f8abd9b14e200cfa5",
+      "size": 5895
+    },
+    {
+      "git_blob_sha1": "62f275eebb77b03a338dd0eda47f971b9a86efe4",
+      "path": "prompts/doc-types/letter-函/examples.md",
+      "role": "upstream_source",
+      "sha256": "da0d855978ba9ab83c7238c48e180d5f0e02bc759ff9a56a64183dad4a70cd48",
+      "size": 2331
+    },
+    {
+      "git_blob_sha1": "2b5fecb61027665a9b2a2ae745d074c1342eca7b",
+      "path": "prompts/doc-types/letter-函/meta.toml",
+      "role": "upstream_source",
+      "sha256": "c31919870988870b1442013bf9d279d2492cf153e4a88cee94807e60513ff6b0",
+      "size": 272
+    },
+    {
+      "git_blob_sha1": "fae6027cdeb8f16e65b4ba0e0c306771483153fc",
+      "path": "prompts/doc-types/letter-函/spec.md",
+      "role": "upstream_source",
+      "sha256": "e61fc51ef2c3c06001e9eac4bbab987a025f882467f5371f72081df592dc8195",
+      "size": 5668
+    },
+    {
+      "git_blob_sha1": "fb5fd0b5d185b6fed06557f8343fbe5e38e9f7e2",
+      "path": "prompts/doc-types/minutes-纪要/examples.md",
+      "role": "upstream_source",
+      "sha256": "1d8dee3a78f38f7adbe21adcdc1d281a54d1b1053ba9b59a5f5074bcb7c3348c",
+      "size": 4022
+    },
+    {
+      "git_blob_sha1": "8d4fbf44248e7bba7f8fdc222717b67db7e8c18d",
+      "path": "prompts/doc-types/minutes-纪要/meta.toml",
+      "role": "upstream_source",
+      "sha256": "e7c2b2d4686e1400ec6dcba8dd07f5524314580133d857c8b0c0e89153ec8ad3",
+      "size": 277
+    },
+    {
+      "git_blob_sha1": "4e73580b0a1c673d875e6ca02b0d39ee45f01848",
+      "path": "prompts/doc-types/minutes-纪要/spec.md",
+      "role": "upstream_source",
+      "sha256": "cb7e021d3368ff5d27d80464740a51af7bc25c6e68b3586acb9e95a2cb2e5b88",
+      "size": 15982
+    },
+    {
+      "git_blob_sha1": "34d15fa78ac74338814d29b999dabec663b37e12",
+      "path": "prompts/doc-types/motion-议案/examples.md",
+      "role": "upstream_source",
+      "sha256": "a3f14d754bec0fc7036a1d4a307b5e014dc57f62bc606674c0ef3a7cb337a337",
+      "size": 2380
+    },
+    {
+      "git_blob_sha1": "a98758cd860c601f14c33f4e0cbe954007b731d6",
+      "path": "prompts/doc-types/motion-议案/meta.toml",
+      "role": "upstream_source",
+      "sha256": "677741334c501c303c896b2cb3bb01dec9c9ab86d65cf71f2840fe734da7f543",
+      "size": 263
+    },
+    {
+      "git_blob_sha1": "b937f4bed37e4c04f6029c93a122dce299a42f56",
+      "path": "prompts/doc-types/motion-议案/spec.md",
+      "role": "upstream_source",
+      "sha256": "839849ab619bc17586b79b12e7cec50f76655ac28f240acf675773acc22010c1",
+      "size": 4992
+    },
+    {
+      "git_blob_sha1": "247e84475da51605c3656037dc0a1b7ee2b71ea7",
+      "path": "prompts/doc-types/notice-通知/examples.md",
+      "role": "upstream_source",
+      "sha256": "2a71d411ed9a4621c89c5226902af5a19eea2f0af8fa4d8d133a94efed390287",
+      "size": 2720
+    },
+    {
+      "git_blob_sha1": "e8cba9284d5e7ec2482293cb9f877a84a453290b",
+      "path": "prompts/doc-types/notice-通知/meta.toml",
+      "role": "upstream_source",
+      "sha256": "002fb83f9b48c1d356b0c0bc2c3bb75a79b83ea67d758a382308c9904a7f6613",
+      "size": 272
+    },
+    {
+      "git_blob_sha1": "687cc2b270c15f0621a5f4258a9adb2043db20d9",
+      "path": "prompts/doc-types/notice-通知/spec.md",
+      "role": "upstream_source",
+      "sha256": "2c8e267582be1a877ed67328a1216a7f78eb1608e9057bfbb6e6e7bddd3dbbe4",
+      "size": 6392
+    },
+    {
+      "git_blob_sha1": "f0f23b2f0b24fdbc44f526696cd15f7ecebfa220",
+      "path": "prompts/doc-types/opinion-意见/examples.md",
+      "role": "upstream_source",
+      "sha256": "d1403e3457b0e74f55bc27c60e0da6e5b0338f1acecaa056583cd38ca031d14f",
+      "size": 4199
+    },
+    {
+      "git_blob_sha1": "bd9cdb02f7afbaefb94c66f0f5884da13c465d1d",
+      "path": "prompts/doc-types/opinion-意见/meta.toml",
+      "role": "upstream_source",
+      "sha256": "d27d01b0f3de51807b4efe075e7c4ba66ac60e928bb0bdcf505c6f9228138bc3",
+      "size": 258
+    },
+    {
+      "git_blob_sha1": "f07f5c361c2ca285894cddffe0d75851ec978983",
+      "path": "prompts/doc-types/opinion-意见/spec.md",
+      "role": "upstream_source",
+      "sha256": "7c5941a2e0643a99f8c5f880274ba2610c6a9e083101907326cbd4bad4921acc",
+      "size": 5329
+    },
+    {
+      "git_blob_sha1": "8f9766252901e1d8a314ef3658e7a7247ffc390c",
+      "path": "prompts/doc-types/order-命令（令）/examples.md",
+      "role": "upstream_source",
+      "sha256": "18a308fbdcb489d4639eb9ebd0a8e182ac1a36d2c8b3018ca5ba748d7197b97a",
+      "size": 2133
+    },
+    {
+      "git_blob_sha1": "a6c1c0a56dc51a7e4d016d42b52944b8067a0ed7",
+      "path": "prompts/doc-types/order-命令（令）/meta.toml",
+      "role": "upstream_source",
+      "sha256": "2eb97035613de5815b42f9ef8a0da997079d07ff270cb48d8b859a4244ba7f6b",
+      "size": 312
+    },
+    {
+      "git_blob_sha1": "af46e63c70fd722c69fd43b22085faf84fe6b763",
+      "path": "prompts/doc-types/order-命令（令）/spec.md",
+      "role": "upstream_source",
+      "sha256": "929106f6f30da681236821617d307239db4fa800b00c103d396a37c8a07a5f28",
+      "size": 6204
+    },
+    {
+      "git_blob_sha1": "e82a12d8d8b8072f1ea09e8cda09463daf06d30f",
+      "path": "prompts/doc-types/presentation-汇报材料/examples.md",
+      "role": "upstream_source",
+      "sha256": "2381b5852d01cbca9084a1ad0bdc1c05806ff01c2720bba98293f3bb8604e462",
+      "size": 3862
+    },
+    {
+      "git_blob_sha1": "c8bb0bfeb3b39e35e2fe4ba94602491604f4ff5f",
+      "path": "prompts/doc-types/presentation-汇报材料/meta.toml",
+      "role": "upstream_source",
+      "sha256": "e1d9db971e4ce1f6504b016029adb104a45fd7f4f092a6bce70d4e8b30a44f0e",
+      "size": 327
+    },
+    {
+      "git_blob_sha1": "c329a78188d2a8efc4ef321f3f82a77b6cc9b3ce",
+      "path": "prompts/doc-types/presentation-汇报材料/spec.md",
+      "role": "upstream_source",
+      "sha256": "2991f0ed1e6b2a13266360cee20dacca0ceb5d3e2eaaf92ef91e06b8e929f379",
+      "size": 6341
+    },
+    {
+      "git_blob_sha1": "c726f9ece8d167b35dd20541529155e0862034d8",
+      "path": "prompts/doc-types/public-notice-通告/examples.md",
+      "role": "upstream_source",
+      "sha256": "b93285d3d4c202ae7e8f3409a40b46d3ade00dde0208496322eea05e409f7acc",
+      "size": 2374
+    },
+    {
+      "git_blob_sha1": "219e19893c90e99574a73174b7c074a85ea09871",
+      "path": "prompts/doc-types/public-notice-通告/meta.toml",
+      "role": "upstream_source",
+      "sha256": "2cce65a5815909dd127fb097053fb5f7ab32229b9cf1936df570b17991a022f3",
+      "size": 279
+    },
+    {
+      "git_blob_sha1": "fd222421a5a4e245dd4891a798e7a3f28991c0bf",
+      "path": "prompts/doc-types/public-notice-通告/spec.md",
+      "role": "upstream_source",
+      "sha256": "5bb586ff69cdbc5bcc9b1617718b83e527a5c99e550a8d7a312f4bf970428353",
+      "size": 5600
+    },
+    {
+      "git_blob_sha1": "2ed509377b01548a99e1767dc63bad89dc031d1a",
+      "path": "prompts/doc-types/reply-回复函/examples.md",
+      "role": "upstream_source",
+      "sha256": "c60662f6032336f8fbfd728988b4bf8a7aa88356c07a639fa419273cf01589bc",
+      "size": 2106
+    },
+    {
+      "git_blob_sha1": "8e472ce10818b574a952b27b4f455031498fda72",
+      "path": "prompts/doc-types/reply-回复函/meta.toml",
+      "role": "upstream_source",
+      "sha256": "0521fbe30909257c6d2633d1daf523acc5b4a8cecb19b736871f196bc3c3ae9d",
+      "size": 299
+    },
+    {
+      "git_blob_sha1": "0f769072bd56038dd987fe805b7cba6778454ce0",
+      "path": "prompts/doc-types/reply-回复函/spec.md",
+      "role": "upstream_source",
+      "sha256": "2f6a5bfd178e5b653a47e369d4248074f28ed22c673483dc9c663f2570b6c871",
+      "size": 5387
+    },
+    {
+      "git_blob_sha1": "8061d8bd904212eed2d00c79b9255daab0a274dd",
+      "path": "prompts/doc-types/report-报告/examples.md",
+      "role": "upstream_source",
+      "sha256": "e1ee0f0a704b2465aad7bedb242df6812ffbafd7fe5e7d916e635972ad822530",
+      "size": 6353
+    },
+    {
+      "git_blob_sha1": "b93ffe49c89b50252764fbc910f5300e7e9e52d2",
+      "path": "prompts/doc-types/report-报告/meta.toml",
+      "role": "upstream_source",
+      "sha256": "f100c0a117957701760df9a68d2423c07c6f2b223e841e63cc4484b33f2f113a",
+      "size": 272
+    },
+    {
+      "git_blob_sha1": "8c54334eb56670b994a8dd0e5378d130004d1c1d",
+      "path": "prompts/doc-types/report-报告/spec.md",
+      "role": "upstream_source",
+      "sha256": "81fc9c8e72b08d91268f122081a1a90d1d9c5c05298220247d3d62fa5f64a502",
+      "size": 6763
+    },
+    {
+      "git_blob_sha1": "0956094f7389b0a344ede9df7aae48fb711e0543",
+      "path": "prompts/doc-types/request-请示/examples.md",
+      "role": "upstream_source",
+      "sha256": "9de6d64011ea9198426cdc02e66c8ac8463a26fad14800fafb6b8e8aa0ada8db",
+      "size": 2421
+    },
+    {
+      "git_blob_sha1": "0cfdc78b912650c62ca3d4525ea4f441a48054f6",
+      "path": "prompts/doc-types/request-请示/meta.toml",
+      "role": "upstream_source",
+      "sha256": "b221a7de2e9806df7ff64db5d192de499cc7a05883df4cbe686f8e159c6b0b8f",
+      "size": 252
+    },
+    {
+      "git_blob_sha1": "4216f9683f47ff16f5a130d8d011bc0a3378343d",
+      "path": "prompts/doc-types/request-请示/spec.md",
+      "role": "upstream_source",
+      "sha256": "dd45bb3b37a36de5268e14a1f534dfa3075bc69f5936560f651a831a0bfb11eb",
+      "size": 5092
+    },
+    {
+      "git_blob_sha1": "25d593f9e50856254df54bb16f35d6b20ab69a67",
+      "path": "prompts/doc-types/resolution-决议/examples.md",
+      "role": "upstream_source",
+      "sha256": "9fa48ea4ee3ee00d080d3ff076b61fa692be30bbafd232d2967f96bc7d0bde57",
+      "size": 2742
+    },
+    {
+      "git_blob_sha1": "bd43f88e9decc21830bdf87e1b3ad911d9b18957",
+      "path": "prompts/doc-types/resolution-决议/meta.toml",
+      "role": "upstream_source",
+      "sha256": "8fb1ea2363c1d5285f45dacf854b896eee452fc3f80cdcd5f2c21700ab043f8d",
+      "size": 258
+    },
+    {
+      "git_blob_sha1": "3cbd18f85244990679156bd21b0e8f876f16ad50",
+      "path": "prompts/doc-types/resolution-决议/spec.md",
+      "role": "upstream_source",
+      "sha256": "98b8a1fd08d0e9c5a68961349117cdb0998ff5626b8ce002b8f3c3879aea0579",
+      "size": 5159
+    },
+    {
+      "git_blob_sha1": "b7899a3d779d0357f96505d71710d1e996a8475f",
+      "path": "prompts/doc-types/special-report-情况专报/examples.md",
+      "role": "upstream_source",
+      "sha256": "4c9301d69f9f876d7aff35b86eee942365f086a414abac165e103012e8713028",
+      "size": 4262
+    },
+    {
+      "git_blob_sha1": "5db49e69fc5e44142269d42adc6e4ba999c7d65f",
+      "path": "prompts/doc-types/special-report-情况专报/meta.toml",
+      "role": "upstream_source",
+      "sha256": "2762eba05c58e5b9e012375e90cf573aa6db4170ea5b9e284247b154725cde7c",
+      "size": 367
+    },
+    {
+      "git_blob_sha1": "97e39590e6058fb89a480e0c91019e3a0256fa52",
+      "path": "prompts/doc-types/special-report-情况专报/spec.md",
+      "role": "upstream_source",
+      "sha256": "cc565961b5476b2c3b964671f5784e7728a2eff92a465050d41f36242cf791c8",
+      "size": 6473
+    },
+    {
+      "git_blob_sha1": "16b2682ec16570c62030322018b64355b547b6b9",
+      "path": "prompts/doc-types/speech-讲话稿/examples.md",
+      "role": "upstream_source",
+      "sha256": "b64600116ff81e8f2ac24e2c5ecef88b5f5de70ef1b82c4b1783c17dedc2fede",
+      "size": 2985
+    },
+    {
+      "git_blob_sha1": "97b789c1cbc7a848b0f05cc65716988a927e368b",
+      "path": "prompts/doc-types/speech-讲话稿/meta.toml",
+      "role": "upstream_source",
+      "sha256": "73bbf8420bd3eee1aaff2cce74d827bb64dc65d4edc76838c70e309e86fb1fd5",
+      "size": 305
+    },
+    {
+      "git_blob_sha1": "2639f4a83606a912749b790975fe96dd3f065d77",
+      "path": "prompts/doc-types/speech-讲话稿/spec.md",
+      "role": "upstream_source",
+      "sha256": "9aa3d9c5f1ff0ec7ebfd798fa81de2fe80a2e4d6a61183726f5893afa8147154",
+      "size": 5649
+    },
+    {
+      "git_blob_sha1": "44194d993a3180d76b12a5b790f4ba0c39da7984",
+      "path": "prompts/doc-types/summary-工作总结/examples.md",
+      "role": "upstream_source",
+      "sha256": "db1d2b8387c588c961ab407cc54246db263af2111240c7f4c8f3abc4135d9b0e",
+      "size": 4135
+    },
+    {
+      "git_blob_sha1": "a604bd16ae633dbd1c712bacb5cf935445b23c55",
+      "path": "prompts/doc-types/summary-工作总结/meta.toml",
+      "role": "upstream_source",
+      "sha256": "954ca8fa353662c51f9ead827f5c5bb3e9d938a011bcad53b5aa1a48d2669ffe",
+      "size": 329
+    },
+    {
+      "git_blob_sha1": "aaf8a639a588fe6399019015ef29454e8c404db2",
+      "path": "prompts/doc-types/summary-工作总结/spec.md",
+      "role": "upstream_source",
+      "sha256": "ecc1b5eb830ef5224767222609b5824f29e1f1d93279e8e20672aa36fefd9f96",
+      "size": 5329
+    },
+    {
+      "git_blob_sha1": "d724d0e82b9bb9aacbaca726ed4f299a294509d1",
+      "path": "prompts/doc-types/work-plan-工作方案/examples.md",
+      "role": "upstream_source",
+      "sha256": "24a294b4f6cadcc37309c936f04788e46fd647d0591566041b533bb8f2027d5f",
+      "size": 3368
+    },
+    {
+      "git_blob_sha1": "668b32873b5c0ef2eb89acde0288b5441c35a972",
+      "path": "prompts/doc-types/work-plan-工作方案/meta.toml",
+      "role": "upstream_source",
+      "sha256": "812c11cbb38546822c25643c280493ed39dd056ec5bb9267bcfeed079429b4dc",
+      "size": 340
+    },
+    {
+      "git_blob_sha1": "92238070b7e9a4ecd760c0faa01bcb62ee994fa3",
+      "path": "prompts/doc-types/work-plan-工作方案/spec.md",
+      "role": "upstream_source",
+      "sha256": "1cc8de390bcea93e30221a9500f6bec3eec3ec5deca5a15c6e470f2b1f5eec95",
+      "size": 6236
+    },
+    {
+      "git_blob_sha1": "dd54585bad1f81b15119c0314616a2e8f021d0e8",
+      "path": "prompts/font-profiles/internal-readable.toml",
+      "role": "upstream_source",
+      "sha256": "6b1e51c77b7cf3b85056e13b2e977193127113ac723a8a3567cc8a38e78f05b5",
+      "size": 800
+    },
+    {
+      "git_blob_sha1": "835ddc8e792ef453be4bac44921776075d88a7da",
+      "path": "prompts/font-profiles/official-standard.toml",
+      "role": "upstream_source",
+      "sha256": "56cdb41bfdb0723a0055e9abbe8be1a0b19636db8c6171002a7a402cf06b18cb",
+      "size": 740
+    },
+    {
+      "git_blob_sha1": "66ac21810294ca276a68d4178bb4db13527ed878",
+      "path": "prompts/font-profiles/speech-readable.toml",
+      "role": "upstream_source",
+      "sha256": "7dc0adad84c58a9b13461e3b9419db30ed4d0b5134fe87e2d98aa8d85259d465",
+      "size": 775
+    },
+    {
+      "git_blob_sha1": "af8ccfe6238db0b9648ddd6c02cd3a4e07e00295",
+      "path": "prompts/layout-profiles/internal-readable.toml",
+      "role": "upstream_source",
+      "sha256": "22a572e0059fe597b2406cdbb72b2d93697a6f05abd42e2957b65c325a31305c",
+      "size": 1047
+    },
+    {
+      "git_blob_sha1": "67780e0c06b037a5dced67b0bf5bd0b28b854f6c",
+      "path": "prompts/layout-profiles/official-standard.toml",
+      "role": "upstream_source",
+      "sha256": "c32e4d1ca577fe9e36d523279821a6829724d3e9b05c69436d7a12073a974548",
+      "size": 1162
+    },
+    {
+      "git_blob_sha1": "1c17d121be12e28cdaf521f54048e567db6babdd",
+      "path": "prompts/layout-profiles/speech-readable.toml",
+      "role": "upstream_source",
+      "sha256": "15546e84b38f7468463958ea8823792ecf6a8b1f9d75c050f4ceb27219c4ec89",
+      "size": 1060
+    },
+    {
+      "git_blob_sha1": "210ab88d0d81eb739389af672315156867aa9d3f",
+      "path": "prompts/profiles/default.toml",
+      "role": "upstream_source",
+      "sha256": "84b11098119f6bfac25723cc75a793544ad13fef50aecf151b2aa32135de2cb1",
+      "size": 2527
+    },
+    {
+      "git_blob_sha1": "61b0d0091298876a449f8845c854bc01df365392",
+      "path": "src/adapters/doc_types.py",
+      "role": "offline_builder",
+      "sha256": "713924a3ebe074ffa5a96bb5049a69b99154cdbfba3ef237264c22f9f996db95",
+      "size": 6866
+    },
+    {
+      "git_blob_sha1": "165c189b82115660c17357e795438c0a7af1e354",
+      "path": "src/adapters/offline/build.py",
+      "role": "offline_builder",
+      "sha256": "8e57d70b0467a18e05379e668a7345b2d2c7c9c7c59a24cfc9e0c3c237fbe72c",
+      "size": 12685
+    },
+    {
+      "git_blob_sha1": "76256944a49c331e5432e2442f7f1e64ab5f9096",
+      "path": "src/adapters/paths.py",
+      "role": "offline_builder",
+      "sha256": "7fb1b2fe511b90de58335ecd10b378baf7e54914270c215b82ccebb6b3fa01f4",
+      "size": 2067
+    },
+    {
+      "git_blob_sha1": "dfdde3a10f80aecf29a49e30b21a583bef2004fd",
+      "path": "src/adapters/profiles.py",
+      "role": "offline_builder",
+      "sha256": "c4274c954a626b1904792b0c5b23f64e170ccbb4d0e1052953738cc1e3f6fba8",
+      "size": 10266
+    },
+    {
+      "git_blob_sha1": "2352de4537b8cf735acd002da53e307da685cc10",
+      "path": "src/adapters/rendering.py",
+      "role": "offline_builder",
+      "sha256": "d71af75d6f43c950b2d35d43b050a5e1d442a0070903376b6fc62dd397d6c2c2",
+      "size": 20293
+    },
+    {
+      "git_blob_sha1": "21ddf08637e3a586f8e007fe2a0de4560409d281",
+      "path": "src/adapters/shared.py",
+      "role": "offline_builder",
+      "sha256": "571dde74420796e4e78c76be6fc2055506b65449b22f218a0216055594b0ad48",
+      "size": 3973
+    },
+    {
+      "git_blob_sha1": "cbc60ac000f79b5ca7b55b7214aa7bf7c267ef0d",
+      "path": "tests/test_offline_build.py",
+      "role": "upstream_catalog_test",
+      "sha256": "f9324696c3a059c195a2e0fb0f1791f78ebd5035bcafc7b0817b9623b44e399b",
+      "size": 4095
+    }
+  ],
+  "genres": [
+    {
+      "aliases": [
+        "公告"
+      ],
+      "category": "法定公文",
+      "description": "向国内外宣布重要事项或者法定事项。",
+      "display_name": "公告",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "announcement",
+      "local_sha256": "7d2796e18e437c9c12e733aabe080c09b53d4ce5c807bd495fc41d6d4e07f56c",
+      "meta_path": "prompts/doc-types/announcement-公告/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/announcement-公告/system_prompt.md",
+      "ruleset_hash": "7d2796e18e437c9c12e733aabe080c09b53d4ce5c807bd495fc41d6d4e07f56c",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/announcement",
+      "source_path": "prompts/doc-types/announcement-公告/spec.md",
+      "template_path": "assets/templates/announcement.md",
+      "title": "公告",
+      "upstream_genre_id": "announcement"
+    },
+    {
+      "aliases": [
+        "批复"
+      ],
+      "category": "法定公文",
+      "description": "用于答复下级机关请示事项。",
+      "display_name": "批复",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "approval",
+      "local_sha256": "9714cdd0bc9fd8375f94bd0812de539dbc983eba139101f192d38f37df3c0a83",
+      "meta_path": "prompts/doc-types/approval-批复/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/approval-批复/system_prompt.md",
+      "ruleset_hash": "9714cdd0bc9fd8375f94bd0812de539dbc983eba139101f192d38f37df3c0a83",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/approval",
+      "source_path": "prompts/doc-types/approval-批复/spec.md",
+      "template_path": "assets/templates/approval.md",
+      "title": "批复",
+      "upstream_genre_id": "approval"
+    },
+    {
+      "aliases": [
+        "简报",
+        "信息简报",
+        "新闻简报"
+      ],
+      "category": "常见正式材料",
+      "description": "用于简要报送动态、会议情况、阶段成果和新闻整理。",
+      "display_name": "简报",
+      "font_profile": "internal-readable",
+      "layout_profile": "internal-readable",
+      "local_genre_id": "briefing",
+      "local_sha256": "6ea7ec2a8aa16d675440593d1bd4aae0a60c37cd31f564cc425b60336ef575f2",
+      "meta_path": "prompts/doc-types/briefing-简报/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/briefing-简报/system_prompt.md",
+      "ruleset_hash": "6ea7ec2a8aa16d675440593d1bd4aae0a60c37cd31f564cc425b60336ef575f2",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/briefing",
+      "source_path": "prompts/doc-types/briefing-简报/spec.md",
+      "template_path": "assets/templates/briefing.md",
+      "title": "简报",
+      "upstream_genre_id": "briefing"
+    },
+    {
+      "aliases": [
+        "通报"
+      ],
+      "category": "法定公文",
+      "description": "用于表彰先进、批评错误或传达重要情况。",
+      "display_name": "通报",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "circular",
+      "local_sha256": "9a0e183d6c6eb2e5297c10d3767684d96d70e8d7358509adb572b8b65f4a9012",
+      "meta_path": "prompts/doc-types/circular-通报/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/circular-通报/system_prompt.md",
+      "ruleset_hash": "9a0e183d6c6eb2e5297c10d3767684d96d70e8d7358509adb572b8b65f4a9012",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/circular",
+      "source_path": "prompts/doc-types/circular-通报/spec.md",
+      "template_path": "assets/templates/circular.md",
+      "title": "通报",
+      "upstream_genre_id": "circular"
+    },
+    {
+      "aliases": [
+        "公报"
+      ],
+      "category": "法定公文",
+      "description": "公开发布重要决定、重大事项或重要会议情况。",
+      "display_name": "公报",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "communique",
+      "local_sha256": "d5cdc525b7d5249a42a3bbf523f4398c7861149dd878d3f9942d9622a3a92318",
+      "meta_path": "prompts/doc-types/communique-公报/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/communique-公报/system_prompt.md",
+      "ruleset_hash": "d5cdc525b7d5249a42a3bbf523f4398c7861149dd878d3f9942d9622a3a92318",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/communique",
+      "source_path": "prompts/doc-types/communique-公报/spec.md",
+      "template_path": "assets/templates/communique.md",
+      "title": "公报",
+      "upstream_genre_id": "communique"
+    },
+    {
+      "aliases": [
+        "决定"
+      ],
+      "category": "法定公文",
+      "description": "对重要事项作出部署、奖惩、处理或调整。",
+      "display_name": "决定",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "decision",
+      "local_sha256": "95e5fb38d0d68569f899a29716bc8e1c863b99954a3d3f4ab4a2f51e85c6a546",
+      "meta_path": "prompts/doc-types/decision-决定/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/decision-决定/system_prompt.md",
+      "ruleset_hash": "95e5fb38d0d68569f899a29716bc8e1c863b99954a3d3f4ab4a2f51e85c6a546",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/decision",
+      "source_path": "prompts/doc-types/decision-决定/spec.md",
+      "template_path": "assets/templates/decision.md",
+      "title": "决定",
+      "upstream_genre_id": "decision"
+    },
+    {
+      "aliases": [
+        "函"
+      ],
+      "category": "法定公文",
+      "description": "用于平行机关或不相隶属机关之间商洽、询问、答复。",
+      "display_name": "函",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "letter",
+      "local_sha256": "0c4805b4e9e6f20b5af135105fdbe440d6b8f562b98df45033b59af495da0f0f",
+      "meta_path": "prompts/doc-types/letter-函/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/letter-函/system_prompt.md",
+      "ruleset_hash": "0c4805b4e9e6f20b5af135105fdbe440d6b8f562b98df45033b59af495da0f0f",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/letter",
+      "source_path": "prompts/doc-types/letter-函/spec.md",
+      "template_path": "assets/templates/letter.md",
+      "title": "函",
+      "upstream_genre_id": "letter"
+    },
+    {
+      "aliases": [
+        "纪要",
+        "会议纪要"
+      ],
+      "category": "法定公文",
+      "description": "用于记载会议主要情况和议定事项。",
+      "display_name": "纪要",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "minutes",
+      "local_sha256": "f6dcf578df85d86bec32c94da267a4d72dd1972c4dbd24d07c2471171daa954d",
+      "meta_path": "prompts/doc-types/minutes-纪要/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/minutes-纪要/system_prompt.md",
+      "ruleset_hash": "f6dcf578df85d86bec32c94da267a4d72dd1972c4dbd24d07c2471171daa954d",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/minutes",
+      "source_path": "prompts/doc-types/minutes-纪要/spec.md",
+      "template_path": "assets/templates/minutes.md",
+      "title": "纪要",
+      "upstream_genre_id": "minutes"
+    },
+    {
+      "aliases": [
+        "议案"
+      ],
+      "category": "法定公文",
+      "description": "具有特定法定主体和程序要求的议案。",
+      "display_name": "议案",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "motion",
+      "local_sha256": "9f9262003ffe89512ee2da434de9f3ebf3a9b6020701e8a5fd4e742dec096efb",
+      "meta_path": "prompts/doc-types/motion-议案/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/motion-议案/system_prompt.md",
+      "ruleset_hash": "9f9262003ffe89512ee2da434de9f3ebf3a9b6020701e8a5fd4e742dec096efb",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/motion",
+      "source_path": "prompts/doc-types/motion-议案/spec.md",
+      "template_path": "assets/templates/motion.md",
+      "title": "议案",
+      "upstream_genre_id": "motion"
+    },
+    {
+      "aliases": [
+        "通知"
+      ],
+      "category": "法定公文",
+      "description": "用于发布、传达、转发事项或安排部署工作。",
+      "display_name": "通知",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "notice",
+      "local_sha256": "f590f3a5249d422c7bebb0aa80c464baa1f93b2e347e76e87fea537c272e74bf",
+      "meta_path": "prompts/doc-types/notice-通知/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/notice-通知/system_prompt.md",
+      "ruleset_hash": "f590f3a5249d422c7bebb0aa80c464baa1f93b2e347e76e87fea537c272e74bf",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/notice",
+      "source_path": "prompts/doc-types/notice-通知/spec.md",
+      "template_path": "assets/templates/notice.md",
+      "title": "通知",
+      "upstream_genre_id": "notice"
+    },
+    {
+      "aliases": [
+        "意见"
+      ],
+      "category": "法定公文",
+      "description": "对重要问题提出见解和处理办法。",
+      "display_name": "意见",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "opinion",
+      "local_sha256": "944ed82db73e2832f134b684d5db37ef7cad1680f4f2a9a850cefb4a0f6ba3ad",
+      "meta_path": "prompts/doc-types/opinion-意见/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/opinion-意见/system_prompt.md",
+      "ruleset_hash": "944ed82db73e2832f134b684d5db37ef7cad1680f4f2a9a850cefb4a0f6ba3ad",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/opinion",
+      "source_path": "prompts/doc-types/opinion-意见/spec.md",
+      "template_path": "assets/templates/opinion.md",
+      "title": "意见",
+      "upstream_genre_id": "opinion"
+    },
+    {
+      "aliases": [
+        "命令",
+        "令",
+        "命令令"
+      ],
+      "category": "法定公文",
+      "description": "用于公布规章、施行重大强制性措施等。",
+      "display_name": "命令（令）",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "order",
+      "local_sha256": "38c304e0a809194a2490a78d921a570c0135d875a4ffaf0e83584b6dfcf62857",
+      "meta_path": "prompts/doc-types/order-命令（令）/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/order-命令（令）/system_prompt.md",
+      "ruleset_hash": "38c304e0a809194a2490a78d921a570c0135d875a4ffaf0e83584b6dfcf62857",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/order",
+      "source_path": "prompts/doc-types/order-命令（令）/spec.md",
+      "template_path": "assets/templates/order.md",
+      "title": "命令（令）",
+      "upstream_genre_id": "order"
+    },
+    {
+      "aliases": [
+        "汇报材料",
+        "汇报稿"
+      ],
+      "category": "常见正式材料",
+      "description": "用于向领导、检查组或上级进行阶段性工作汇报。",
+      "display_name": "汇报材料",
+      "font_profile": "internal-readable",
+      "layout_profile": "internal-readable",
+      "local_genre_id": "report",
+      "local_sha256": "b19ad7ba4def1ee2c5008a2d35d4d03d967c747464e9d841efb9577bb492ad0e",
+      "meta_path": "prompts/doc-types/presentation-汇报材料/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/presentation-汇报材料/system_prompt.md",
+      "ruleset_hash": "b19ad7ba4def1ee2c5008a2d35d4d03d967c747464e9d841efb9577bb492ad0e",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/presentation",
+      "source_path": "prompts/doc-types/presentation-汇报材料/spec.md",
+      "template_path": "assets/templates/presentation.md",
+      "title": "汇报材料",
+      "upstream_genre_id": "presentation"
+    },
+    {
+      "aliases": [
+        "通告"
+      ],
+      "category": "法定公文",
+      "description": "在一定范围内公布应当遵守或者周知的事项。",
+      "display_name": "通告",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "public-notice",
+      "local_sha256": "4e4e26b0202dd3402553b79eb1c584bb79390b0806ddb379afa7a21e86634848",
+      "meta_path": "prompts/doc-types/public-notice-通告/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/public-notice-通告/system_prompt.md",
+      "ruleset_hash": "4e4e26b0202dd3402553b79eb1c584bb79390b0806ddb379afa7a21e86634848",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/public-notice",
+      "source_path": "prompts/doc-types/public-notice-通告/spec.md",
+      "template_path": "assets/templates/public-notice.md",
+      "title": "通告",
+      "upstream_genre_id": "public-notice"
+    },
+    {
+      "aliases": [
+        "回复函",
+        "复函"
+      ],
+      "category": "常见正式材料",
+      "description": "用于对来函、来文、咨询事项作出正式回复。",
+      "display_name": "回复函",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "reply",
+      "local_sha256": "cb967faff0033650843fee645246dd61d0e236afd35fa7497e933eb857f402ad",
+      "meta_path": "prompts/doc-types/reply-回复函/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/reply-回复函/system_prompt.md",
+      "ruleset_hash": "cb967faff0033650843fee645246dd61d0e236afd35fa7497e933eb857f402ad",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/reply",
+      "source_path": "prompts/doc-types/reply-回复函/spec.md",
+      "template_path": "assets/templates/reply.md",
+      "title": "回复函",
+      "upstream_genre_id": "reply"
+    },
+    {
+      "aliases": [
+        "报告"
+      ],
+      "category": "法定公文",
+      "description": "用于向上级汇报工作、反映情况、回复询问。",
+      "display_name": "报告",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "statutory_report",
+      "local_sha256": "78ce0ecca0a495dbdeda594b08d4909bee1d6c1f6476a90bf105f1e97a6861a2",
+      "meta_path": "prompts/doc-types/report-报告/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/report-报告/system_prompt.md",
+      "ruleset_hash": "78ce0ecca0a495dbdeda594b08d4909bee1d6c1f6476a90bf105f1e97a6861a2",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/report",
+      "source_path": "prompts/doc-types/report-报告/spec.md",
+      "template_path": "assets/templates/report.md",
+      "title": "报告",
+      "upstream_genre_id": "report"
+    },
+    {
+      "aliases": [
+        "请示"
+      ],
+      "category": "法定公文",
+      "description": "用于向上级请求指示、批准。",
+      "display_name": "请示",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "request",
+      "local_sha256": "f9bbaca88e69057fc12d185a7399008540a03f93882fbc481b951a33c4cf42cc",
+      "meta_path": "prompts/doc-types/request-请示/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/request-请示/system_prompt.md",
+      "ruleset_hash": "f9bbaca88e69057fc12d185a7399008540a03f93882fbc481b951a33c4cf42cc",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/request",
+      "source_path": "prompts/doc-types/request-请示/spec.md",
+      "template_path": "assets/templates/request.md",
+      "title": "请示",
+      "upstream_genre_id": "request"
+    },
+    {
+      "aliases": [
+        "决议"
+      ],
+      "category": "法定公文",
+      "description": "会议讨论通过的重要决策事项。",
+      "display_name": "决议",
+      "font_profile": "official-standard",
+      "layout_profile": "official-standard",
+      "local_genre_id": "resolution",
+      "local_sha256": "4a0ebc131bb61d37bd0a083a1648622ea870d0aa7ecb43179b05560cbb508960",
+      "meta_path": "prompts/doc-types/resolution-决议/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/resolution-决议/system_prompt.md",
+      "ruleset_hash": "4a0ebc131bb61d37bd0a083a1648622ea870d0aa7ecb43179b05560cbb508960",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/resolution",
+      "source_path": "prompts/doc-types/resolution-决议/spec.md",
+      "template_path": "assets/templates/resolution.md",
+      "title": "决议",
+      "upstream_genre_id": "resolution"
+    },
+    {
+      "aliases": [
+        "情况专报",
+        "信息专报",
+        "舆情专报",
+        "专报"
+      ],
+      "category": "常见正式材料",
+      "description": "用于向领导或上级报送专题信息、风险情况和舆情态势。",
+      "display_name": "情况专报",
+      "font_profile": "internal-readable",
+      "layout_profile": "internal-readable",
+      "local_genre_id": "special-report",
+      "local_sha256": "76c35c2769002b80b906444f628983cf11b82b9a2d5fec6e88779b8ffcf9ba40",
+      "meta_path": "prompts/doc-types/special-report-情况专报/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/special-report-情况专报/system_prompt.md",
+      "ruleset_hash": "76c35c2769002b80b906444f628983cf11b82b9a2d5fec6e88779b8ffcf9ba40",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/special-report",
+      "source_path": "prompts/doc-types/special-report-情况专报/spec.md",
+      "template_path": "assets/templates/special-report.md",
+      "title": "情况专报",
+      "upstream_genre_id": "special-report"
+    },
+    {
+      "aliases": [
+        "讲话稿",
+        "发言稿"
+      ],
+      "category": "常见正式材料",
+      "description": "用于领导讲话、会议发言、动员部署和总结点评。",
+      "display_name": "讲话稿",
+      "font_profile": "speech-readable",
+      "layout_profile": "speech-readable",
+      "local_genre_id": "speech",
+      "local_sha256": "b35a5426196f576f5bf323352ddd905766525f704f2527d06f16b13ec9fe178c",
+      "meta_path": "prompts/doc-types/speech-讲话稿/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/speech-讲话稿/system_prompt.md",
+      "ruleset_hash": "b35a5426196f576f5bf323352ddd905766525f704f2527d06f16b13ec9fe178c",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/speech",
+      "source_path": "prompts/doc-types/speech-讲话稿/spec.md",
+      "template_path": "assets/templates/speech.md",
+      "title": "讲话稿",
+      "upstream_genre_id": "speech"
+    },
+    {
+      "aliases": [
+        "工作总结",
+        "总结",
+        "总结材料"
+      ],
+      "category": "常见正式材料",
+      "description": "用于阶段性复盘、年度总结、专项工作总结。",
+      "display_name": "工作总结",
+      "font_profile": "internal-readable",
+      "layout_profile": "internal-readable",
+      "local_genre_id": "work_summary",
+      "local_sha256": "80c99367127e6eabca3a5329ec745bcd5bad46734b10aa577a478f4627f858b1",
+      "meta_path": "prompts/doc-types/summary-工作总结/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/summary-工作总结/system_prompt.md",
+      "ruleset_hash": "80c99367127e6eabca3a5329ec745bcd5bad46734b10aa577a478f4627f858b1",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/summary",
+      "source_path": "prompts/doc-types/summary-工作总结/spec.md",
+      "template_path": "assets/templates/summary.md",
+      "title": "工作总结",
+      "upstream_genre_id": "summary"
+    },
+    {
+      "aliases": [
+        "工作方案",
+        "实施方案",
+        "方案"
+      ],
+      "category": "常见正式材料",
+      "description": "用于专项行动、阶段性工作、制度落地和项目推进。",
+      "display_name": "工作方案",
+      "font_profile": "internal-readable",
+      "layout_profile": "internal-readable",
+      "local_genre_id": "work-plan",
+      "local_sha256": "1cb1cf8437562a603f6546f25d568fdb46adca74deae5e53ac45683de0aaee2c",
+      "meta_path": "prompts/doc-types/work-plan-工作方案/meta.toml",
+      "prompt_path": "dist/offline/default/doc-types/work-plan-工作方案/system_prompt.md",
+      "ruleset_hash": "1cb1cf8437562a603f6546f25d568fdb46adca74deae5e53ac45683de0aaee2c",
+      "ruleset_id": "zhaohui-yang/official-document-drafting@6b4166a50b96733684b36da6336ea85a847cf3be/offline/default/work-plan",
+      "source_path": "prompts/doc-types/work-plan-工作方案/spec.md",
+      "template_path": "assets/templates/work-plan.md",
+      "title": "工作方案",
+      "upstream_genre_id": "work-plan"
+    }
+  ],
+  "license_path": "LICENSE",
+  "license_sha256": "2d8ba6968842d2d058a2f1f02f8a5252603e32124d79b684edf2ca119acd6a38",
+  "local_snapshot_path": "backend/vendor/official_document_drafting/6b4166a50b96733684b36da6336ea85a847cf3be",
+  "schema_version": 1,
+  "upstream_commit": "6b4166a50b96733684b36da6336ea85a847cf3be",
+  "upstream_license": "MIT",
+  "upstream_repository": "https://github.com/zhaohui-yang/official-document-drafting",
+  "upstream_tree": "b649efe9a575dcf86cd1428b18605216b7260a63"
+}
