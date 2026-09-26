@@ -3,6 +3,7 @@ from pathlib import Path
 
 from .contracts import DraftingRules, GenreAdapter, GenreCapabilities, StructureContract
 from .work_summary_retrieval import WORK_SUMMARY_RETRIEVAL_PROFILE
+from .work_summary_commercial import WORK_SUMMARY_COMMERCIAL_CONTRACT
 
 
 def _evaluate_quality(candidate, citations, facts):
@@ -32,4 +33,5 @@ WORK_SUMMARY_ADAPTER = GenreAdapter(
     quality_contract_id="work_summary_quality_contract", quality_evaluator=_evaluate_quality,
     capabilities=GenreCapabilities(status="VERIFIED_CORE_GENRE", production_ready=True,
                                    offline_architecture_proof=True),
+    commercial=WORK_SUMMARY_COMMERCIAL_CONTRACT,
 )

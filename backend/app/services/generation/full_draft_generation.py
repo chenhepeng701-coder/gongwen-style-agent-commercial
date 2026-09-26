@@ -23,7 +23,7 @@ from app.services.generation.official_document_drafting import build_full_draft_
 from app.services.generation.full_article_candidate_adapter import import_full_article, propose_exact_citations
 from app.services.generation.flow3_v3_trace import evaluate_full_article_facts
 from app.services.generation.full_article_quality import evaluate_full_article_quality
-from app.services.generation.genres.registry import resolve_genre
+from app.services.generation.commercial_genre_runtime import CommercialGenreRuntime
 from app.services.generation.delivery_decision import full_article_review_result, full_article_unchecked_result
 from app.services.flow4.handoff import build_full_article_handoff
 from app.services.flow4.renderer import render_full_article
@@ -170,10 +170,13 @@ def prepare_full_draft_material(request):
     # Only the existing task normalization is reused from generator. In
     # particular prepare_flow3_v33_structured_generation is never entered.
     from app.services.generation.generator import build_official_draft_task
+    runtime = CommercialGenreRuntime.admit(request.document_type, request.export_format)
     task = build_official_draft_task(request)
-    retrieval = retrieve_documents(task, persist_trace=False)
+    retrieval = retrieve_documents(task, persist_trace=False,
+                                   retrieval_profile=runtime.adapter.retrieval_profile)
     assets = read_selected_material_assets(retrieval)
     assembly = assemble_task_from_assets(request, retrieval, assets)
+    runtime.validate_packet(assembly.packet)
     _capture_material_traces(retrieval, assembly)
     return assembly.packet
 
@@ -187,7 +190,8 @@ async def generate_full_draft(request):
     if request.generation_route != "full_article_drafting":
         raise FullArticleContractError("FULL_DRAFT_EXPLICIT_ROUTE_REQUIRED")
     started = time.perf_counter()
-    genre = resolve_genre(request.document_type, purpose="production")
+    runtime = CommercialGenreRuntime.admit(request.document_type, request.export_format)
+    genre = runtime.adapter
     reference_pack = (load_writing_reference_pack()
                       if genre.drafting_rules.reference_policy == "case32" else None)
     reference_hash = reference_pack.sha256 if reference_pack else ""
@@ -197,8 +201,7 @@ async def generate_full_draft(request):
         packet = prepare_full_draft_material(request)
     finally:
         _material_traces.reset(token)
-    if not packet.brief_json:
-        raise FullArticleContractError("FULL_DRAFT_TASK_ASSEMBLY_REQUIRED")
+    runtime.validate_packet(packet)
     provider = get_llm_provider()
     if not isinstance(provider, OpenAICompatibleProvider) or not provider.config.model.lower().startswith("qwen"):
         raise FullArticleContractError("FULL_DRAFT_CURRENT_QWEN_PROVIDER_REQUIRED")
@@ -212,7 +215,9 @@ async def generate_full_draft(request):
                   "retry_limit": 0, "fallback_used": False, "status": "PREPARED",
                   "material_preparation": "deterministic_task_assembly",
                   "run_id": root.name, "writer_trace": TRACE_FILENAME,
-                  "REFERENCE_PACK_SHA256": reference_hash}
+                  "REFERENCE_PACK_SHA256": reference_hash,
+                  "commercial_runtime": runtime.diagnostics(),
+                  "canonical_fact_status": "NOT_RUN"}
     _save_json(root, "call_accounting.json", accounting)
 
     def attempted(attempt):
@@ -233,12 +238,13 @@ async def generate_full_draft(request):
         _save_json(root, "prompt_manifest.json", {
             **{k: v for k, v in prompt.items() if k not in {"system", "user"}},
             "REFERENCE_PACK_SHA256": reference_hash})
+        call_options = runtime.claim_writer_call()
         accounting["writer_calls"] = 1
         # Only the verified exact Flash model opts in; other Qwen calls stay unchanged.
         writer_options = {"reasoning_effort": "low"} if provider.config.model == "qwen3.8-flash" else {}
         with observe_writer_call(root):
             raw = provider.generate_text(prompt["user"], system_prompt=prompt["system"],
-                temperature=request.temperature, retry_limit=0, preserve_whitespace=True,
+                temperature=request.temperature, **call_options,
                 on_http_request_attempt=attempted, **writer_options)
         # First operation on a returned article: persist exact UTF-8 bytes,
         # before validation, Markdown indexing, citations, checks or export.
@@ -258,7 +264,9 @@ async def generate_full_draft(request):
         try:
             citations = propose_exact_citations(candidate)
             facts = evaluate_full_article_facts(candidate, citations)
+            accounting["canonical_fact_status"] = json.loads(facts.result_json)["status"]
             quality = evaluate_full_article_quality(candidate, citations, facts)
+            runtime.require_no_recovery()
             _save_json(root, "citations.json", citations.model_dump())
             _save_json(root, "fact_report.json", facts.model_dump())
             _save_json(root, "quality_report.json", quality.model_dump())
@@ -282,8 +290,7 @@ async def generate_full_draft(request):
         result.delivery_warnings.extend(warnings)
         if result.delivery_decision:
             result.delivery_decision.delivery_warnings.extend(warnings)
-        if result.article_markdown != raw:
-            raise FullArticleContractError("FULL_DRAFT_BODY_CHANGED_DURING_DELIVERY")
+        runtime.require_delivery_body(raw, result.article_markdown)
         (root / "FINAL_DELIVERED_ARTICLE.md").write_bytes(result.article_markdown.encode("utf-8"))
         _save_json(root, "api_result.json", result.model_dump())
         accounting["status"] = result.delivery_status

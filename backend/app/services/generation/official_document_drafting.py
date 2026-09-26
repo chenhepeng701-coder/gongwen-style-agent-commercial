@@ -88,6 +88,8 @@ def _genre_user_prompt(instruction: str, materials: str, adapter) -> str:
 
 
 def build_full_draft_prompt(packet):
+    from app.services.generation.commercial_genre_runtime import planning_instruction
+
     task = json.loads(packet.task_json)
     adapter = resolve_genre(task.get("document_type", ""), purpose="inspection")
     rules = adapter.drafting_rules
@@ -99,7 +101,7 @@ def build_full_draft_prompt(packet):
                    + f"\n目标{task['target_words']}字，全文不超过{task['hard_max']}字。"
                    + "主送对象、单位全称和成文日期未提供时，按原文种规则处理缺口；不得猜测。正文标题正常校对。"
                    + f"\n采用任务指定的{task.get('level', '')}{task.get('org_type', '')}正式语域，输出完整Markdown正文，不导出Word。"
-                   + "在此篇幅和事实边界内按上游规则自主安排繁简、主次和结构，不先输出提纲。")
+                   + planning_instruction(adapter.document_type))
     user = _genre_user_prompt(instruction, "### 素材文件：./materials.md\n\n" + packet.materials_markdown(), adapter)
     return {"system": system, "user": user, "ruleset_id": rules.ruleset_id,
             "ruleset_hash": rules.ruleset_hash, "host_boundary_hash": text_sha(boundary),

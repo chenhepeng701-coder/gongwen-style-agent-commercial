@@ -31,8 +31,16 @@ class GenreRegistry:
         adapter = self._identities.get(str(document_type or "").strip())
         if adapter is None:
             raise GenreResolutionError("GENRE_NOT_REGISTERED")
-        if purpose == "production" and not adapter.capabilities.production_ready:
-            raise GenreResolutionError("GENRE_OFFLINE_ONLY")
+        if purpose == "production":
+            from .contracts import GenreCapabilities
+            from .commercial_gate import CommercialAdmissionError, require_commercial_production
+            if (isinstance(adapter.capabilities, GenreCapabilities)
+                    and adapter.capabilities.production_ready is False):
+                raise GenreResolutionError("GENRE_OFFLINE_ONLY")
+            try:
+                require_commercial_production(adapter)
+            except CommercialAdmissionError as exc:
+                raise GenreResolutionError(exc.code) from exc
         if purpose == "offline" and not adapter.capabilities.offline_architecture_proof:
             raise GenreResolutionError("GENRE_OFFLINE_UNSUPPORTED")
         return adapter

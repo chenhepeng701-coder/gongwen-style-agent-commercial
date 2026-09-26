@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from .retrieval import RetrievalProfile
+from .commercial_contract import CommercialGenreContract
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,9 @@ class GenreAdapter:
     # Declarative restrictions only. Shared authority is mandatory and is not
     # an adapter field/callback. No UNKNOWN/scope/admission override exists.
     fact_policy_extensions: tuple[Literal["PRESERVE_PLAN_MODALITY"], ...] = ()
+    # Formal production requires this complete, independently admitted contract.
+    # Architecture-only adapters deliberately leave it absent.
+    commercial: CommercialGenreContract | None = None
 
     def __post_init__(self):
         if not all((self.genre_id, self.document_type, self.quality_contract_id,

@@ -13,16 +13,18 @@ import sys
 import tempfile
 
 
-def main():
+def main(*, workspace_relative="tmp/multi-genre-foundation",
+         task_name="MULTI-GENRE-FOUNDATION", count_label="MULTI_GENRE_OFFLINE_COUNTS",
+         require_user_manifest=False):
     backend = Path(__file__).resolve().parents[1]
     root = backend.parent
     sys.path.insert(0, str(backend))
     sys.dont_write_bytecode = True
     if "--real-run" in sys.argv:
-        raise SystemExit("MULTI-GENRE-FOUNDATION does not authorize real Run access")
+        raise SystemExit(task_name + " does not authorize real Run access")
     for variable in ("P3A_REAL_RUN_DIR", "P3B_REAL_RUN_DIR"):
         os.environ.pop(variable, None)
-    parent = root / "tmp/multi-genre-foundation"
+    parent = root / workspace_relative
     parent.mkdir(parents=True, exist_ok=True)
     runtime = Path(tempfile.mkdtemp(prefix="runtime-", dir=parent))
     counts = dict(external_network=0, real_embedding=0, real_model=0,
@@ -30,6 +32,8 @@ def main():
     protected = [backend / name for name in ("data", "uploads", "output", ".env")]
     protected.extend((root / ".env", root / "writing_style_library"))
     user_manifest = parent / "protected-user-files.json"
+    if require_user_manifest and not user_manifest.is_file():
+        raise SystemExit(task_name + " requires the initial protected user file manifest")
     user_files = set()
     if user_manifest.exists():
         user_files = {root / path for path in json.loads(user_manifest.read_text(encoding="utf-8-sig"))}
@@ -43,7 +47,7 @@ def main():
                 path = Path(os.fsdecode(value)).resolve()
                 if path in user_files or any(path == directory or directory in path.parents for directory in protected):
                     counts["forbidden_data_access"] += 1
-                    raise AssertionError("MULTI-GENRE-FOUNDATION forbids real or pre-existing user data access")
+                    raise AssertionError(task_name + " forbids real or pre-existing user data access")
         # Windows asyncio needs local socketpair IPC. No other socket is allowed.
         if event == "socket.connect":
             try:
@@ -59,7 +63,7 @@ def main():
                     frame = frame.f_back
         if event in {"socket.connect", "socket.getaddrinfo", "socket.gethostbyname", "socket.gethostbyaddr", "socket.sendto"}:
             counts["external_network"] += 1
-            raise AssertionError("MULTI-GENRE-FOUNDATION forbids network: " + event)
+            raise AssertionError(task_name + " forbids network: " + event)
 
     sys.addaudithook(audit)
     from app.utils import runtime_paths
@@ -70,11 +74,11 @@ def main():
 
     def forbidden_model(*args, **kwargs):
         counts["real_model"] += 1
-        raise AssertionError("MULTI-GENRE-FOUNDATION forbids real model calls")
+        raise AssertionError(task_name + " forbids real model calls")
 
     def forbidden_embedding(*args, **kwargs):
         counts["real_embedding"] += 1
-        raise AssertionError("MULTI-GENRE-FOUNDATION forbids real embedding calls")
+        raise AssertionError(task_name + " forbids real embedding calls")
 
     # Preserve real Provider serializers tested over explicit in-memory doubles;
     # block actual HTTP transport. TestClient and MockTransport remain offline.
@@ -84,7 +88,7 @@ def main():
     import pytest
     result = pytest.main([*sys.argv[1:], "--basetemp=" + str(runtime / "pytest"),
                           "-o", "cache_dir=" + str(runtime / "cache")])
-    print("MULTI_GENRE_OFFLINE_COUNTS=" + json.dumps(counts, sort_keys=True))
+    print(count_label + "=" + json.dumps(counts, sort_keys=True))
     (runtime / "call-counts.json").write_text(json.dumps(counts, indent=2), encoding="utf-8")
     return result if not any(value for key, value in counts.items() if key != "asyncio_socketpair_ipc") else 1
 

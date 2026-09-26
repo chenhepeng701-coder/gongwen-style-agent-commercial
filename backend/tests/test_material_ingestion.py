@@ -393,6 +393,7 @@ def test_each_api_batch_checks_count_before_concatenation(local, monkeypatch, di
 
 
 def test_protected_generation_retrieval_and_legacy_owners_unchanged():
+    from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, assert_commercial_genre_content
     from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
     from p1_ranking_approval import DOCUMENT_RETRIEVER_PATH, assert_p1_document_retriever
@@ -410,6 +411,9 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for file in files:
+        if file in COMMERCIAL_GENRE_CONTENT_SHA256:
+            assert_commercial_genre_content(root, file)
+            continue
         if file in P3B_CONTENT_SHA256:
             assert_p3b_content(root, file)
             continue

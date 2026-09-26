@@ -172,6 +172,7 @@ def test_existing_retrieval_trace_persistence_unchanged(monkeypatch, tmp_path):
 
 
 def test_retrieval_business_code_and_protected_owners_unchanged():
+    from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, assert_commercial_genre_content
     from p3a_semantic_approval import ATOMIC_EVIDENCE_PATH, assert_p3a_atomic_evidence
     from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
 
@@ -179,6 +180,9 @@ def test_retrieval_business_code_and_protected_owners_unchanged():
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/task_assembly.py",
                  "backend/app/services/generation/full_draft_material.py"):
+        if path in COMMERCIAL_GENRE_CONTENT_SHA256:
+            assert_commercial_genre_content(ROOT, path)
+            continue
         if path == ATOMIC_EVIDENCE_PATH:
             assert_p3a_atomic_evidence(ROOT)
             continue
