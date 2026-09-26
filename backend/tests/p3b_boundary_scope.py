@@ -18,4 +18,9 @@ P3B_CONTENT_SHA256 = {
 
 def assert_p3b_content(root: Path, path: str) -> None:
     content = (root / path).read_bytes().replace(b"\r\n", b"\n")
-    assert sha256(content).hexdigest() == P3B_CONTENT_SHA256[path], path + " differs from exact P3-B scope content"
+    if sha256(content).hexdigest() == P3B_CONTENT_SHA256[path]:
+        return
+    # Keep every P3-B pin. Permit only explicitly pinned multi-genre wiring;
+    # the canonical Fact authority and candidate adapter remain byte-identical.
+    from multi_genre_scope import assert_multi_genre_content
+    assert_multi_genre_content(root, path, message=path + " differs from exact P3-B scope content")

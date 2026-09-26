@@ -7,11 +7,13 @@ import logging
 import re
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import fmean
 from typing import Any, Mapping
 
+from app.services.generation.genres.retrieval import RetrievalProfile
 from app.services.retrieval.official_document_classifier import classify_document_role
 from app.services.retrieval.retriever import search_detailed
 from app.utils.runtime_paths import get_logs_dir
@@ -23,13 +25,6 @@ logger = logging.getLogger(__name__)
 
 RELEVANCE_THRESHOLD = 0.50
 RAW_CANDIDATE_LIMIT = 200
-# Work-summary fact sources need document coverage, not a fixed semantic Top-K.
-# Six remains only a relevance seed; the final primary budget is derived from
-# the document's clean structural coverage and size.
-PRIMARY_RELEVANCE_SEED = 6
-PRIMARY_MIN_COVERAGE_CHUNKS = 8
-PRIMARY_MAX_COVERAGE_CHUNKS = 24
-AUXILIARY_CHUNK_BUDGET = 2
 PRIMARY_TEXT_LIMIT = 800
 AUXILIARY_TEXT_LIMIT = 300
 MAX_AUXILIARY_DOCUMENTS = 2
@@ -48,26 +43,6 @@ _GENERIC_TOPIC_TERMS = (
     "工作", "会议", "讲话", "报告", "材料", "全市", "全县", "全区",
     "全镇", "单位", "部门", "相关", "进行", "推进",
 )
-_FACT_COMPLETION_RE = re.compile(
-    r"(?:截至|累计|已经|已完成|完成了|建立了|制定了|开展了|组织开展|落实了|推进了|"
-    r"实现了|达到了|通过了|整改销号|排查发现|治理完成|建成|形成了)"
-)
-_FACT_RESULT_RE = re.compile(r"(?:成效|进展|结果|完成率|覆盖率|同比|提升|下降|销号率|持证上岗率)")
-_UNRESOLVED_PLACEHOLDER_RE = re.compile(r"(?:[×Xx]{1,}|_{2,}|＿{2,})")
-_PROBLEM_SECTION_RE = re.compile(r"(?:问题|不足|短板|差距|制约|瓶颈|未完成|尚未)")
-_FUTURE_SECTION_RE = re.compile(
-    r"(?:下一步|下阶段|下半年|工作打算|工作计划|工作措施|工作安排|部署要求|后续)"
-)
-_ACHIEVEMENT_SECTION_RE = re.compile(r"(?:总体|成绩|成效|成果|完成情况|进展|结果|态势)")
-_FACT_ROLE_BONUS = {
-    "result": 0.20,
-    "progress": 0.18,
-    "data": 0.18,
-    "mixed": 0.10,
-    "measure": 0.04,
-    "problem": 0.12,
-    "responsibility": 0.02,
-}
 _RESULT_KEYS = (
     "doc_id", "title", "file_path", "chunk_index", "chunk_text", "score",
     "score_type", "vector_score", "chunk_id", "source_file", "metadata",
@@ -450,33 +425,27 @@ def _selected_chunk(
     }
 
 
-def _chunk_coverage_role(candidate: Mapping[str, Any]) -> str:
-    metadata = _metadata(candidate)
-    content_role = _clean(candidate.get("content_role") or metadata.get("content_role")).lower()
-    heading = _clean(candidate.get("section_heading") or metadata.get("section_heading"))
-    section_path = " ".join(str(value) for value in (metadata.get("section_path") or []))
-    context = f"{section_path} {heading}".strip()
-    text = _clean(candidate.get("chunk_text"))
-    if _FUTURE_SECTION_RE.search(context):
-        return "next_step"
-    if content_role == "problem" or _PROBLEM_SECTION_RE.search(context):
-        return "problem"
-    if content_role in {"result", "progress", "data", "mixed"} or _ACHIEVEMENT_SECTION_RE.search(context):
-        return "achievement_status"
-    if content_role in {"measure", "responsibility"} or _FACT_COMPLETION_RE.search(text):
-        return "major_work"
-    return "context"
+def _coverage_role(candidate: Mapping[str, Any], profile: RetrievalProfile) -> str:
+    # Profiles are trusted reading policies, but accidental edits must never
+    # flow back into the raw candidate that later becomes Atomic input.
+    return profile.classify_coverage(deepcopy(candidate))
 
 
-def _primary_coverage_selection(document: Mapping[str, Any]) -> list[tuple[dict[str, Any], str, str]]:
-    ranked = _rank_chunks_for_document(document)
+def _chunk_preference(candidate: Mapping[str, Any], profile: RetrievalProfile) -> float:
+    return profile.chunk_preference(deepcopy(candidate))
+
+
+def _primary_coverage_selection(
+    document: Mapping[str, Any], profile: RetrievalProfile,
+) -> list[tuple[dict[str, Any], str, str]]:
+    ranked = _rank_chunks_for_document(document, profile)
     # Retrieval preserves document coverage.  Placeholder-bearing propositions
     # are removed at Atomic Evidence granularity so other legal facts in the
     # same chunk are not discarded with them.
     clean_ranked = ranked
-    if len(clean_ranked) <= PRIMARY_MIN_COVERAGE_CHUNKS:
+    if len(clean_ranked) <= profile.primary_min_coverage_chunks:
         return [
-            (item, _chunk_coverage_role(item), "all_relevant_primary_chunks")
+            (item, _coverage_role(item, profile), "all_relevant_primary_chunks")
             for item in clean_ranked
         ]
 
@@ -490,16 +459,16 @@ def _primary_coverage_selection(document: Mapping[str, Any]) -> list[tuple[dict[
         selected_keys.add(key)
         selected.append((item, coverage_role, reason))
 
-    # First secure the content functions required by a work summary.  This is
+    # First secure the content functions required by the selected genre. This is
     # still relevance-bounded because every candidate belongs to the already
     # gated primary document.
-    for role in ("achievement_status", "major_work", "problem", "next_step"):
-        role_items = [item for item in clean_ranked if _chunk_coverage_role(item) == role]
-        for item in role_items[:2]:
+    for role in profile.coverage_roles:
+        role_items = [item for item in clean_ranked if _coverage_role(item, profile) == role]
+        for item in role_items[:profile.per_role_limit]:
             add(item, role, f"structure_coverage:{role}")
 
-    for item in clean_ranked[:PRIMARY_RELEVANCE_SEED]:
-        add(item, _chunk_coverage_role(item), "semantic_relevance_seed")
+    for item in clean_ranked[:profile.primary_relevance_seed]:
+        add(item, _coverage_role(item, profile), "semantic_relevance_seed")
 
     # Expand with distinct source sections before adding more same-theme hits.
     seen_sections = {
@@ -516,19 +485,19 @@ def _primary_coverage_selection(document: Mapping[str, Any]) -> list[tuple[dict[
         )
         if section_key in seen_sections:
             continue
-        add(item, _chunk_coverage_role(item), "distinct_primary_section")
+        add(item, _coverage_role(item, profile), "distinct_primary_section")
         seen_sections.add(section_key)
-        if len(selected) >= PRIMARY_MAX_COVERAGE_CHUNKS:
+        if len(selected) >= profile.primary_max_coverage_chunks:
             break
 
     dynamic_budget = min(
-        PRIMARY_MAX_COVERAGE_CHUNKS,
-        max(PRIMARY_MIN_COVERAGE_CHUNKS, len(clean_ranked) - len(clean_ranked) // 3),
+        profile.primary_max_coverage_chunks,
+        max(profile.primary_min_coverage_chunks, len(clean_ranked) - len(clean_ranked) // 3),
     )
     for item in clean_ranked:
         if len(selected) >= dynamic_budget:
             break
-        add(item, _chunk_coverage_role(item), "primary_document_coverage_fill")
+        add(item, _coverage_role(item, profile), "primary_document_coverage_fill")
     return selected
 
 
@@ -537,7 +506,7 @@ def _select_chunks(
     auxiliaries: list[dict[str, Any]],
     candidates: list[dict[str, Any]],
     *,
-    work_summary: bool,
+    profile: RetrievalProfile,
 ) -> list[dict[str, Any]]:
     raw_ranks = {
         (_clean(candidate.get("doc_id")), _clean(candidate.get("chunk_id")), int(candidate.get("chunk_index", 0) or 0)): rank
@@ -548,11 +517,11 @@ def _select_chunks(
         (
             primary,
             "primary",
-            _primary_coverage_selection(primary)
-            if work_summary
+            _primary_coverage_selection(primary, profile)
+            if profile.primary_coverage
             else [
-                (item, _chunk_coverage_role(item), "semantic_relevance")
-                for item in _rank_chunks_for_document(primary)[:PRIMARY_RELEVANCE_SEED]
+                (item, _coverage_role(item, profile), "semantic_relevance")
+                for item in _rank_chunks_for_document(primary, profile)[:profile.primary_relevance_seed]
             ],
         ),
         *(
@@ -560,8 +529,8 @@ def _select_chunks(
                 document,
                 "auxiliary",
                 [
-                    (item, _chunk_coverage_role(item), "qualified_auxiliary_relevance")
-                    for item in _rank_chunks_for_document(document)[:AUXILIARY_CHUNK_BUDGET]
+                    (item, _coverage_role(item, profile), "qualified_auxiliary_relevance")
+                    for item in _rank_chunks_for_document(document, profile)[:profile.auxiliary_chunk_budget]
                 ],
             )
             for document in auxiliaries
@@ -590,43 +559,16 @@ def _select_chunks(
     return selected
 
 
-def _fact_chunk_bonus(candidate: Mapping[str, Any]) -> float:
-    metadata = _metadata(candidate)
-    content_role = _clean(candidate.get("content_role") or metadata.get("content_role")).lower()
-    text = _clean(candidate.get("chunk_text"))
-    heading = _clean(candidate.get("section_heading") or metadata.get("section_heading"))
-    section_path = " ".join(str(value) for value in (metadata.get("section_path") or []))
-    section_context = f"{section_path} {heading}".strip()
-    bonus = _FACT_ROLE_BONUS.get(content_role, 0.0)
-    if content_role == "problem" and int(metadata.get("section_level") or 0) >= 2:
-        bonus += 0.08
-    if content_role == "background":
-        bonus -= 0.06
-    if _FACT_COMPLETION_RE.search(text):
-        bonus += 0.12
-    if _FACT_RESULT_RE.search(text):
-        bonus += 0.05
-    if _FUTURE_SECTION_RE.search(section_context):
-        bonus -= 0.30
-    # A chunk carrying unresolved user placeholders can still provide style or
-    # structure, but it must not displace a clean factual chunk in the fixed
-    # primary evidence budget.
-    if _UNRESOLVED_PLACEHOLDER_RE.search(text):
-        bonus -= 0.40
-    return bonus
-
-
-def _rank_chunks_for_document(document: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _rank_chunks_for_document(
+    document: Mapping[str, Any], profile: RetrievalProfile,
+) -> list[dict[str, Any]]:
     chunks = list(document.get("_chunks") or [])
-    if not (
-        document.get("_requested_source_role") == "fact_source"
-        and document.get("_candidate_source_role") == "fact_source"
-    ):
+    if (document.get("_requested_source_role"), document.get("_candidate_source_role")) not in profile.chunk_preference_source_roles:
         return chunks
     return sorted(
         chunks,
         key=lambda item: (
-            -(_similarity(item) + _fact_chunk_bonus(item)),
+            -(_similarity(item) + _chunk_preference(item, profile)),
             -_similarity(item),
             int(item.get("chunk_index", 0) or 0),
             _clean(item.get("chunk_id")),
@@ -734,9 +676,14 @@ def retrieve_documents(
     *,
     persist_trace: bool = True,
     search_fn: Any = None,
+    retrieval_profile: RetrievalProfile | None = None,
 ) -> dict[str, Any]:
     """Return the locked Flow 2 document-level retrieval contract."""
     prepared = prepare_retrieval_request(task)
+    if retrieval_profile is None:
+        from app.services.generation.genres.registry import retrieval_profile_for
+
+        retrieval_profile = retrieval_profile_for(prepared["query_fields"]["document_type"])
     reference_scope = _normalized(prepared["query_fields"].get("reference_scope"))
     disabled_scopes = {_normalized(value) for value in _DISABLED_REFERENCE_SCOPES}
     if reference_scope in disabled_scopes:
@@ -807,8 +754,7 @@ def retrieve_documents(
                 primary,
                 auxiliaries,
                 candidates,
-                work_summary=str(getattr(task, "document_type", "") or "").strip()
-                == "工作总结",
+                profile=retrieval_profile,
             ),
             "rejected_documents": rejected_documents,
             "relevance_threshold": RELEVANCE_THRESHOLD,

@@ -390,7 +390,7 @@ def full_article_review_result(render_result, manifest=None):
     from app.models.generation import ArticleGenResult
     from app.services.generation.generator import count_official_draft_words
     from app.services.flow4.renderer import render_full_article
-    from app.services.generation.work_summary_quality_gate import evaluate_full_article_quality
+    from app.services.generation.full_article_quality import evaluate_full_article_quality
     rendered = render_full_article(render_result.handoff)
     if rendered != render_result:
         raise ValueError("FULL_ARTICLE_RENDER_CHANGED")

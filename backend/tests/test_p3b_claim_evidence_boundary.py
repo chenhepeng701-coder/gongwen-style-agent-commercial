@@ -14,7 +14,7 @@ from app.services.generation.full_article_candidate_adapter import import_full_a
 from app.services.generation import flow3_v3_trace as facts
 
 
-TASK = {"user_task": {"level": "乡镇 / 街道", "org_type": "党政机关", "target_words": 1200}}
+TASK = {"user_task": {"document_type": "工作总结", "level": "乡镇 / 街道", "org_type": "党政机关", "target_words": 1200}}
 
 
 def row(source, eid="EV-TEST-1", scope="S1", subject="", action="", obj="", state=None):
@@ -315,7 +315,12 @@ def test_p3b_touches_only_scoped_production_functions():
     for path in P3B_CONTENT_SHA256:
         assert_p3b_content(root, path)
         old = functions(subprocess.check_output(["git", "show", "cdf06f48f390925d3bbe2d3c9d13d67935f6b903:" + path], cwd=root))
-        new = functions((root / path).read_text(encoding="utf-8"))
+        from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, migration_base_source
+        # Validate the original P3-B-only delta against its unchanged approved
+        # source. Current migration wiring is independently exact-pinned by
+        # assert_p3b_content, with canonical fact and candidate bytes protected.
+        source = migration_base_source(root, path) if path in MULTI_GENRE_CONTENT_SHA256 else (root / path).read_bytes()
+        new = functions(source)
         assert {name for name in old.keys() | new.keys() if old.get(name) != new.get(name)} <= allowed[Path(path).name]
 
 

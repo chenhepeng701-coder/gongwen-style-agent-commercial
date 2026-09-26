@@ -219,7 +219,16 @@ def test_deterministic_ties_do_not_depend_on_raw_candidate_order():
 
 def test_only_document_aggregation_changes_in_production_owner():
     before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{OWNER_PATH}"], cwd=ROOT)
-    trees = [ast.parse(source) for source in (before, (ROOT / OWNER_PATH).read_bytes())]
+    from multi_genre_scope import assert_multi_genre_content, assert_p1_core_unchanged, migration_base_source
+    current = (ROOT / OWNER_PATH).read_bytes().replace(b"\r\n", b"\n")
+    migration_base = migration_base_source(ROOT, OWNER_PATH)
+    if current != migration_base:
+        assert_multi_genre_content(ROOT, OWNER_PATH)
+        assert_p1_core_unchanged(ROOT)
+    # The original pre-P1 oracle still proves the P1 delta exactly. This task's
+    # additional profile extraction is constrained above and by full payload
+    # parity tests; no historical source or expected ranking has been replaced.
+    trees = [ast.parse(source) for source in (before, migration_base)]
     for tree in trees:
         tree.body = [node for node in tree.body if not isinstance(node, ast.FunctionDef)
                      or node.name != "_aggregate_documents"]

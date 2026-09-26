@@ -1439,15 +1439,12 @@ def evaluate_full_article_quality(candidate, sidecar, fact_report):
     Display sections come only from Markdown positions. No process trace or
     evidence authority is inferred from them. Experimental M4 is not required.
     """
-    from app.models.full_article import article_blocks, article_units, bind_report, article_check_identity
-    from app.services.generation.flow3_v3_trace import require_full_article_fact_report
-    from app.services.generation.generator import count_official_draft_words, derive_final_delivery_length_gate
-    require_full_article_fact_report(candidate, sidecar, fact_report)
-    identity = article_check_identity(candidate)
-    facts = json.loads(fact_report.result_json)
-    blocks, units = article_blocks(candidate.content), article_units(candidate.content)
-    raw_task = json.loads(candidate.task_json)
-    task = raw_task.get("user_task", raw_task)
+    from app.models.full_article import bind_report
+    from app.services.generation.full_article_quality import full_article_quality_context
+    from app.services.generation.genres.registry import default_genre
+    context = full_article_quality_context(candidate, sidecar, fact_report)
+    identity, facts, task = context["identity"], context["facts"], context["task"]
+    blocks, units = context["blocks"], context["units"]
     sections = []
     for block in blocks:
         if block.level or not sections:
@@ -1478,21 +1475,7 @@ def evaluate_full_article_quality(candidate, sidecar, fact_report):
             if pattern.search(text):
                 signals.append({"unit_id": unit.unit_id, "start": unit.start, "end": unit.end,
                                 "signal": name, "status": "OBSERVATION_ONLY"})
-    measured = count_official_draft_words(candidate.content)
-    target = task.get("target_words")
-    length = {"target_words": target, "measured_article_characters": measured,
-              "count_basis": "count_official_draft_words(canonical_raw_content)",
-              "legacy_writer_hard_max": raw_task.get("hard_max"),
-              "legacy_budget_usage": "UNAVAILABLE_FOR_FULL_ARTICLE"}
-    length_status = "MANUAL_REVIEW_REQUIRED"
-    if type(target) is int and target > 0:
-        limits = derive_final_delivery_length_gate(target)
-        length.update(limits)
-        length_status = ("FAIL_OVER_LENGTH" if measured > limits["max_words"] else
-                         "MANUAL_REVIEW_REQUIRED" if measured < limits["min_words"] else "PASS")
-        length["under_length_policy"] = "REVIEW_WITHOUT_LEGACY_CAPACITY_MODE"
-        length["upper_limit_severity"] = "BLOCKING_QUALIFICATION_NOT_BODY_DELIVERY"
-        length["target_delta"] = measured - target
+    length, length_status = context["length"], context["length_status"]
     checks = []
     def add(check_id, result, evidence, evaluator, *, required=True, migration=""):
         inputs = {**identity, "fact_report_sha256": fact_report.result_sha256}
@@ -1518,7 +1501,7 @@ def evaluate_full_article_quality(candidate, sidecar, fact_report):
     add("semantic_task_and_evidence_coverage", "MANUAL_REVIEW_REQUIRED",
         {"task_requirement": task, "article_structure": [b.model_dump() for b in blocks],
          "fact_report_hash": fact_report.result_sha256}, "production_quality_ssot:assisted",
-        migration="按真实任务及证据检查全文的结构、工作链、问题和下一步；未分类句子不能伪装 FACT/ANALYSIS。")
+        migration=default_genre().structure_contract.maturity_review_instruction)
     add("baseline_genre_maturity_revision_cost", "MANUAL_REVIEW_REQUIRED",
         {"quality_contract": WORK_SUMMARY_QUALITY_CONTRACT_V1.contract_id,
          "manual_items": ["language_paragraph_maturity", "user_editing_cost", "high_unit_replaceability"]},
