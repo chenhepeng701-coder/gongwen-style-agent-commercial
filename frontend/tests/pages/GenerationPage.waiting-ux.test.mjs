@@ -155,12 +155,18 @@ function fakeClock(t) {
 const timer = page => textOf(page.find(node => node.props?.role === 'timer'))
 const waiting = page => page.find(node => node.props?.className === 'generation-page')
 const component = (page, name) => page.find(node => node.type?.name === name)
+const clickButton = (page, label) => {
+  const button = page.find(node => node.props?.onClick && textOf(node) === label)
+  assert.ok(button, `button must be available: ${label}`)
+  button.props.onClick()
+}
+const compactWaiting = page => page.find(node => node.props?.className?.includes('generation-wait-panel__content--compact'))
 const beginSingle = page => page.find(node => node.props?.className === 'write-generate-button').props.onClick()
 const draft = { title: '2026年安全生产工作总结', documentType: '工作总结', businessDomain: '安全生产' }
 
 test('waiting timer starts at zero and formats real elapsed seconds including hours', async t => {
   const clock = fakeClock(t)
-  const page = harness('GenerationPage', { loading: true, requestTitle: draft.title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: draft.title })
   t.after(() => page.unmount())
   await page.flush()
   assert.match(timer(page), /00:00/)
@@ -181,7 +187,7 @@ test('waiting timer starts at zero and formats real elapsed seconds including ho
 
 test('timer catches up to clock time after delayed interval delivery and cleans up on unmount', async t => {
   const clock = fakeClock(t)
-  const page = harness('GenerationPage', { loading: true, requestTitle: draft.title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: draft.title })
   await page.flush()
   t.mock.timers.setTime(Date.now() + 74_000)
   clock.tick(1000)
@@ -195,7 +201,7 @@ test('timer catches up to clock time after delayed interval delivery and cleans 
 
 test('StrictMode-equivalent effect replay leaves exactly one interval and clears it on exit', async t => {
   const clock = fakeClock(t)
-  const page = harness('GenerationPage', { loading: true, requestTitle: draft.title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: draft.title })
   await page.flush()
   assert.equal(clock.active.size, 1)
   page.replayEffects()
@@ -212,7 +218,7 @@ test('StrictMode-equivalent effect replay leaves exactly one interval and clears
 
 test('waiting hints change at 31 and 91 seconds without claiming a backend stage', async t => {
   const clock = fakeClock(t)
-  const page = harness('GenerationPage', { loading: true, requestTitle: draft.title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: draft.title })
   t.after(() => page.unmount())
   const hint = () => textOf(page.find(node => node.props?.className === 'generation-wait-hint'))
   await page.flush()
@@ -234,7 +240,7 @@ test('waiting hints change at 31 and 91 seconds without claiming a backend stage
 test('waiting content preserves title and exposes static steps without live timer announcements', async t => {
   const clock = fakeClock(t)
   const title = '  2026年安全生产工作总结（原始标题）  '
-  const page = harness('GenerationPage', { loading: true, requestTitle: title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: title })
   t.after(() => page.unmount())
   await page.flush()
   const output = page.text()
@@ -260,7 +266,7 @@ test('waiting content preserves title and exposes static steps without live time
 
 test('loading false removes waiting UI and a later request starts a fresh timer', async t => {
   const clock = fakeClock(t)
-  const page = harness('GenerationPage', { loading: true, requestTitle: draft.title })
+  const page = harness('GenerationPage', { loading: true, requestStartedAt: Date.now(), requestTitle: draft.title })
   t.after(() => page.unmount())
   await page.flush()
   clock.tick(9000)
@@ -270,7 +276,7 @@ test('loading false removes waiting UI and a later request starts a fresh timer'
   await page.flush()
   assert.equal(waiting(page), undefined)
   assert.equal(clock.active.size, 0)
-  page.update({ loading: true })
+  page.update({ loading: true, requestStartedAt: Date.now() })
   await page.flush()
   assert.match(timer(page), /00:00/)
   assert.equal(clock.active.size, 1)
@@ -320,31 +326,165 @@ test('actual failed request removes waiting UI and preserves the existing error 
   assert.equal(clock.active.size, 0)
 })
 
-test('return to writing parameters clears timer while keeping the same in-flight request', async t => {
+test('full -> compact -> full preserves one pending request, its payload and 01:00 -> 01:20 elapsed time', async t => {
   const clock = fakeClock(t)
   const page = harness('ArticleGenPage', { activePage: 'articleGen', articleGenDraft: draft })
   t.after(() => page.unmount())
   await page.flush()
   beginSingle(page)
   await page.flush()
-  clock.tick(5000)
+  const request = page.sent[0]
+  const originalPayload = structuredClone(request.payload)
+  const startedAt = component(page, 'GenerationWaitingIndicator').props.startedAt
+  clock.tick(60_000)
   await page.flush()
-  const returnButton = page.find(node => node.props?.onClick && textOf(node) === '返回写作参数')
-  assert.ok(returnButton)
-  returnButton.props.onClick()
+  assert.match(timer(page), /01:00/)
+  clickButton(page, '返回写作参数')
   await page.flush()
   assert.equal(waiting(page), undefined)
-  assert.equal(clock.active.size, 0)
-  clock.tick(10_000)
-  await page.flush()
+  assert.equal(page.props.activePage, 'articleGen')
+  assert.match(timer(page), /01:00/)
+  assert.ok(compactWaiting(page))
+  assert.equal(clock.active.size, 1)
   assert.equal(page.sent.length, 1)
+  assert.equal(page.sent[0], request)
+  clock.tick(20_000)
+  await page.flush()
+  assert.match(timer(page), /01:20/)
+  clickButton(page, '查看生成状态')
+  await page.flush()
+  assert.equal(page.props.activePage, 'genResult')
+  assert.ok(waiting(page))
+  assert.equal(compactWaiting(page), undefined)
+  assert.match(timer(page), /01:20/)
+  assert.equal(component(page, 'GenerationWaitingIndicator').props.startedAt, startedAt)
+  assert.equal(clock.active.size, 1)
+  assert.equal(page.sent.length, 1)
+  assert.equal(page.sent[0], request)
+  assert.deepEqual(request.payload, originalPayload)
+  assert.equal(Object.keys(request.payload).some(key => /elapsed|progress|timer|started/i.test(key)), false)
   const article = { title: draft.title, content: '测试正文', id: 'offline-return' }
-  page.sent[0].resolve({ articles: [article] })
+  request.resolve({ articles: [article] })
   await page.flush()
   assert.equal(component(page, 'EditorPage').props.article, article)
-  assert.deepEqual(page.navigations, ['genResult', 'articleGen', 'editor'])
+  assert.deepEqual(page.navigations, ['genResult', 'articleGen', 'genResult', 'editor'])
   assert.equal(clock.active.size, 0)
 })
+
+test('compact preview replaces the old spinner with honest waiting content and no seven-step process', async t => {
+  const clock = fakeClock(t)
+  const page = harness('ArticleGenPage', { activePage: 'articleGen', articleGenDraft: draft })
+  t.after(() => page.unmount())
+  await page.flush()
+  assert.equal(compactWaiting(page), undefined)
+  beginSingle(page)
+  await page.flush()
+  clickButton(page, '返回写作参数')
+  await page.flush()
+  for (const elapsed of [0, 31_000, 60_000]) {
+    clock.tick(elapsed)
+    await page.flush()
+    const preview = compactWaiting(page)
+    assert.ok(preview)
+    const output = textOf(preview)
+    for (const label of ['正在生成文章', '已用时间', '请求仍在处理中。', '返回写作参数不会取消当前生成请求。', '查看生成状态']) {
+      assert.ok(output.includes(label))
+    }
+    assert.ok(page.find(node => node.props?.className === 'generation-wait-hint'))
+    assert.doesNotMatch(output, /请求已提交，请等待真实生成结果返回。|\d\s*[%％]|ETA|预计|剩余时间|已完成|当前正在执行|当前阶段/)
+    for (const step of pipeline) assert.equal(output.includes(step), false)
+    assert.equal(descendants(preview).some(node => /core-spinner|core-state--loading/.test(node.props?.className || '')), false)
+    assert.equal(descendants(preview).some(node => node.props?.role === 'progressbar' || node.type === 'progress'), false)
+    const status = page.find(node => node.props?.role === 'status')
+    assert.equal(status.props['aria-live'], 'polite')
+    assert.equal(descendants(status).some(node => node.props?.role === 'timer'), false)
+    assert.equal(page.find(node => node.props?.role === 'timer').props['aria-live'], 'off')
+    assert.equal(page.find(node => node.props?.className === 'generation-loading-dots').props['aria-hidden'], 'true')
+  }
+  assert.equal(page.sent.length, 1)
+})
+
+test('navigation immediately catches up after background throttling without duplicating the request', async t => {
+  const clock = fakeClock(t)
+  const page = harness('ArticleGenPage', { activePage: 'articleGen', articleGenDraft: draft })
+  t.after(() => page.unmount())
+  await page.flush()
+  beginSingle(page)
+  await page.flush()
+  t.mock.timers.setTime(Date.now() + 60_000)
+  clickButton(page, '返回写作参数')
+  await page.flush()
+  assert.match(timer(page), /01:00/)
+  t.mock.timers.setTime(Date.now() + 20_000)
+  clickButton(page, '查看生成状态')
+  await page.flush()
+  assert.match(timer(page), /01:20/)
+  for (let i = 0; i < 3; i++) {
+    clickButton(page, '返回写作参数')
+    await page.flush()
+    clickButton(page, '查看生成状态')
+    await page.flush()
+  }
+  assert.match(timer(page), /01:20/)
+  assert.equal(clock.active.size, 1)
+  assert.equal(page.sent.length, 1)
+})
+
+for (const outcome of ['success', 'failure']) {
+  for (const view of ['compact', 'full']) {
+    test(`${outcome} after navigating to ${view} retains existing result handling and resets the next single request`, async t => {
+      const clock = fakeClock(t)
+      const page = harness('ArticleGenPage', { activePage: 'articleGen', articleGenDraft: draft })
+      t.after(() => page.unmount())
+      await page.flush()
+      beginSingle(page)
+      await page.flush()
+      clock.tick(60_000)
+      await page.flush()
+      clickButton(page, '返回写作参数')
+      await page.flush()
+      if (view === 'full') {
+        clickButton(page, '查看生成状态')
+        await page.flush()
+      }
+      assert.match(timer(page), /01:00/)
+      assert.equal(page.sent.length, 1)
+      const article = { title: draft.title, content: '离线测试正文', id: `offline-${view}` }
+      if (outcome === 'success') page.sent[0].resolve({ articles: [article] })
+      else page.sent[0].reject(new Error('离线测试：生成失败'))
+      await page.flush()
+      assert.equal(waiting(page), undefined)
+      assert.equal(compactWaiting(page), undefined)
+      assert.equal(clock.active.size, 0)
+      if (outcome === 'success') {
+        assert.equal(page.props.activePage, 'editor')
+        assert.equal(component(page, 'EditorPage').props.article, article)
+        component(page, 'EditorPage').props.onBack()
+      } else {
+        assert.equal(page.props.activePage, 'articleGen')
+        const modal = component(page, 'Modal')
+        assert.equal(modal.props.visible, true)
+        assert.equal(modal.props.type, 'error')
+        assert.equal(modal.props.title, `第 1 项生成失败: ${draft.title}`)
+        assert.equal(modal.props.message, '离线测试：生成失败')
+        modal.props.onClose()
+      }
+      await page.flush()
+      clock.tick(40_000)
+      beginSingle(page)
+      await page.flush()
+      assert.equal(page.sent.length, 2, 'only explicit generation starts the second request')
+      assert.match(timer(page), /00:00/)
+      clock.tick(2000)
+      await page.flush()
+      clickButton(page, '返回写作参数')
+      await page.flush()
+      assert.match(timer(page), /00:02/)
+      assert.equal(clock.active.size, 1)
+      assert.equal(page.sent.length, 2)
+    })
+  }
+}
 
 test('consecutive batch requests with identical titles reset by request identity', async t => {
   const clock = fakeClock(t)
