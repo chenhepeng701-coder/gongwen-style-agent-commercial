@@ -4,7 +4,7 @@ import EmptyState from '../components/EmptyState'
 import { getSafeErrorMessage } from '../components/ErrorState'
 import FormControl from '../components/FormControl'
 import StatusTag from '../components/StatusTag'
-import { GenreSelect, SceneSelect } from '../components/WritingCatalogSelects'
+import { GenreSelect, SceneSelect, BusinessDomainSelect } from '../components/WritingCatalogSelects'
 
 const STATUS_PRESENTATION = {
   pending: { label: '未开始', tone: 'neutral' },
@@ -86,9 +86,7 @@ export default function BatchTaskPage({
             </select>
           </FormControl>
           <FormControl label="业务领域" htmlFor="batch-default-business-domain">
-            <select id="batch-default-business-domain" value={defaults.businessDomain} onChange={event => onDefaultChange('businessDomain', event.target.value)} disabled={loading}>
-              {options.businessDomain.map(option => <option key={option}>{option}</option>)}
-            </select>
+            <BusinessDomainSelect id="batch-default-business-domain" items={options.businessDomain} value={defaults.businessDomain} onChange={event => onDefaultChange('businessDomain', event.target.value)} disabled={loading || !catalogReady} />
           </FormControl>
           <FormControl label="写作目的" htmlFor="batch-default-writing-purpose">
             <select id="batch-default-writing-purpose" value={defaults.writingPurpose} onChange={event => onDefaultChange('writingPurpose', event.target.value)} disabled={loading}>
@@ -174,7 +172,7 @@ export default function BatchTaskPage({
                       <FormControl label="写作场景"><SceneSelect scenes={options.scenes} value={row.scene} onChange={event => onTaskChange(index, 'scene', event.target.value)} disabled={loading || !catalogReady} /></FormControl>
                       <FormControl label="层级"><select value={row.level} onChange={event => onTaskChange(index, 'level', event.target.value)} disabled={loading}>{options.level.map(option => <option key={option}>{option}</option>)}</select></FormControl>
                       <FormControl label="单位类型"><select value={row.orgType} onChange={event => onTaskChange(index, 'orgType', event.target.value)} disabled={loading}>{options.orgType.map(option => <option key={option}>{option}</option>)}</select></FormControl>
-                      <FormControl label="业务领域"><select value={row.businessDomain} onChange={event => onTaskChange(index, 'businessDomain', event.target.value)} disabled={loading}>{options.businessDomain.map(option => <option key={option}>{option}</option>)}</select></FormControl>
+                      <FormControl label="业务领域"><BusinessDomainSelect items={options.businessDomain} value={row.businessDomain} onChange={event => onTaskChange(index, 'businessDomain', event.target.value)} disabled={loading || !catalogReady} /></FormControl>
                       <FormControl label="写作目的"><select value={row.writingPurpose} onChange={event => onTaskChange(index, 'writingPurpose', event.target.value)} disabled={loading}>{options.writingPurpose.map(option => <option key={option}>{option}</option>)}</select></FormControl>
                       <FormControl label="目标字数"><input type="number" min="500" max="5000" step="100" value={row.wordCount} onChange={event => onTaskChange(index, 'wordCount', event.target.value)} disabled={loading} /></FormControl>
                       <FormControl label="参考资料范围"><select value={row.referenceScope} onChange={event => onTaskChange(index, 'referenceScope', event.target.value)} disabled={loading}>{options.referenceScope.map(option => <option key={option}>{option}</option>)}</select></FormControl>

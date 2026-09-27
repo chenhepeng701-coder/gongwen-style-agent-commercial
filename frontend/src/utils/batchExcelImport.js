@@ -1,6 +1,10 @@
-import { normalizeUiTaskGenre, normalizeScene } from './genreCatalog.js'
+import { normalizeUiTaskGenre, normalizeScene, normalizeBusinessDomain, normalizeUiTaskBusinessDomain, readBusinessDomainCatalog } from './genreCatalog.js'
 
 const TASK_FIELDS = ['title', 'documentType', 'scene', 'level', 'orgType', 'businessDomain', 'writingPurpose', 'wordCount', 'referenceScope']
+
+// Import compatibility only, never a catalog choice or an alias mapping.
+// This mixed old cell cannot identify either canonical domain; preserve it.
+const PRESERVED_LEGACY_DOMAIN_CELLS = new Set(['纪检/巡察'])
 
 const HEADER_ALIASES = {
   title: ['标题', '主题', '标题/主题'],
@@ -110,6 +114,7 @@ export function formatBatchImportSummary(result) {
 }
 
 export function parseBatchExcelRows(rows, defaults, optionSets) {
+  const businessDomains = readBusinessDomainCatalog({ items: optionSets.businessDomain })
   const normalizedRows = Array.isArray(rows) ? rows : []
   const firstNonBlankIndex = normalizedRows.findIndex(row => Array.isArray(row) && row.some(cell => cleanText(cell)))
   if (firstNonBlankIndex < 0) return { totalRows: 0, tasks: [], skipped: [], errors: [], mode: 'single', diagnostics: {} }
@@ -149,11 +154,17 @@ export function parseBatchExcelRows(rows, defaults, optionSets) {
     const validations = [
       ['level', '层级', optionSets.level],
       ['orgType', '单位类型', optionSets.orgType],
-      ['businessDomain', '业务领域', optionSets.businessDomain],
       ['writingPurpose', '写作目的', optionSets.writingPurpose],
       ['referenceScope', '参考资料范围', optionSets.referenceScope],
     ]
     let error = ''
+    if (columns.businessDomain !== undefined && cleanText(cells[columns.businessDomain])) {
+      const rawDomain = String(cells[columns.businessDomain])
+      const domain = normalizeBusinessDomain(rawDomain, businessDomains)
+      if (businessDomains.some(item => item.value === domain)) importedTask.businessDomain = domain
+      else if (PRESERVED_LEGACY_DOMAIN_CELLS.has(compact(rawDomain))) importedTask.businessDomain = rawDomain
+      else error = `业务领域“${cleanText(rawDomain)}”不是系统有效选项。`
+    }
     if (columns.documentType !== undefined && cleanText(cells[columns.documentType])) {
       // Preserve unresolved historical identities for display; request admission
       // later requires a canonical production genre from the backend catalog.
@@ -186,7 +197,8 @@ export function parseBatchExcelRows(rows, defaults, optionSets) {
     else {
       const task = { ...normalizedDefaults, ...nonEmptyTaskFields(importedTask), count: importedTask.count ?? 1 }
       if (Object.prototype.hasOwnProperty.call(importedTask, 'scene')) task.scene = importedTask.scene
-      tasks.push(optionSets.genreCatalog ? normalizeUiTaskGenre(task, optionSets.genreCatalog) : task)
+      const normalized = normalizeUiTaskBusinessDomain(task, businessDomains)
+      tasks.push(optionSets.genreCatalog ? normalizeUiTaskGenre(normalized, optionSets.genreCatalog) : normalized)
     }
   })
   return { totalRows: Math.max(0, normalizedRows.length - (header.hasHeader ? actualHeaderIndex + 1 : firstNonBlankIndex)), tasks, skipped, errors, mode: header.hasHeader && Object.keys(columns).some(field => !['title', 'sequence'].includes(field)) ? 'multi' : 'single', diagnostics }

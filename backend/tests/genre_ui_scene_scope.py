@@ -20,18 +20,18 @@ CATALOG_PATH = "backend/app/services/generation/genres/catalog.py"
 NEW_BACKEND_PATHS = (CATALOG_PATH,)
 FRONTEND_CONTENT_SHA256 = {
     "frontend/src/App.jsx": "c3ace3f5a94c441ac0c3db483cd0a9b170fe218e992e5b45c1997cbb86bfb32d",
-    "frontend/src/api.js": "9ee4e92b81e61ce9f7991d7c37a8ab39487bd78cd27fdf89be86ad45a9201ab3",
-    "frontend/src/pages/ArticleGenPage.jsx": "e04a9e5ffdd8584e221843206d208a78859b86129d8c2a3b58f5c5b40fff6c4f",
-    "frontend/src/pages/BatchTaskPage.jsx": "795296e25f298b4d65de068e728b4881c5e38456e29f448696ef79303d767dbf",
-    "frontend/src/utils/batchExcelImport.js": "21c04ccf4605fcaf816f2a690eee9f3b1cfbf2c43274769ffd169e7a1a732f8a",
-    "frontend/src/utils/batchTaskParams.js": "9095acbe5b3393fe21302166231422e8a55c2dd9b013e7b6515e4b3738043246",
-    "frontend/tests/utils/batchExcelImport.test.mjs": "902fc2ab9522e257bb8505c098b1cd57951d2e7eafbb1c5c0fc6abea00d59ff9",
-    "frontend/tests/utils/batchTaskParams.test.mjs": "dda652817e127c3648c110b70ccc58253f55b4f69a023ac590eae4cf2496c842",
-    "frontend/src/components/WritingCatalogSelects.jsx": "92b3d4a73b1abc2a8f2122acbc84e486617a598a62118da2bea40dfba4c0df0f",
-    "frontend/src/utils/genreCatalog.js": "3f2298793fdb1a7a6aa778cdbcf6413435d8871e1683a8058e306948e0ec2681",
-    "frontend/tests/fixtures/genreCatalog.mjs": "3e867337bcabab874e87f65fbb8623990a28684b42eb3c318e50d49612f3be90",
-    "frontend/tests/pages/ArticleGenPage.genre-scene-routing.test.mjs": "5884b1c86818bef1a571df7102cdd7ddcbb4f32ad33b63b4a2ddc92c57f55d31",
-    "frontend/tests/utils/genreCatalog.test.mjs": "a1719f95387949d33bea9548f150d708fc5dd40672dafa274731d44284618ebd",
+    "frontend/src/api.js": "083238e2dcb5410781e4cab6fd7dd5065c159b10d947ba9c01303b1a93fb39d1",
+    "frontend/src/pages/ArticleGenPage.jsx": "f019cd8ad773c851aae6a15e7854469bad1ad74b5a69392dad4f536343ab0668",
+    "frontend/src/pages/BatchTaskPage.jsx": "60cd69f4f16b16b771ff4d9e0af417a06489f1b0e678f438a5f093332201b224",
+    "frontend/src/utils/batchExcelImport.js": "332dcfc2bc0d129cbe7e850a52792d66fcabf9304de6dbf8fde6c15318e28e49",
+    "frontend/src/utils/batchTaskParams.js": "c1497b9a17a555c1aa21d5bf3bcee9409daf628e902b2c3b682ec2e759352a85",
+    "frontend/tests/utils/batchExcelImport.test.mjs": "74f4515c7576019bbaa797766ee2cc22474347d57a228fa1b97879c7de2c20a5",
+    "frontend/tests/utils/batchTaskParams.test.mjs": "00b02c2dde863193f59266bc2dedaffa3c33b3e009ddbce39b585b872ba07d7f",
+    "frontend/src/components/WritingCatalogSelects.jsx": "3defcb035b1291c2e24ebffa40409cfb39b759f9d16d061cdc855f17e3b7090f",
+    "frontend/src/utils/genreCatalog.js": "72de34ed88b776ef53eb0179a53be3086cfe10f636d6789508b3d7a7949c4a58",
+    "frontend/tests/fixtures/genreCatalog.mjs": "fe4eba2a45961b4169cc7576fe083621cad6791d4194ecf00e029811f4f0f9d0",
+    "frontend/tests/pages/ArticleGenPage.genre-scene-routing.test.mjs": "6d74fc9449104f5a333dde5a898afe31eb523a253e4710b9dc01e320612b094f",
+    "frontend/tests/utils/genreCatalog.test.mjs": "e25c0bb5809843b104e6216dfbef868d6abcef17f1681fb97d38e8209bad425a",
 }
 GENRE_UI_SCENE_MIGRATIONS = (
     REGISTRY_PATH, RETRIEVER_PATH, ROUTER_PATH, SCENE_OWNER_PATH, *NEW_BACKEND_PATHS, *FRONTEND_CONTENT_SHA256,
@@ -44,10 +44,11 @@ GENRE_UI_SCENE_CONTENT_SHA256 = {
     **FRONTEND_CONTENT_SHA256,
 }
 QUERY_PREPARATION_SEAMS = ("_field_payload", "prepare_retrieval_request")
-# SCENE-CONTRACT-01 supersedes only the request/metadata boundary. Original
-# integration pins above remain intact; all other AST owners still equal BASE.
+# SCENE-CONTRACT-01 supersedes only the request/metadata boundary.
+# BUSINESS-DOMAIN-TAXONOMY-01 reseals exact frontend/Router bytes only;
+# path lists and other owners stay fixed, with exact Router AST checks below.
 SCENE_CONTRACT_CONTENT_SHA256 = {
-    ROUTER_PATH: "9802cb64447adaeb125ce8752e86db33dbd089cc2b5bbe0123669f35cd322bf8",
+    ROUTER_PATH: "e1f182b044b57d02b82e42fd5bcb9a1c12b34aa5814a88b4438532eb133d4be3",
     SCENE_OWNER_PATH: "45fdef0ec6250f480e1f0a328421bea2114be47b39b0d2078f07ceb95ec02de1",
 }
 # PR #18 introduced these files after the historical directory guards' BASEs.
@@ -83,6 +84,18 @@ def _protected_ast(source: bytes, path: str) -> str:
     elif path == ROUTER_PATH:
         tree.body = [node for node in tree.body if not isinstance(node, ast.AsyncFunctionDef)
                      or node.name != "get_genre_catalog"]
+        # BUSINESS-DOMAIN-TAXONOMY-01: remove only the exact read-only endpoint,
+        # never exclude another handler or enlarge the protected path lists.
+        domain_endpoint = ast.parse('''
+@router.get("/business-domains")
+async def get_business_domain_catalog():
+    """Read-only task context names; no evidence or production authority."""
+    from app.services.business_domain_catalog import business_domain_catalog
+
+    return business_domain_catalog()
+''').body[0]
+        tree.body = [node for node in tree.body
+                     if ast.dump(node) != ast.dump(domain_endpoint)]
         # Exact statements only; no blanket exclusion of the HTTP handler or
         # its delivery/error/logging authority is permitted.
         allowed_source = '''
@@ -90,6 +103,8 @@ if req.scene:
     for article in batch.articles:
         article.scene = req.scene
 from app.services.retrieval.scene_classifier import normalize_generation_scene
+from app.services.business_domain_catalog import normalize_business_domain
+req.business_domain = normalize_business_domain(req.business_domain)
 try:
     req.scene = normalize_generation_scene(req.scene)
 except ValueError as exc:

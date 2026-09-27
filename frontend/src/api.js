@@ -249,6 +249,10 @@ export function getGenreCatalog() {
   return api.get('/generation/genres')
 }
 
+export function getBusinessDomainCatalog() {
+  return api.get('/generation/business-domains')
+}
+
 export function generateArticle(payload) {
   return api.post('/generation/generate', payload, { timeout: 600000 })
 }

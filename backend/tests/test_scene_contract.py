@@ -125,13 +125,14 @@ def test_legacy_history_reads_and_restores_empty_before_new_generation(configure
 import { readFileSync } from 'node:fs';
 import { normalizeRestoredTaskGenre } from './src/utils/genreCatalog.js';
 import { buildTaskGenerationPayload } from './src/utils/batchTaskParams.js';
-const { old, catalog, scenes, defaults } = JSON.parse(readFileSync(0, 'utf8'));
+const { old, catalog, scenes, defaults, domains } = JSON.parse(readFileSync(0, 'utf8'));
 const restored = normalizeRestoredTaskGenre({ documentType: old.document_type, scene: old.scene }, catalog, scenes);
 process.stdout.write(JSON.stringify(buildTaskGenerationPayload({ title: old.request_title,
-  document_type: restored.documentType, scene: restored.scene, count: 1 }, defaults, catalog)));
+  document_type: restored.documentType, scene: restored.scene, count: 1 }, defaults, catalog, domains)));
 """
     result = subprocess.run([node, "--input-type=module", "-e", script], cwd=ROOT / "frontend",
         input=json.dumps({"old": old, "catalog": client.get("/api/generation/genres").json(),
+                          "domains": client.get("/api/generation/business-domains").json()["items"],
                           "scenes": scene_classifier.get_scene_taxonomy(), "defaults": REQUEST}, ensure_ascii=False),
         text=True, encoding="utf-8", capture_output=True, check=True, timeout=30)
     restored = json.loads(result.stdout)
