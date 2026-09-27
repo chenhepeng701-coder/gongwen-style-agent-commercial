@@ -428,6 +428,10 @@ def test_production_files_unchanged_and_no_experiment_imports():
     for name in ("backend/app/routers/generation.py", "backend/app/services/generation/generator.py",
                  "backend/app/services/generation/atomic_evidence.py",
                  "backend/app/services/generation/official_document_drafting.py"):
+        from genre_ui_scene_scope import ROUTER_PATH, assert_integration_content
+        if name == ROUTER_PATH:
+            assert_integration_content(ROOT, name)
+            continue
         # W3-8C-3 explicitly connects full_draft_generation to Task Assembly;
         # that authorized boundary now has production-path contract coverage.
         # WRITER-VIEW-01 exempts only full_draft_material.py presentation;

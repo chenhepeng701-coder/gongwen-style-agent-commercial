@@ -514,6 +514,14 @@ def _feedback_field_log_payload(req: ArticleGenRequest) -> dict[str, str]:
     }
 
 
+@router.get("/genres")
+async def get_genre_catalog():
+    """Registry-derived read-only writing options and production eligibility."""
+    from app.services.generation.genres.catalog import genre_catalog
+
+    return genre_catalog()
+
+
 @router.post("/generate", response_model=ArticleGenBatchResult)
 async def generate_article(req: ArticleGenRequest):
     """Generate one or more articles from title/theme.
@@ -526,6 +534,15 @@ async def generate_article(req: ArticleGenRequest):
     effective_article_mode = (req.article_mode or "").strip().lower()
     if effective_article_mode != "official_draft":
         raise HTTPException(status_code=400, detail=OFFICIAL_DRAFT_ONLY_MESSAGE)
+    from app.services.retrieval.scene_classifier import normalize_generation_scene
+
+    try:
+        req.scene = normalize_generation_scene(req.scene)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=_public_error_detail("INVALID_SCENE", str(exc), field="scene"),
+        ) from exc
     if (
         effective_article_mode == "official_draft"
         and (req.document_type or "").strip() == "党课讲稿"
@@ -552,6 +569,10 @@ async def generate_article(req: ArticleGenRequest):
         )
         batch = await _generator.generate_commercial_flow(req)
         _map_delivery_result_to_http(batch)
+        # All new response/history metadata uses the same normalized request;
+        # legacy result adapters must not turn an empty Scene into a genre.
+        for article in batch.articles:
+            article.scene = req.scene or ""
         log_id = str(uuid.uuid4())[:8]
 
         first = batch.articles[0] if batch.articles else None

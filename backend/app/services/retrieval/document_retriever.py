@@ -100,7 +100,7 @@ def _split_positive_and_negative(title: str) -> tuple[str, list[str]]:
 
 
 def _field_payload(task: Any) -> dict[str, Any]:
-    return {
+    fields = {
         "title": _clean(_value(task, "title")),
         "document_type": _clean(_value(task, "document_type")),
         "level": _clean(_value(task, "level")),
@@ -110,6 +110,13 @@ def _field_payload(task: Any) -> dict[str, Any]:
         "target_words": _value(task, "target_words", None),
         "reference_scope": _clean(_value(task, "reference_scope")),
     }
+    # OfficialDraftTask already retains an explicitly supplied scene here.
+    # A legacy scene-only request used it as its genre, not as a second signal.
+    scene = _clean(_value(task, "scene", _value(task, "scene_compat", "")))
+    if (scene and scene.lower().replace(" ", "") not in {"auto", "自动", "未指定", "自动/未指定", "自动识别场景"}
+            and not _value(task, "document_type_from_scene_compat", False)):
+        fields["scene"] = scene
+    return fields
 
 
 def prepare_retrieval_request(task: Any) -> dict[str, Any]:
@@ -120,7 +127,7 @@ def prepare_retrieval_request(task: Any) -> dict[str, Any]:
     ])
     auxiliary_limits = []
     positive_normalized = _normalized(positive_title)
-    for value in (fields["org_type"], fields["level"], fields["writing_purpose"]):
+    for value in (fields["org_type"], fields["level"], fields["writing_purpose"], fields.get("scene", "")):
         normalized = _normalized(value)
         if normalized and normalized not in positive_normalized:
             auxiliary_limits.append(value)
@@ -136,10 +143,13 @@ def prepare_retrieval_request(task: Any) -> dict[str, Any]:
         "positive_title": positive_title,
         "negative_concepts": negative_concepts,
         "semantic_fields": [
-            name for name in ("title", "document_type", "business_domain", "org_type", "level", "writing_purpose")
+            name for name in ("title", "document_type", "business_domain", "org_type", "level", "writing_purpose", "scene")
             if fields.get(name)
         ],
-        "excluded_semantic_fields": ["target_words", "reference_scope", "scene", "style"],
+        "excluded_semantic_fields": [
+            name for name in ("target_words", "reference_scope", "scene", "style")
+            if name != "scene" or not fields.get("scene")
+        ],
     }
 
 

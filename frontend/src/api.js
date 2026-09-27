@@ -245,6 +245,10 @@ export function getTopicSuggestions() {
 }
 
 // Generation
+export function getGenreCatalog() {
+  return api.get('/generation/genres')
+}
+
 export function generateArticle(payload) {
   return api.post('/generation/generate', payload, { timeout: 600000 })
 }

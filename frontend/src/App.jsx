@@ -104,6 +104,7 @@ export default function App() {
 
   const handleReuseGenerationEntry = (entry) => {
     setArticleGenDraft({
+      isHistoryReplay: true,
       title: entry.request_title || entry.title || '',
       count: entry.count || 1,
       scene: entry.scene || '',
@@ -116,6 +117,7 @@ export default function App() {
       referenceScope: entry.reference_scope || '',
       targetWords: entry.target_words || 1200,
       exportFormat: entry.export_format || 'docx',
+      style: entry.style ?? '',
     })
     handleNavigate('articleGen')
   }

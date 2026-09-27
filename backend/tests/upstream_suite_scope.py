@@ -25,6 +25,11 @@ def upstream_base_source(root: Path, path: str) -> bytes:
 
 def assert_upstream_suite_content(root: Path, path: str, *, message="") -> None:
     content = (root / path).read_bytes().replace(b"\r\n", b"\n")
+    from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
+    if path in GENRE_UI_SCENE_MIGRATIONS and sha256(content).hexdigest() != UPSTREAM_SUITE_CONTENT_SHA256.get(path):
+        assert_integration_content(root, path,
+            message=message or path + " differs from exact UPSTREAM-22-GENRE-MIGRATION content")
+        return
     assert (path in UPSTREAM_SUITE_MIGRATIONS
             and sha256(content).hexdigest() == UPSTREAM_SUITE_CONTENT_SHA256.get(path)), (
         message or path + " differs from exact UPSTREAM-22-GENRE-MIGRATION content")
@@ -34,6 +39,10 @@ def assert_upstream_protected_owners(root: Path) -> None:
     from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, PROTECTED_OWNER_PATHS
     paths = (set(COMMERCIAL_GENRE_CONTENT_SHA256) | set(PROTECTED_OWNER_PATHS)) - set(UPSTREAM_SUITE_MIGRATIONS)
     for path in sorted(paths):
+        from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
+        if path in GENRE_UI_SCENE_MIGRATIONS:
+            assert_integration_content(root, path, message="UPSTREAM-22 protected owner changed: " + path)
+            continue
         assert (root / path).read_bytes().replace(b"\r\n", b"\n") == upstream_base_source(root, path), (
             "UPSTREAM-22 protected owner changed: " + path)
 

@@ -399,6 +399,10 @@ def test_production_and_fact_owners_remain_unchanged():
     # WRITER-VIEW-01 exempts full_draft_material.py only; its original packet,
     # candidate input and complete decoded views retain deep comparison coverage.
     for name in files:
+        from genre_ui_scene_scope import ROUTER_PATH, assert_integration_content
+        if name == ROUTER_PATH:
+            assert_integration_content(ROOT, name)
+            continue
         if name in P3B_CONTENT_SHA256:
             assert_p3b_content(ROOT, name)
             continue
