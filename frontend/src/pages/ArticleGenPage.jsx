@@ -25,6 +25,7 @@ import Button from '../components/Button'
 import FormControl from '../components/FormControl'
 import BatchTaskPage from './BatchTaskPage'
 import GenerationPage from './GenerationPage'
+import GenerationWaitingIndicator from '../components/GenerationWaitingIndicator'
 import EditorPage from './EditorPage'
 import {
   buildDocumentModeDraftText,
@@ -265,6 +266,7 @@ export default function ArticleGenPage({
   const [validationErrors, setValidationErrors] = useState({})
 
   const [loading, setLoading] = useState(false)
+  const [requestStartedAt, setRequestStartedAt] = useState(null)
   const [stopRequested, setStopRequested] = useState(false)
   const [errorModal, setErrorModal] = useState(null)
   const [pendingWordExportArticle, setPendingWordExportArticle] = useState(null)
@@ -638,6 +640,7 @@ export default function ArticleGenPage({
             genreCatalog,
             businessDomainOptions,
           )
+          setRequestStartedAt(Date.now())
           const res = await generateArticle(payload)
           const returnedQualityTestDraft = res?.articles?.some(isQualityTestDraft)
           updateTaskStatus(row.id, returnedQualityTestDraft ? 'quality_test' : 'completed', {
@@ -694,6 +697,8 @@ export default function ArticleGenPage({
             message,
           })
           break
+        } finally {
+          setRequestStartedAt(null)
         }
       }
 
@@ -985,6 +990,7 @@ export default function ArticleGenPage({
           key={currentRequestTask?.id}
           loading={loading}
           requestTitle={currentRequestTask?.title}
+          requestStartedAt={requestStartedAt}
           isBatch={generationOrigin === 'batchTask'}
           stopRequested={stopRequested}
           onReturn={() => onNavigate?.(generationOrigin)}
@@ -1270,11 +1276,11 @@ export default function ArticleGenPage({
 
           <div className="write-preview-body">
             {loading ? (
-              <div className="core-state core-state--loading" role="status" aria-live="polite">
-                <span className="core-spinner" aria-hidden="true" />
-                <h3>正在生成文章</h3>
-                <p>请求已提交，请等待真实生成结果返回。</p>
-              </div>
+              <GenerationWaitingIndicator
+                variant="compact"
+                startedAt={requestStartedAt}
+                onViewStatus={() => onNavigate?.('genResult')}
+              />
             ) : !primaryArticle ? (
               <div className="core-state core-state--empty">
                 <div className="core-state__mark" aria-hidden="true">文</div>
