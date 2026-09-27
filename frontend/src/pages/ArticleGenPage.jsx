@@ -982,6 +982,8 @@ export default function ArticleGenPage({
       <div className="workflow-route">
         {workflowDialogs}
         <GenerationPage
+          key={currentRequestTask?.id}
+          loading={loading}
           requestTitle={currentRequestTask?.title}
           isBatch={generationOrigin === 'batchTask'}
           stopRequested={stopRequested}
