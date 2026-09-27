@@ -4,6 +4,8 @@ import { fullArticleCopyText, verifyFullArticleContent, isFullArticle, articleMa
 import * as XLSX from 'xlsx'
 import {
   generateArticle,
+  getGenreCatalog,
+  getSceneTaxonomy,
   getLibraryStats,
   getGenerationLog,
   getGenerationOutputDir,
@@ -30,6 +32,8 @@ import {
 } from '../utils/documentModeDraft'
 import { buildTaskGenerationPayload, referenceModeFromScope } from '../utils/batchTaskParams'
 import { formatBatchImportSummary, parseBatchExcelRows } from '../utils/batchExcelImport'
+import { loadWritingCatalogs, normalizeScene, normalizeUiTaskGenre, normalizeRestoredTaskGenre, productionTaskError } from '../utils/genreCatalog'
+import { GenreSelect, SceneSelect } from '../components/WritingCatalogSelects'
 
 const WORD_EXPORT_RESPONSIBILITY_NOTICE = '导出内容仅为辅助写作初稿，不代表最终可提交版本。请结合本单位要求、领导意见和最新政策口径进行修改审核。'
 
@@ -38,25 +42,6 @@ const ARTICLE_MODE_LABELS = {
   draft_article: '公文初稿',
   full_article: '公文初稿',
 }
-
-const DOCUMENT_TYPE_OPTIONS = [
-  '党课讲稿',
-  '领导讲话稿',
-  '工作总结',
-  '工作汇报',
-  '工作报告',
-  '预案',
-  '述职报告',
-  '民主生活会对照检查材料',
-  '组织生活会个人发言材料',
-  '工作计划',
-  '实施方案',
-  '调研报告',
-  '心得体会 / 研讨发言',
-  '其他',
-]
-
-const WRITING_SCENE_OPTIONS = DOCUMENT_TYPE_OPTIONS.slice(0, 10)
 
 const LEVEL_OPTIONS = ['乡镇 / 街道', '县区', '县级', '市级', '省直 / 厅局', '基层单位', '其他']
 
@@ -103,12 +88,8 @@ const WRITING_PURPOSE_OPTIONS = [
   '其他',
 ]
 
-const DOCUMENT_TYPE_PARTY_LECTURE = '党课讲稿'
-const DEFAULT_DOCUMENT_TYPE = '工作总结'
 const DEFAULT_BUSINESS_DOMAIN = '安全生产'
 const DEFAULT_WRITING_PURPOSE = '汇报总结'
-const WRITING_PURPOSE_REPORT = '情况汇报'
-const WRITING_PURPOSE_STUDY = '学习研讨'
 
 const REFERENCE_SCOPE_OPTIONS = [
   '自动匹配资料库',
@@ -117,7 +98,8 @@ const REFERENCE_SCOPE_OPTIONS = [
 ]
 
 const INITIAL_TASK_DEFAULTS = {
-  documentType: DEFAULT_DOCUMENT_TYPE,
+  documentType: '',
+  scene: '',
   level: LEVEL_OPTIONS[0],
   orgType: ORG_TYPE_OPTIONS[0],
   businessDomain: DEFAULT_BUSINESS_DOMAIN,
@@ -134,6 +116,7 @@ function createUiBatchTask(defaults, overrides = {}) {
   return {
     ...defaults,
     ...imported,
+    scene: Object.prototype.hasOwnProperty.call(overrides, 'scene') ? (normalizeScene(overrides.scene) || '') : (defaults.scene || ''),
     title: imported.title ?? '',
     count: imported.count ?? 1,
     id: overrides.id || `batch-task-${batchTaskSequence}`,
@@ -276,11 +259,15 @@ export default function ArticleGenPage({
 }) {
   const [rows, setRows] = useState(() => [createUiBatchTask(INITIAL_TASK_DEFAULTS)])
   const [scene, setScene] = useState('')
+  const [genreCatalog, setGenreCatalog] = useState(null)
+  const [sceneOptions, setSceneOptions] = useState([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
+  const [catalogError, setCatalogError] = useState('')
   const [articleMode, setArticleMode] = useState('official_draft')
   const [analysisWrapperEnabled, setAnalysisWrapperEnabled] = useState(false)
   const [appreciationScope, setAppreciationScope] = useState('single_deep')
   const [appreciationCount, setAppreciationCount] = useState(3)
-  const [documentType, setDocumentType] = useState(DEFAULT_DOCUMENT_TYPE)
+  const [documentType, setDocumentType] = useState('')
   const [level, setLevel] = useState(LEVEL_OPTIONS[0])
   const [orgType, setOrgType] = useState(ORG_TYPE_OPTIONS[0])
   const [businessDomain, setBusinessDomain] = useState(DEFAULT_BUSINESS_DOMAIN)
@@ -317,13 +304,15 @@ export default function ArticleGenPage({
 
   const fileInputRef = useRef(null)
   const stopRequestedRef = useRef(false)
+  const taskContextTouchedRef = useRef(false)
   const [fileName, setFileName] = useState('')
-  const writingPurposeOptions = documentType === DOCUMENT_TYPE_PARTY_LECTURE
-    ? WRITING_PURPOSE_OPTIONS.filter(option => option !== WRITING_PURPOSE_REPORT)
-    : WRITING_PURPOSE_OPTIONS
+  const genreOptions = genreCatalog?.genres || []
+  const catalogReady = !!genreCatalog && !catalogLoading && !catalogError
+  const defaultDocumentType = genreOptions.find(genre => genre.production_ready)?.document_type || ''
 
   const getDefaultTaskParams = (overrides = {}) => ({
     documentType,
+    scene,
     level,
     orgType,
     businessDomain,
@@ -334,6 +323,7 @@ export default function ArticleGenPage({
   })
 
   const handleFileUpload = (e) => {
+    if (!catalogReady) return
     const file = e.target.files?.[0]
     if (!file) return
     setFileName(file.name)
@@ -346,15 +336,19 @@ export default function ArticleGenPage({
         const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
         const defaults = getDefaultTaskParams()
         const result = parseBatchExcelRows(json, defaults, {
-          documentType: DOCUMENT_TYPE_OPTIONS,
+          genreCatalog,
+          scene: sceneOptions.map(option => option.name),
           level: LEVEL_OPTIONS,
           orgType: ORG_TYPE_OPTIONS,
           businessDomain: BUSINESS_DOMAIN_OPTIONS,
           writingPurpose: WRITING_PURPOSE_OPTIONS,
           referenceScope: REFERENCE_SCOPE_OPTIONS,
         })
-        const parsed = result.tasks.map(task => createUiBatchTask(defaults, task))
-        if (parsed.length > 0) setRows(parsed)
+        const parsed = result.tasks.map(task => createUiBatchTask(defaults, normalizeUiTaskGenre(task, genreCatalog)))
+        if (parsed.length > 0) {
+          taskContextTouchedRef.current = true
+          setRows(parsed)
+        }
         setErrorModal({
           type: result.errors.length ? 'error' : 'success',
           title: 'Excel导入完成',
@@ -370,13 +364,41 @@ export default function ArticleGenPage({
   }
 
   const triggerFileInput = () => {
+    if (!catalogReady) return
     fileInputRef.current?.click()
   }
 
   // Batch progress tracking
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 })
 
+  const loadCatalogs = async () => {
+    setCatalogLoading(true)
+    setCatalogError('')
+    setGenreCatalog(null)
+    setSceneOptions([])
+    try {
+      const { catalog, scenes } = await loadWritingCatalogs(getGenreCatalog, getSceneTaxonomy)
+      setGenreCatalog(catalog)
+      setSceneOptions(scenes)
+    } catch {
+      setCatalogError('文种或写作场景目录加载失败，请重新加载后再生成。')
+    } finally {
+      setCatalogLoading(false)
+    }
+  }
+
   useEffect(() => {
+    if (!genreCatalog) return
+    setRows(currentRows => currentRows.map(row => normalizeRestoredTaskGenre({
+      ...row, documentType: row.documentType || (row.requiresGenreSelection ? '' : defaultDocumentType),
+    }, genreCatalog, sceneOptions)))
+    const normalizedDefaults = normalizeRestoredTaskGenre({ documentType: documentType || defaultDocumentType, scene }, genreCatalog, sceneOptions)
+    setDocumentType(normalizedDefaults.documentType)
+    setScene(normalizedDefaults.scene)
+  }, [genreCatalog])
+
+  useEffect(() => {
+    loadCatalogs()
     getLibraryStats()
       .then(res => setLibraryStats(res))
       .catch(() => {})
@@ -387,8 +409,14 @@ export default function ArticleGenPage({
 
   useEffect(() => {
     if (!articleGenDraft) return
+    taskContextTouchedRef.current = true
+    const restoredGenre = normalizeRestoredTaskGenre({
+      documentType: articleGenDraft.documentType || articleGenDraft.document_type || (articleGenDraft.isHistoryReplay ? '' : defaultDocumentType),
+      requiresGenreSelection: articleGenDraft.isHistoryReplay && !articleGenDraft.documentType && !articleGenDraft.document_type,
+      scene: articleGenDraft.scene,
+    }, genreCatalog, catalogReady ? sceneOptions : undefined)
     const draftDefaults = getDefaultTaskParams({
-      documentType: articleGenDraft.documentType || articleGenDraft.document_type || DEFAULT_DOCUMENT_TYPE,
+      ...restoredGenre,
       level: articleGenDraft.level || LEVEL_OPTIONS[0],
       orgType: articleGenDraft.orgType || articleGenDraft.org_type || ORG_TYPE_OPTIONS[0],
       businessDomain: articleGenDraft.businessDomain || articleGenDraft.business_domain || DEFAULT_BUSINESS_DOMAIN,
@@ -396,13 +424,13 @@ export default function ArticleGenPage({
       wordCount: articleGenDraft.targetWords || articleGenDraft.target_length || 1200,
       referenceScope: articleGenDraft.referenceScope || articleGenDraft.reference_scope || REFERENCE_SCOPE_OPTIONS[0],
     })
-    setRows([createUiBatchTask(draftDefaults, { title: articleGenDraft.title || '' })])
-    setScene(articleGenDraft.scene || '')
+    setRows([createUiBatchTask(draftDefaults, { title: articleGenDraft.title || '', count: articleGenDraft.count || 1 })])
+    setScene(restoredGenre.scene)
     setArticleMode('official_draft')
     setAnalysisWrapperEnabled(!!articleGenDraft.analysisWrapper)
     setAppreciationScope(articleGenDraft.appreciationScope || 'single_deep')
     setAppreciationCount(articleGenDraft.appreciationCount || 3)
-    setDocumentType(articleGenDraft.documentType || articleGenDraft.document_type || DEFAULT_DOCUMENT_TYPE)
+    setDocumentType(restoredGenre.documentType)
     setLevel(articleGenDraft.level || LEVEL_OPTIONS[0])
     setOrgType(articleGenDraft.orgType || articleGenDraft.org_type || ORG_TYPE_OPTIONS[0])
     setBusinessDomain(articleGenDraft.businessDomain || articleGenDraft.business_domain || DEFAULT_BUSINESS_DOMAIN)
@@ -424,12 +452,6 @@ export default function ArticleGenPage({
     onHistoryEditorArticleConsumed?.()
   }, [historyEditorArticle, onHistoryEditorArticleConsumed])
 
-  useEffect(() => {
-    if (documentType === DOCUMENT_TYPE_PARTY_LECTURE && writingPurpose === WRITING_PURPOSE_REPORT) {
-      setWritingPurpose(WRITING_PURPOSE_STUDY)
-    }
-  }, [documentType, writingPurpose])
-
   const loadOutputDir = async () => {
     try {
       const res = await getGenerationOutputDir()
@@ -443,7 +465,7 @@ export default function ArticleGenPage({
   }
 
   const normalizeDefaultSceneForUi = (value) => {
-    return value === '自动识别场景' ? '' : (value || '')
+    return normalizeScene(value) || ''
   }
 
   const normalizeDefaultExportFormatForUi = (value) => {
@@ -461,6 +483,7 @@ export default function ArticleGenPage({
   const loadGenerationDefaults = async () => {
     try {
       const settings = await getGenerationDefaultSettings()
+      if (taskContextTouchedRef.current) return
       setScene(normalizeDefaultSceneForUi(settings.scene))
       setArticleMode('official_draft')
       setTargetWords(settings.target_words || 1200)
@@ -468,7 +491,7 @@ export default function ArticleGenPage({
       setExportFormat(normalizeDefaultExportFormatForUi(settings.export_format))
       setRows(currentRows => {
         if (currentRows.length !== 1 || currentRows[0].title.trim()) return currentRows
-        return [{ ...currentRows[0], wordCount: normalizeTargetWords(settings.target_words || 1200) }]
+        return [{ ...currentRows[0], scene: normalizeDefaultSceneForUi(settings.scene), wordCount: normalizeTargetWords(settings.target_words || 1200) }]
       })
     } catch {
       // Keep page defaults when saved defaults cannot be read.
@@ -508,6 +531,7 @@ export default function ArticleGenPage({
   }
 
   const addRow = () => {
+    taskContextTouchedRef.current = true
     setRows(currentRows => [...currentRows, createUiBatchTask(getDefaultTaskParams())])
   }
 
@@ -516,17 +540,10 @@ export default function ArticleGenPage({
   }
 
   const updateRow = (index, field, value) => {
+    taskContextTouchedRef.current = true
     setRows(currentRows => currentRows.map((row, i) => {
       if (i !== index) return row
-      const updated = { ...row, [field]: value }
-      if (
-        field === 'documentType'
-        && value === DOCUMENT_TYPE_PARTY_LECTURE
-        && updated.writingPurpose === WRITING_PURPOSE_REPORT
-      ) {
-        updated.writingPurpose = WRITING_PURPOSE_STUDY
-      }
-      return updated
+      return { ...row, [field]: value }
     }))
   }
 
@@ -553,8 +570,17 @@ export default function ArticleGenPage({
   }
 
   const handleGenerate = async () => {
-    const validRows = rows.filter(r => r.title.trim())
+    const requestRows = activePage === 'batchTask' ? rows : rows.slice(0, 1)
+    const validRows = requestRows.filter(r => r.title.trim())
     if (validRows.length === 0) return
+
+    const invalid = validRows.map(row => ({ row, message: productionTaskError({
+      document_type: row.documentType, scene: row.scene, count: row.count,
+    }, catalogReady ? genreCatalog : null, exportFormat) })).find(item => item.message)
+    if (invalid) {
+      setErrorModal({ type: 'error', title: '请检查写作参数', message: `${invalid.row.title}：${invalid.message}` })
+      return
+    }
 
     const requestOrigin = activePage === 'batchTask' ? 'batchTask' : 'articleGen'
     setGenerationOrigin(requestOrigin)
@@ -603,6 +629,7 @@ export default function ArticleGenPage({
             {
               title: row.title,
               document_type: row.documentType,
+              scene: row.scene,
               level: row.level,
               org_type: row.orgType,
               business_domain: row.businessDomain,
@@ -613,10 +640,10 @@ export default function ArticleGenPage({
               count: row.count,
             },
             {
-              scene,
               temperature,
               export_format: exportFormat,
             },
+            genreCatalog,
           )
           const res = await generateArticle(payload)
           const returnedQualityTestDraft = res?.articles?.some(isQualityTestDraft)
@@ -869,21 +896,23 @@ export default function ArticleGenPage({
   }
 
   const handleRerunFromLog = (entry) => {
+    taskContextTouchedRef.current = true
+    const restoredGenre = normalizeRestoredTaskGenre({ documentType: entry.document_type || '', requiresGenreSelection: !entry.document_type, scene: entry.scene }, genreCatalog, catalogReady ? sceneOptions : undefined)
     setRows([createUiBatchTask({
-      documentType: entry.document_type || DEFAULT_DOCUMENT_TYPE,
+      ...restoredGenre,
       level: entry.level || LEVEL_OPTIONS[0],
       orgType: entry.org_type || ORG_TYPE_OPTIONS[0],
       businessDomain: entry.business_domain || DEFAULT_BUSINESS_DOMAIN,
       writingPurpose: entry.writing_purpose || DEFAULT_WRITING_PURPOSE,
       wordCount: entry.target_words || 1200,
       referenceScope: entry.reference_scope || REFERENCE_SCOPE_OPTIONS[0],
-    }, { title: entry.request_title || entry.title || '' })])
-    setScene(entry.scene || '')
+    }, { title: entry.request_title || entry.title || '', count: entry.count || 1 })])
+    setScene(restoredGenre.scene)
     setArticleMode('official_draft')
     setAnalysisWrapperEnabled(!!entry.analysis_wrapper_enabled)
     setAppreciationScope(entry.appreciation_scope || entry.appreciation?.appreciation_scope || 'single_deep')
     setAppreciationCount(entry.appreciation_count || entry.appreciation?.appreciation_count || 3)
-    setDocumentType(entry.document_type || DEFAULT_DOCUMENT_TYPE)
+    setDocumentType(restoredGenre.documentType)
     setLevel(entry.level || LEVEL_OPTIONS[0])
     setOrgType(entry.org_type || ORG_TYPE_OPTIONS[0])
     setBusinessDomain(entry.business_domain || DEFAULT_BUSINESS_DOMAIN)
@@ -891,6 +920,7 @@ export default function ArticleGenPage({
     setReferenceScope(entry.reference_scope || REFERENCE_SCOPE_OPTIONS[0])
     setTargetWords(entry.target_words || 1200)
     setExportFormat(entry.export_format || 'docx')
+    setAdditionalRequirements(entry.style || '')
     setResult(null)
     setErrorModal(null)
   }
@@ -903,8 +933,10 @@ export default function ArticleGenPage({
   }
 
   const handleBatchDefaultChange = (field, value) => {
+    taskContextTouchedRef.current = true
     const setters = {
       documentType: setDocumentType,
+      scene: setScene,
       level: setLevel,
       orgType: setOrgType,
       businessDomain: setBusinessDomain,
@@ -920,6 +952,9 @@ export default function ArticleGenPage({
     .reduce((sum, row) => sum + (Number.isInteger(row.count) && row.count > 0 ? row.count : 1), 0)
 
   const singleTask = rows[0] || createUiBatchTask(INITIAL_TASK_DEFAULTS)
+  const singleTaskError = productionTaskError({ document_type: singleTask.documentType, scene: singleTask.scene, count: singleTask.count }, genreCatalog, exportFormat)
+  const taskValidationErrors = rows.map(row => row.title.trim() && catalogReady
+    ? productionTaskError({ document_type: row.documentType, scene: row.scene, count: row.count }, genreCatalog, exportFormat) : '')
   const primaryArticle = result?.articles?.[0] || null
   const art = primaryArticle
   const primaryArticleText = primaryArticle ? buildDocumentModeDraftText(primaryArticle) : ''
@@ -988,13 +1023,19 @@ export default function ArticleGenPage({
         <BatchTaskPage
           rows={rows}
           loading={loading}
-          defaults={{ documentType, level, orgType, businessDomain, writingPurpose, wordCount: targetWords, referenceScope }}
+          defaults={{ documentType, scene, level, orgType, businessDomain, writingPurpose, wordCount: targetWords, referenceScope }}
+          catalogReady={catalogReady}
+          catalogLoading={catalogLoading}
+          catalogError={catalogError}
+          onReloadCatalogs={loadCatalogs}
+          taskValidationErrors={taskValidationErrors}
           options={{
-            documentType: DOCUMENT_TYPE_OPTIONS,
+            genres: genreOptions,
+            scenes: sceneOptions,
             level: LEVEL_OPTIONS,
             orgType: ORG_TYPE_OPTIONS,
             businessDomain: BUSINESS_DOMAIN_OPTIONS,
-            writingPurpose: writingPurposeOptions,
+            writingPurpose: WRITING_PURPOSE_OPTIONS,
             referenceScope: REFERENCE_SCOPE_OPTIONS,
           }}
           totalCount={totalCount}
@@ -1095,14 +1136,18 @@ export default function ArticleGenPage({
             </FormControl>
 
             <FormControl label="文种" htmlFor="article-document-type">
-              <select
+              <GenreSelect
                 id="article-document-type"
+                genres={genreOptions}
                 value={singleTask.documentType}
                 onChange={event => updateRow(0, 'documentType', event.target.value)}
-                disabled={loading}
-              >
-                {DOCUMENT_TYPE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
-              </select>
+                disabled={loading || !catalogReady}
+              />
+            </FormControl>
+
+            <FormControl label="写作场景" htmlFor="article-scene">
+              <SceneSelect id="article-scene" scenes={sceneOptions} value={singleTask.scene}
+                onChange={event => updateRow(0, 'scene', event.target.value)} disabled={loading || !catalogReady} />
             </FormControl>
 
             <FormControl label="层级" htmlFor="article-level">
@@ -1145,14 +1190,11 @@ export default function ArticleGenPage({
                 onChange={event => updateRow(0, 'writingPurpose', event.target.value)}
                 disabled={loading}
               >
-                {(singleTask.documentType === DOCUMENT_TYPE_PARTY_LECTURE
-                  ? WRITING_PURPOSE_OPTIONS.filter(option => option !== WRITING_PURPOSE_REPORT)
-                  : WRITING_PURPOSE_OPTIONS
-                ).map(option => <option key={option} value={option}>{option}</option>)}
+                {WRITING_PURPOSE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
             </FormControl>
 
-            <FormControl label="目标字数" htmlFor="article-target-words">
+            <FormControl label="目标字数" htmlFor="article-target-words" className="write-field--full">
               <input
                 id="article-target-words"
                 type="number"
@@ -1190,10 +1232,13 @@ export default function ArticleGenPage({
           </div>
 
           <div className="write-form-actions">
+            {catalogError && <div role="alert">{catalogError} <Button onClick={loadCatalogs} disabled={catalogLoading}>重新加载</Button></div>}
+            {catalogReady && singleTaskError && <p role="alert">{singleTaskError}</p>}
             <Button
               variant="primary"
               size="lg"
               loading={loading}
+              disabled={!catalogReady || !!singleTaskError}
               onClick={handleSingleGenerate}
               className="write-generate-button"
             >

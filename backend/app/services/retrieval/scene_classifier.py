@@ -154,6 +154,22 @@ def get_scene_taxonomy() -> list[dict]:
     return SCENE_TAXONOMY
 
 
+def normalize_generation_scene(value: str | None) -> str | None:
+    """Validate new generation input, without classification or legacy guesses.
+
+    The API applies this once before Retrieval/Task Assembly/Writer. Historical
+    records remain readable; their genre-as-scene recovery is a separate path.
+    """
+    scene = (value or "").strip()
+    if scene.lower().replace(" ", "") in {
+        "", "auto", "自动", "未指定", "自动/未指定", "自动识别场景",
+    }:
+        return None
+    if scene not in {item["name"] for item in get_scene_taxonomy()}:
+        raise ValueError("请选择有效的写作场景，或选择自动 / 未指定。")
+    return scene
+
+
 def get_scene_stats() -> dict:
     """Get document counts per scene."""
     docs = list_documents()["items"]

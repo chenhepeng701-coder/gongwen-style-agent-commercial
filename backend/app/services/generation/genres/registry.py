@@ -25,6 +25,13 @@ class GenreRegistry:
             raise GenreResolutionError("GENRE_IDENTITY_ALREADY_REGISTERED")
         self._identities.update(dict.fromkeys(identities, adapter))
 
+    def all(self) -> tuple[GenreAdapter, ...]:
+        """Return each registered adapter once, in registration order.
+
+        The snapshot is immutable and aliases do not create extra genres.
+        """
+        return tuple({adapter.genre_id: adapter for adapter in self._identities.values()}.values())
+
     def resolve(self, document_type: str | None, *, purpose: str = "inspection") -> GenreAdapter:
         if purpose not in {"inspection", "production", "offline"}:
             raise GenreResolutionError("GENRE_RESOLUTION_PURPOSE_INVALID")

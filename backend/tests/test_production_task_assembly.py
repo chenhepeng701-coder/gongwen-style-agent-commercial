@@ -308,6 +308,14 @@ def test_protected_owners_unchanged_from_task_base():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for path in paths:
+        from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
+        from genre_ui_scene_scope import MERGED_UPSTREAM_OWNER_PATHS, assert_integration_protected_owner
+        if path in MERGED_UPSTREAM_OWNER_PATHS:
+            assert_integration_protected_owner(root, path)
+            continue
+        if path in GENRE_UI_SCENE_MIGRATIONS and path != DOCUMENT_RETRIEVER_PATH:
+            assert_integration_content(root, path)
+            continue
         if path in COMMERCIAL_GENRE_CONTENT_SHA256:
             assert_commercial_genre_content(root, path)
             continue

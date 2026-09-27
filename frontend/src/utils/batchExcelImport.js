@@ -1,8 +1,11 @@
-const TASK_FIELDS = ['title', 'documentType', 'level', 'orgType', 'businessDomain', 'writingPurpose', 'wordCount', 'referenceScope']
+import { normalizeUiTaskGenre, normalizeScene } from './genreCatalog.js'
+
+const TASK_FIELDS = ['title', 'documentType', 'scene', 'level', 'orgType', 'businessDomain', 'writingPurpose', 'wordCount', 'referenceScope']
 
 const HEADER_ALIASES = {
   title: ['标题', '主题', '标题/主题'],
   documentType: ['文种', '文种类型'],
+  scene: ['写作场景', '场景', 'scene'],
   level: ['层级'],
   orgType: ['单位类型'],
   businessDomain: ['业务领域'],
@@ -144,7 +147,6 @@ export function parseBatchExcelRows(rows, defaults, optionSets) {
 
     const importedTask = { title }
     const validations = [
-      ['documentType', '文种类型', optionSets.documentType],
       ['level', '层级', optionSets.level],
       ['orgType', '单位类型', optionSets.orgType],
       ['businessDomain', '业务领域', optionSets.businessDomain],
@@ -152,7 +154,19 @@ export function parseBatchExcelRows(rows, defaults, optionSets) {
       ['referenceScope', '参考资料范围', optionSets.referenceScope],
     ]
     let error = ''
+    if (columns.documentType !== undefined && cleanText(cells[columns.documentType])) {
+      // Preserve unresolved historical identities for display; request admission
+      // later requires a canonical production genre from the backend catalog.
+      importedTask.documentType = cleanText(cells[columns.documentType])
+    }
+    if (columns.scene !== undefined) {
+      const explicitScene = normalizeScene(cells[columns.scene])
+      if (explicitScene && !optionSets.scene?.includes(explicitScene)) {
+        error = `写作场景“${explicitScene}”不是系统有效选项。`
+      } else importedTask.scene = explicitScene || ''
+    }
     for (const [field, label, options] of validations) {
+      if (error) break
       if (columns[field] === undefined || !cleanText(cells[columns[field]])) continue
       const mapped = mapOption(cells[columns[field]], label, options)
       if (mapped.error) { error = mapped.error; break }
@@ -169,7 +183,11 @@ export function parseBatchExcelRows(rows, defaults, optionSets) {
       else importedTask.count = parsed.value
     }
     if (error) errors.push({ row: rowNumber, reason: error })
-    else tasks.push({ ...normalizedDefaults, ...nonEmptyTaskFields(importedTask), count: importedTask.count ?? 1 })
+    else {
+      const task = { ...normalizedDefaults, ...nonEmptyTaskFields(importedTask), count: importedTask.count ?? 1 }
+      if (Object.prototype.hasOwnProperty.call(importedTask, 'scene')) task.scene = importedTask.scene
+      tasks.push(optionSets.genreCatalog ? normalizeUiTaskGenre(task, optionSets.genreCatalog) : task)
+    }
   })
   return { totalRows: Math.max(0, normalizedRows.length - (header.hasHeader ? actualHeaderIndex + 1 : firstNonBlankIndex)), tasks, skipped, errors, mode: header.hasHeader && Object.keys(columns).some(field => !['title', 'sequence'].includes(field)) ? 'multi' : 'single', diagnostics }
 }

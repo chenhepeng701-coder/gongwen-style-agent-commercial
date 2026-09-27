@@ -1,3 +1,5 @@
+import { normalizeTaskGenre, productionTaskError } from './genreCatalog.js'
+
 export const REFERENCE_MODE_OPTIONS = [
   { value: 'auto', label: '自动匹配资料库' },
   { value: 'search', label: '优先参考搜索结果' },
@@ -24,6 +26,7 @@ export function buildBatchTask(defaults, overrides = {}) {
   return {
     title: '',
     document_type: safeDefaults.document_type || '',
+    scene: safeDefaults.scene ?? null,
     level: safeDefaults.level || '',
     org_type: safeDefaults.org_type || '',
     business_domain: safeDefaults.business_domain || '',
@@ -46,15 +49,14 @@ export function applyDefaultsToTask(task, defaults) {
   })
 }
 
-export function buildTaskGenerationPayload(task, shared) {
-  const safeTask = buildBatchTask({}, task || {})
+export function buildTaskGenerationPayload(task, shared, catalog) {
+  const safeTask = normalizeTaskGenre(buildBatchTask({}, task || {}), catalog)
   const safeShared = shared || {}
-  const hasExplicitScene = Object.prototype.hasOwnProperty.call(safeTask, 'scene')
   const hasExplicitStyle = Object.prototype.hasOwnProperty.call(safeTask, 'style')
   const count = safeTask.count || 1
-  const generationRoute = safeTask.document_type === '工作总结' && count === 1
-    ? 'full_article_drafting'
-    : 'current'
+  const error = productionTaskError({ ...safeTask, count }, catalog, safeShared.export_format || 'docx')
+  if (error) throw new Error(error)
+  const genre = catalog.genres.find(item => item.document_type === safeTask.document_type)
   return {
     title: String(safeTask.title || '').trim(),
     document_type: safeTask.document_type,
@@ -64,10 +66,10 @@ export function buildTaskGenerationPayload(task, shared) {
     writing_purpose: safeTask.writing_purpose,
     target_length: safeTask.target_length,
     reference_mode: safeTask.reference_mode,
-    scene: hasExplicitScene ? safeTask.scene : null,
+    scene: safeTask.scene,
     ...(hasExplicitStyle ? { style: safeTask.style } : {}),
     article_mode: 'official_draft',
-    generation_route: generationRoute,
+    generation_route: genre.generation_route,
     temperature: safeShared.temperature ?? 0.7,
     count,
     export_format: safeShared.export_format || 'docx',

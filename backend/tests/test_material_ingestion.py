@@ -411,6 +411,14 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for file in files:
+        from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
+        from genre_ui_scene_scope import MERGED_UPSTREAM_OWNER_PATHS, assert_integration_protected_owner
+        if file in MERGED_UPSTREAM_OWNER_PATHS:
+            assert_integration_protected_owner(root, file)
+            continue
+        if file in GENRE_UI_SCENE_MIGRATIONS and file != DOCUMENT_RETRIEVER_PATH:
+            assert_integration_content(root, file)
+            continue
         if file in COMMERCIAL_GENRE_CONTENT_SHA256:
             assert_commercial_genre_content(root, file)
             continue

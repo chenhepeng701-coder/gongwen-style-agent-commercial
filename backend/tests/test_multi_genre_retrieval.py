@@ -124,6 +124,10 @@ def test_p1_ranking_primary_auxiliary_and_safety_gates_remain_identical_ast(base
     for name in names:
         nodes = [next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == name)
                  for tree in trees]
+        if name == "prepare_retrieval_request" and ast.dump(nodes[0]) != ast.dump(nodes[1]):
+            from genre_ui_scene_scope import assert_query_preparation_migration
+            assert_query_preparation_migration(ROOT)
+            continue
         assert ast.dump(nodes[0]) == ast.dump(nodes[1]), name
 
 

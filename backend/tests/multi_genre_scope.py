@@ -118,6 +118,10 @@ def assert_p1_core_unchanged(root: Path) -> None:
     before = nodes(migration_base_source(root, P1_RETRIEVER))
     after = nodes((root / P1_RETRIEVER).read_bytes())
     for name in (*P1_UNCHANGED_FUNCTIONS, *P1_UNCHANGED_CONSTANTS):
+        from genre_ui_scene_scope import QUERY_PREPARATION_SEAMS, assert_query_preparation_migration
+        if name in QUERY_PREPARATION_SEAMS and before[name] != after[name]:
+            assert_query_preparation_migration(root)
+            continue
         assert before[name] == after[name], "P1 shared function or constant changed: " + name
 
 

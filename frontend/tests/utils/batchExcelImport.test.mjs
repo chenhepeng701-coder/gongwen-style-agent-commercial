@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseBatchExcelRows } from '../../src/utils/batchExcelImport.js'
+import { catalog } from '../fixtures/genreCatalog.mjs'
+import * as XLSX from 'xlsx'
+import { buildTaskGenerationPayload } from '../../src/utils/batchTaskParams.js'
 
 const defaults = { documentType: '党课讲稿', level: '乡镇 / 街道', orgType: '党政机关', businessDomain: '党建', writingPurpose: '学习研讨', wordCount: 1200, referenceScope: '自动匹配资料库' }
 const options = {
@@ -71,4 +74,59 @@ test('标准业务表头仍映射且未识别列被诊断', () => {
   const result = parseBatchExcelRows([['标题', '文种', '未知列'], ['任务', '工作总结', 'x']], defaults, options)
   assert.equal(result.tasks[0].documentType, '工作总结')
   assert.deepEqual(result.diagnostics.unrecognizedHeaders, ['未知列'])
+})
+
+test('场景列独立保留每行值，自动场景清空默认值', () => {
+  const rows = [['标题', '文种', '写作场景'], ['第一行', '工作总结', '年度工作总结'], ['第二行', '工作总结', '专题汇报'], ['自动', '工作总结', '自动 / 未指定']]
+  const result = parseBatchExcelRows(rows, { ...defaults, scene: '专题汇报' }, { ...options, genreCatalog: catalog, scene: ['年度工作总结', '专题汇报'] })
+  assert.equal(result.errors.length, 0)
+  assert.deepEqual(result.tasks.map(task => task.scene), ['年度工作总结', '专题汇报', ''])
+})
+
+test('旧九列兼容导入使用后端安全映射并保留歧义值', () => {
+  const result = parseBatchExcelRows(realStructureRows, defaults, { ...options, genreCatalog: catalog })
+  assert.equal(result.tasks.length, 10)
+  assert.equal(result.tasks[0].documentType, '讲话稿')
+  assert.equal(result.tasks[0].scene, '党课讲稿')
+  assert.equal(result.tasks[2].documentType, '讲话稿')
+  assert.equal(result.tasks[4].documentType, '汇报材料')
+  assert.equal(result.tasks[8].documentType, '调研报告')
+  assert.equal(result.tasks[8].scene, '')
+})
+
+test('无场景列才继承默认场景，非法场景明确报错', () => {
+  const inherited = parseBatchExcelRows([['标题'], ['任务']], { ...defaults, scene: '专题汇报' }, { ...options, genreCatalog: catalog })
+  assert.equal(inherited.tasks[0].scene, '专题汇报')
+  const rejected = parseBatchExcelRows([['标题', '场景'], ['任务', '不存在的场景']], defaults, { ...options, genreCatalog: catalog, scene: ['专题汇报'] })
+  assert.equal(rejected.tasks.length, 0)
+  assert.match(rejected.errors[0].reason, /不是系统有效选项/)
+})
+
+test('真实内存XLSX读写往返保留场景列及独立任务值', () => {
+  const sheet = XLSX.utils.aoa_to_sheet([['标题', '文种', '写作场景'], ['任务甲', '工作总结', '专题汇报'], ['任务乙', '工作总结', '自动 / 未指定']])
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, sheet, '任务')
+  const bytes = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+  const restored = XLSX.read(bytes, { type: 'buffer' })
+  const rows = XLSX.utils.sheet_to_json(restored.Sheets['任务'], { header: 1, defval: '' })
+  const result = parseBatchExcelRows(rows, defaults, { ...options, genreCatalog: catalog, scene: ['专题汇报'] })
+  assert.equal(result.errors.length, 0)
+  assert.deepEqual(result.tasks.map(task => [task.title, task.scene]), [['任务甲', '专题汇报'], ['任务乙', '']])
+})
+
+test('Excel场景进入正式payload，空白和auto单元格均清空非空默认场景', () => {
+  const rows = [['标题', '文种', '写作场景'], ['手选', '工作总结', '专题汇报'], ['空白', '工作总结', '  '], ['自动', '工作总结', 'auto']]
+  const result = parseBatchExcelRows(rows, { ...defaults, scene: '年度工作总结' }, { ...options, genreCatalog: catalog, scene: ['专题汇报'] })
+  const payloads = result.tasks.map(task => buildTaskGenerationPayload({ title: task.title, document_type: task.documentType, scene: task.scene }, {}, catalog))
+  assert.deepEqual(payloads.map(task => task.scene), ['专题汇报', null, null])
+  assert.ok(payloads.every(task => task.generation_route === 'full_article_drafting'))
+})
+
+test('Excel安全映射保留手选场景优先，歧义旧文种保留显示但正式请求拒绝', () => {
+  const rows = [['标题', '文种', '场景'], ['旧党课', '党课讲稿', '动员讲话'], ['旧调研', '调研报告', '专题汇报']]
+  const result = parseBatchExcelRows(rows, defaults, { ...options, genreCatalog: catalog, scene: ['动员讲话', '专题汇报'] })
+  assert.equal(result.tasks[0].documentType, '讲话稿')
+  assert.equal(result.tasks[0].scene, '动员讲话')
+  assert.equal(result.tasks[1].documentType, '调研报告')
+  assert.throws(() => buildTaskGenerationPayload({ document_type: result.tasks[1].documentType, scene: result.tasks[1].scene }, {}, catalog), /请选择支持的标准文种/)
 })
