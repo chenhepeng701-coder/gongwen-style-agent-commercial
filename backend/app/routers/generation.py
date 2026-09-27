@@ -522,6 +522,14 @@ async def get_genre_catalog():
     return genre_catalog()
 
 
+@router.get("/business-domains")
+async def get_business_domain_catalog():
+    """Read-only task context names; no evidence or production authority."""
+    from app.services.business_domain_catalog import business_domain_catalog
+
+    return business_domain_catalog()
+
+
 @router.post("/generate", response_model=ArticleGenBatchResult)
 async def generate_article(req: ArticleGenRequest):
     """Generate one or more articles from title/theme.
@@ -535,6 +543,9 @@ async def generate_article(req: ArticleGenRequest):
     if effective_article_mode != "official_draft":
         raise HTTPException(status_code=400, detail=OFFICIAL_DRAFT_ONLY_MESSAGE)
     from app.services.retrieval.scene_classifier import normalize_generation_scene
+    from app.services.business_domain_catalog import normalize_business_domain
+
+    req.business_domain = normalize_business_domain(req.business_domain)
 
     try:
         req.scene = normalize_generation_scene(req.scene)

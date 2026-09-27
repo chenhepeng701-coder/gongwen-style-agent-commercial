@@ -4,6 +4,14 @@ export const readyGenre = (genre_id, document_type) => ({
   production_ready: true, generation_route: 'full_article_drafting', export_formats: ['docx', 'txt'],
 })
 
+// Test response only. Production choices are loaded from /business-domains.
+export const businessDomains = [
+  { value: '纪检 / 廉政', display_name: '纪检 / 廉政', aliases: [] },
+  { value: '巡察整改', display_name: '巡察整改', aliases: [] },
+  ...['党建', '作风建设', '安全生产', '基层治理', '生态环保'].map(value => ({ value, display_name: value, aliases: [] })),
+  { value: '合成标准域', display_name: '合成展示名', aliases: ['合成旧域甲', '合成旧域乙'] },
+]
+
 export const catalog = {
   genres: [
     readyGenre('work_summary', '工作总结'),

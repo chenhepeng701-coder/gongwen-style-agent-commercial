@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseBatchExcelRows } from '../../src/utils/batchExcelImport.js'
-import { catalog } from '../fixtures/genreCatalog.mjs'
+import { catalog, businessDomains } from '../fixtures/genreCatalog.mjs'
+import { normalizeBusinessDomain } from '../../src/utils/genreCatalog.js'
 import * as XLSX from 'xlsx'
 import { buildTaskGenerationPayload } from '../../src/utils/batchTaskParams.js'
 
@@ -9,7 +10,7 @@ const defaults = { documentType: '党课讲稿', level: '乡镇 / 街道', orgTy
 const options = {
   documentType: ['党课讲稿', '领导讲话稿', '工作汇报', '工作总结', '调研报告'],
   level: ['乡镇 / 街道', '县区'], orgType: ['党政机关'],
-  businessDomain: ['党建', '纪检/巡察', '作风建设', '安全生产', '基层治理', '生态环保'],
+  businessDomain: businessDomains,
   writingPurpose: ['学习研讨', '工作部署', '贯彻落实', '问题整改', '总结复盘', '其他'],
   referenceScope: ['自动匹配资料库'],
 }
@@ -27,6 +28,42 @@ const realStructureRows = [
   ['任务10', '调研报告', '乡镇 / 街道', '党政机关', '基层治理', '其他', 1800, '自动匹配资料库', 1],
 ]
 
+test('Excel preserves ambiguous mixed legacy cells, separates canonical domains and rejects other unknown cells', () => {
+  const rows = [['标题', '业务领域'], ['标准', '纪检 / 廉政'], ['旧混合值', '纪检/巡察'],
+    ['排版', ' 纪检 ／ 巡察 '], ['未来别名', '合成旧域乙'], ['巡察', '巡察整改'], ['未知', '旧系统自定义值']]
+  const snapshot = structuredClone(rows)
+  const result = parseBatchExcelRows(rows, defaults, options)
+  assert.deepEqual(result.tasks.map(task => task.businessDomain), ['纪检 / 廉政', '纪检/巡察', ' 纪检 ／ 巡察 ', '合成标准域', '巡察整改'])
+  assert.deepEqual(result.errors, [{ row: 7, reason: '业务领域“旧系统自定义值”不是系统有效选项。' }])
+  assert.deepEqual(rows, snapshot)
+  assert.throws(() => parseBatchExcelRows(rows, defaults, { ...options, businessDomain: [] }), /业务领域目录暂不可用/)
+})
+
+test('Excel blank/missing business domain inherits normalized defaults, including unknown historic defaults', () => {
+  for (const value of ['纪检/巡察', '纪检 / 廉政', '巡察整改', '历史默认域']) {
+    const initial = Object.freeze({ ...defaults, businessDomain: value })
+    for (const rows of [[['标题'], ['任务']], [['标题', '业务领域'], ['任务', '']]]) {
+      const result = parseBatchExcelRows(rows, initial, options)
+      assert.equal(result.errors.length, 0)
+      assert.equal(result.tasks[0].businessDomain, normalizeBusinessDomain(value, businessDomains))
+      assert.equal(initial.businessDomain, value)
+    }
+  }
+})
+
+test('real in-memory XLSX round trip preserves mixed legacy and distinct canonical payloads', () => {
+  const rows = [['标题', '文种', '业务领域'], ['标准', '工作总结', '纪检 / 廉政'],
+    ['旧模板', '工作总结', '纪检/巡察'], ['巡察', '工作总结', '巡察整改'], ['安全', '工作总结', '安全生产']]
+  const book = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(rows), '任务')
+  const restored = XLSX.read(XLSX.write(book, { type: 'buffer', bookType: 'xlsx' }), { type: 'buffer' })
+  const result = parseBatchExcelRows(XLSX.utils.sheet_to_json(restored.Sheets['任务'], { header: 1 }), defaults, { ...options, genreCatalog: catalog })
+  assert.equal(result.errors.length, 0)
+  const payloads = result.tasks.map(task => buildTaskGenerationPayload({ title: task.title,
+    document_type: task.documentType, business_domain: task.businessDomain }, {}, catalog, businessDomains))
+  assert.deepEqual(payloads.map(task => task.business_domain), ['纪检 / 廉政', '纪检/巡察', '巡察整改', '安全生产'])
+})
+
 test('真实二维结构识别占位表头，导入10条且列1不入任务', () => {
   const result = parseBatchExcelRows(realStructureRows, defaults, options)
   assert.equal(result.tasks.length, 10)
@@ -39,7 +76,7 @@ for (const index of [0, 3, 6, 9]) {
   test(`真实结构第${index + 1}条映射全部独立参数`, () => {
     const task = parseBatchExcelRows(realStructureRows, defaults, options).tasks[index]
     const source = realStructureRows[index + 1]
-    assert.deepEqual(task, { title: source[0], documentType: source[1], level: source[2], orgType: source[3], businessDomain: source[4], writingPurpose: source[5], wordCount: source[6], referenceScope: source[7], count: source[8] })
+    assert.deepEqual(task, { title: source[0], documentType: source[1], level: source[2], orgType: source[3], businessDomain: normalizeBusinessDomain(source[4], businessDomains), writingPurpose: source[5], wordCount: source[6], referenceScope: source[7], count: source[8] })
   })
 }
 
@@ -117,7 +154,7 @@ test('真实内存XLSX读写往返保留场景列及独立任务值', () => {
 test('Excel场景进入正式payload，空白和auto单元格均清空非空默认场景', () => {
   const rows = [['标题', '文种', '写作场景'], ['手选', '工作总结', '专题汇报'], ['空白', '工作总结', '  '], ['自动', '工作总结', 'auto']]
   const result = parseBatchExcelRows(rows, { ...defaults, scene: '年度工作总结' }, { ...options, genreCatalog: catalog, scene: ['专题汇报'] })
-  const payloads = result.tasks.map(task => buildTaskGenerationPayload({ title: task.title, document_type: task.documentType, scene: task.scene }, {}, catalog))
+  const payloads = result.tasks.map(task => buildTaskGenerationPayload({ title: task.title, document_type: task.documentType, scene: task.scene }, {}, catalog, businessDomains))
   assert.deepEqual(payloads.map(task => task.scene), ['专题汇报', null, null])
   assert.ok(payloads.every(task => task.generation_route === 'full_article_drafting'))
 })

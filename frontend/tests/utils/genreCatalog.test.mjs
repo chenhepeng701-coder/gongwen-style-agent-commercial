@@ -3,20 +3,22 @@ import assert from 'node:assert/strict'
 import {
   loadWritingCatalogs, normalizeScene, normalizeTaskGenre, normalizeUiTaskGenre,
   normalizeRestoredTaskGenre, productionTaskError, readGenreCatalog, readSceneTaxonomy,
+  normalizeBusinessDomain, normalizeUiTaskBusinessDomain, readBusinessDomainCatalog,
 } from '../../src/utils/genreCatalog.js'
-import { catalog, readyGenre } from '../fixtures/genreCatalog.mjs'
+import { catalog, readyGenre, businessDomains } from '../fixtures/genreCatalog.mjs'
 import { buildTaskGenerationPayload } from '../../src/utils/batchTaskParams.js'
 
 test('loads backend response without replacing it with frontend catalog or classification', async () => {
   const scenes = { items: [{ name: '服务端场景', keywords: ['服务端'] }] }
-  const result = await loadWritingCatalogs(async () => catalog, async () => scenes)
+  const result = await loadWritingCatalogs(async () => catalog, async () => scenes, async () => ({ items: businessDomains }))
   assert.equal(result.catalog, catalog)
   assert.equal(result.scenes, scenes.items)
+  assert.equal(result.businessDomains, businessDomains)
 })
 
 test('failed or malformed catalog/taxonomy load fails closed with no fallback', async () => {
-  await assert.rejects(loadWritingCatalogs(async () => { throw new Error('offline') }, async () => ({ items: [] })), /offline/)
-  await assert.rejects(loadWritingCatalogs(async () => catalog, async () => { throw new Error('taxonomy offline') }), /taxonomy offline/)
+  await assert.rejects(loadWritingCatalogs(async () => { throw new Error('offline') }, async () => ({ items: [] }), async () => ({ items: businessDomains })), /offline/)
+  await assert.rejects(loadWritingCatalogs(async () => catalog, async () => { throw new Error('taxonomy offline') }, async () => ({ items: businessDomains })), /taxonomy offline/)
   for (const response of [null, {}, { genres: [] }, { genres: [readyGenre('x', 'x')] }]) {
     assert.throws(() => readGenreCatalog(response), /目录暂不可用/)
   }
@@ -85,7 +87,7 @@ test('scene-only summary history restores auto without mutation and can rerun af
   assert.deepEqual(historical, { documentType: '', scene: '工作总结', requiresGenreSelection: true })
   const payload = buildTaskGenerationPayload({
     document_type: '工作总结', scene: restored.scene, title: '历史任务重跑', count: 1,
-  }, {}, catalog)
+  }, {}, catalog, businessDomains)
   assert.equal(payload.scene, null)
   assert.equal(payload.document_type, '工作总结')
 })
@@ -147,5 +149,47 @@ test('unknown historical scenes remain unchanged even when matching an unknown d
 test('restored scene auto sentinels are normalized before catalog cleanup', () => {
   for (const scene of [undefined, null, '', 'auto', '自动', '未指定', '自动识别场景', '自动/未指定', '自动 / 未指定']) {
     assert.equal(normalizeRestoredTaskGenre({ documentType: '', scene }, catalog, []).scene, '')
+  }
+})
+
+test('business domain resolver consumes every canonical and alias, including future server values', () => {
+  assert.equal(readBusinessDomainCatalog({ items: businessDomains }), businessDomains)
+  for (const item of businessDomains) {
+    for (const name of [item.value, ...item.aliases]) {
+      assert.equal(normalizeBusinessDomain(name, businessDomains), item.value)
+      assert.equal(normalizeBusinessDomain(` ${name.replaceAll('/', ' ／ ')} `, businessDomains), item.value)
+    }
+  }
+  assert.equal(normalizeBusinessDomain('纪检/巡察', businessDomains), '纪检/巡察')
+  assert.equal(normalizeBusinessDomain('纪检 / 廉政', businessDomains), '纪检 / 廉政')
+  assert.equal(normalizeBusinessDomain('巡察整改', businessDomains), '巡察整改')
+  assert.ok(businessDomains.every(item => ![item.value, ...item.aliases].includes('纪检/巡察')))
+})
+
+test('history and delayed defaults normalize without mutating original or erasing unknown values', () => {
+  for (const value of ['纪检/巡察', '纪检 / 廉政', '巡察整改', ' 未知历史领域 ', '', null]) {
+    for (const key of ['businessDomain', 'business_domain']) {
+      const history = Object.freeze({ [key]: value, title: '历史任务' })
+      const pending = normalizeUiTaskBusinessDomain(history, [])
+      const restored = normalizeUiTaskBusinessDomain(pending, businessDomains)
+      assert.equal(restored.businessDomain, value)
+      assert.deepEqual(history, { [key]: value, title: '历史任务' })
+      assert.notEqual(restored, history)
+    }
+  }
+  for (const value of [undefined, null, '', '  ', '未知历史领域']) {
+    assert.equal(normalizeBusinessDomain(value, businessDomains), value)
+  }
+})
+
+test('unavailable, malformed or conflicting business domain catalog has no fallback', async () => {
+  const load = getDomains => loadWritingCatalogs(async () => catalog, async () => ({ items: [] }), getDomains)
+  await assert.rejects(load(async () => { throw new Error('业务领域加载失败') }), /业务领域加载失败/)
+  const item = businessDomains.find(item => item.aliases.length > 0)
+  for (const items of [undefined, [], [{}], [{ ...item, display_name: ' ' }], [item, item],
+    [item, { value: item.aliases[0], display_name: '冲突', aliases: [] }],
+    [{ ...item, aliases: [item.value] }], [{ ...item, aliases: [''] }]]) {
+    assert.throws(() => readBusinessDomainCatalog({ items }), /业务领域目录暂不可用/)
+    await assert.rejects(load(async () => ({ items })), /业务领域目录暂不可用/)
   }
 })

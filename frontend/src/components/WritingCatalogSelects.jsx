@@ -26,3 +26,15 @@ export function SceneSelect({ scenes = [], value, ...props }) {
     </select>
   )
 }
+
+export function BusinessDomainSelect({ items = [], value, disabled, ...props }) {
+  const ready = items.length > 0
+  return (
+    <select {...props} value={ready ? (value || '') : ''} disabled={disabled || !ready}>
+      <option value="" disabled>{ready ? '请选择业务领域' : '业务领域目录加载中或不可用'}</option>
+      {ready && value && !items.some(item => item.value === value)
+        && <option value={value} disabled>{value}（历史值，已保留）</option>}
+      {items.map(item => <option key={item.value} value={item.value}>{item.display_name}</option>)}
+    </select>
+  )
+}

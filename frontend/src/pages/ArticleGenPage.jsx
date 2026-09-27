@@ -6,6 +6,7 @@ import {
   generateArticle,
   getGenreCatalog,
   getSceneTaxonomy,
+  getBusinessDomainCatalog,
   getLibraryStats,
   getGenerationLog,
   getGenerationOutputDir,
@@ -32,8 +33,8 @@ import {
 } from '../utils/documentModeDraft'
 import { buildTaskGenerationPayload, referenceModeFromScope } from '../utils/batchTaskParams'
 import { formatBatchImportSummary, parseBatchExcelRows } from '../utils/batchExcelImport'
-import { loadWritingCatalogs, normalizeScene, normalizeUiTaskGenre, normalizeRestoredTaskGenre, productionTaskError } from '../utils/genreCatalog'
-import { GenreSelect, SceneSelect } from '../components/WritingCatalogSelects'
+import { loadWritingCatalogs, normalizeScene, normalizeUiTaskGenre, normalizeRestoredTaskGenre, productionTaskError, normalizeBusinessDomain, normalizeUiTaskBusinessDomain } from '../utils/genreCatalog'
+import { GenreSelect, SceneSelect, BusinessDomainSelect } from '../components/WritingCatalogSelects'
 
 const WORD_EXPORT_RESPONSIBILITY_NOTICE = '导出内容仅为辅助写作初稿，不代表最终可提交版本。请结合本单位要求、领导意见和最新政策口径进行修改审核。'
 
@@ -55,23 +56,6 @@ const ORG_TYPE_OPTIONS = [
   '国企',
   '村 / 社区',
   '园区 / 开发区',
-  '其他',
-]
-
-const BUSINESS_DOMAIN_OPTIONS = [
-  '党建',
-  '纪检/巡察',
-  '纪检 / 廉政',
-  '意识形态',
-  '基层治理',
-  '乡村振兴',
-  '安全生产',
-  '营商环境',
-  '生态环保',
-  '教育医疗',
-  '经济发展',
-  '作风建设',
-  '办公室综合',
   '其他',
 ]
 
@@ -261,6 +245,7 @@ export default function ArticleGenPage({
   const [scene, setScene] = useState('')
   const [genreCatalog, setGenreCatalog] = useState(null)
   const [sceneOptions, setSceneOptions] = useState([])
+  const [businessDomainOptions, setBusinessDomainOptions] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError, setCatalogError] = useState('')
   const [articleMode, setArticleMode] = useState('official_draft')
@@ -307,7 +292,7 @@ export default function ArticleGenPage({
   const taskContextTouchedRef = useRef(false)
   const [fileName, setFileName] = useState('')
   const genreOptions = genreCatalog?.genres || []
-  const catalogReady = !!genreCatalog && !catalogLoading && !catalogError
+  const catalogReady = !!genreCatalog && businessDomainOptions.length > 0 && !catalogLoading && !catalogError
   const defaultDocumentType = genreOptions.find(genre => genre.production_ready)?.document_type || ''
 
   const getDefaultTaskParams = (overrides = {}) => ({
@@ -315,11 +300,11 @@ export default function ArticleGenPage({
     scene,
     level,
     orgType,
-    businessDomain,
     writingPurpose,
     wordCount: normalizeTargetWords(overrides.wordCount ?? targetWords),
     referenceScope,
     ...overrides,
+    businessDomain: normalizeBusinessDomain(overrides.businessDomain ?? businessDomain, businessDomainOptions),
   })
 
   const handleFileUpload = (e) => {
@@ -340,7 +325,7 @@ export default function ArticleGenPage({
           scene: sceneOptions.map(option => option.name),
           level: LEVEL_OPTIONS,
           orgType: ORG_TYPE_OPTIONS,
-          businessDomain: BUSINESS_DOMAIN_OPTIONS,
+          businessDomain: businessDomainOptions,
           writingPurpose: WRITING_PURPOSE_OPTIONS,
           referenceScope: REFERENCE_SCOPE_OPTIONS,
         })
@@ -376,26 +361,29 @@ export default function ArticleGenPage({
     setCatalogError('')
     setGenreCatalog(null)
     setSceneOptions([])
+    setBusinessDomainOptions([])
     try {
-      const { catalog, scenes } = await loadWritingCatalogs(getGenreCatalog, getSceneTaxonomy)
+      const { catalog, scenes, businessDomains } = await loadWritingCatalogs(getGenreCatalog, getSceneTaxonomy, getBusinessDomainCatalog)
       setGenreCatalog(catalog)
       setSceneOptions(scenes)
+      setBusinessDomainOptions(businessDomains)
     } catch {
-      setCatalogError('文种或写作场景目录加载失败，请重新加载后再生成。')
+      setCatalogError('文种、写作场景或业务领域目录加载失败，请重新加载后再生成。')
     } finally {
       setCatalogLoading(false)
     }
   }
 
   useEffect(() => {
-    if (!genreCatalog) return
-    setRows(currentRows => currentRows.map(row => normalizeRestoredTaskGenre({
+    if (!genreCatalog || !businessDomainOptions.length) return
+    setRows(currentRows => currentRows.map(row => normalizeUiTaskBusinessDomain(normalizeRestoredTaskGenre({
       ...row, documentType: row.documentType || (row.requiresGenreSelection ? '' : defaultDocumentType),
-    }, genreCatalog, sceneOptions)))
+    }, genreCatalog, sceneOptions), businessDomainOptions)))
     const normalizedDefaults = normalizeRestoredTaskGenre({ documentType: documentType || defaultDocumentType, scene }, genreCatalog, sceneOptions)
     setDocumentType(normalizedDefaults.documentType)
     setScene(normalizedDefaults.scene)
-  }, [genreCatalog])
+    setBusinessDomain(current => normalizeBusinessDomain(current, businessDomainOptions))
+  }, [genreCatalog, businessDomainOptions])
 
   useEffect(() => {
     loadCatalogs()
@@ -433,7 +421,7 @@ export default function ArticleGenPage({
     setDocumentType(restoredGenre.documentType)
     setLevel(articleGenDraft.level || LEVEL_OPTIONS[0])
     setOrgType(articleGenDraft.orgType || articleGenDraft.org_type || ORG_TYPE_OPTIONS[0])
-    setBusinessDomain(articleGenDraft.businessDomain || articleGenDraft.business_domain || DEFAULT_BUSINESS_DOMAIN)
+    setBusinessDomain(draftDefaults.businessDomain)
     setWritingPurpose(articleGenDraft.writingPurpose || articleGenDraft.writing_purpose || DEFAULT_WRITING_PURPOSE)
     setReferenceScope(articleGenDraft.referenceScope || articleGenDraft.reference_scope || REFERENCE_SCOPE_OPTIONS[0])
     setTargetWords(articleGenDraft.targetWords || 1200)
@@ -570,6 +558,10 @@ export default function ArticleGenPage({
   }
 
   const handleGenerate = async () => {
+    if (!catalogReady) {
+      setErrorModal({ type: 'error', title: '目录暂不可用', message: catalogError || '文种、写作场景或业务领域目录加载中，请稍后再生成。' })
+      return
+    }
     const requestRows = activePage === 'batchTask' ? rows : rows.slice(0, 1)
     const validRows = requestRows.filter(r => r.title.trim())
     if (validRows.length === 0) return
@@ -644,6 +636,7 @@ export default function ArticleGenPage({
               export_format: exportFormat,
             },
             genreCatalog,
+            businessDomainOptions,
           )
           const res = await generateArticle(payload)
           const returnedQualityTestDraft = res?.articles?.some(isQualityTestDraft)
@@ -897,12 +890,13 @@ export default function ArticleGenPage({
 
   const handleRerunFromLog = (entry) => {
     taskContextTouchedRef.current = true
+    const restoredDomain = normalizeBusinessDomain(entry.business_domain || DEFAULT_BUSINESS_DOMAIN, businessDomainOptions)
     const restoredGenre = normalizeRestoredTaskGenre({ documentType: entry.document_type || '', requiresGenreSelection: !entry.document_type, scene: entry.scene }, genreCatalog, catalogReady ? sceneOptions : undefined)
     setRows([createUiBatchTask({
       ...restoredGenre,
       level: entry.level || LEVEL_OPTIONS[0],
       orgType: entry.org_type || ORG_TYPE_OPTIONS[0],
-      businessDomain: entry.business_domain || DEFAULT_BUSINESS_DOMAIN,
+      businessDomain: restoredDomain,
       writingPurpose: entry.writing_purpose || DEFAULT_WRITING_PURPOSE,
       wordCount: entry.target_words || 1200,
       referenceScope: entry.reference_scope || REFERENCE_SCOPE_OPTIONS[0],
@@ -915,7 +909,7 @@ export default function ArticleGenPage({
     setDocumentType(restoredGenre.documentType)
     setLevel(entry.level || LEVEL_OPTIONS[0])
     setOrgType(entry.org_type || ORG_TYPE_OPTIONS[0])
-    setBusinessDomain(entry.business_domain || DEFAULT_BUSINESS_DOMAIN)
+    setBusinessDomain(restoredDomain)
     setWritingPurpose(entry.writing_purpose || DEFAULT_WRITING_PURPOSE)
     setReferenceScope(entry.reference_scope || REFERENCE_SCOPE_OPTIONS[0])
     setTargetWords(entry.target_words || 1200)
@@ -1034,7 +1028,7 @@ export default function ArticleGenPage({
             scenes: sceneOptions,
             level: LEVEL_OPTIONS,
             orgType: ORG_TYPE_OPTIONS,
-            businessDomain: BUSINESS_DOMAIN_OPTIONS,
+            businessDomain: businessDomainOptions,
             writingPurpose: WRITING_PURPOSE_OPTIONS,
             referenceScope: REFERENCE_SCOPE_OPTIONS,
           }}
@@ -1173,14 +1167,13 @@ export default function ArticleGenPage({
             </FormControl>
 
             <FormControl label="业务领域" htmlFor="article-business-domain">
-              <select
+              <BusinessDomainSelect
                 id="article-business-domain"
+                items={businessDomainOptions}
                 value={singleTask.businessDomain}
                 onChange={event => updateRow(0, 'businessDomain', event.target.value)}
-                disabled={loading}
-              >
-                {BUSINESS_DOMAIN_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
-              </select>
+                disabled={loading || !catalogReady}
+              />
             </FormControl>
 
             <FormControl label="写作目的" htmlFor="article-writing-purpose">

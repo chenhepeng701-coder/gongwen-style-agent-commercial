@@ -4,13 +4,27 @@ import {
   applyDefaultsToTask, buildBatchTask, buildTaskGenerationPayload,
   referenceModeFromScope, referenceScopeFromMode,
 } from '../../src/utils/batchTaskParams.js'
-import { catalog, readyGenre } from '../fixtures/genreCatalog.mjs'
+import { catalog, readyGenre, businessDomains } from '../fixtures/genreCatalog.mjs'
 
 const defaults = {
   document_type: '工作总结', scene: '年度工作总结', level: '乡镇 / 街道', org_type: '党政机关',
   business_domain: '作风建设', writing_purpose: '学习研讨', target_length: 1200, reference_mode: 'auto',
 }
-const payload = (task, shared) => buildTaskGenerationPayload(task, shared, catalog)
+const payload = (task, shared) => buildTaskGenerationPayload(task, shared, catalog, businessDomains)
+
+test('batch defaults and each payload use server aliases without erasing unknown historic context', () => {
+  for (const value of ['纪检/巡察', '纪检 / 廉政', '巡察整改', '未知历史领域', '安全生产']) {
+    const expected = value
+    const initial = Object.freeze({ ...defaults, business_domain: value })
+    const task = buildBatchTask(initial, { title: '批量合成任务' }, businessDomains)
+    assert.equal(task.business_domain, expected)
+    assert.equal(applyDefaultsToTask(task, initial, businessDomains).business_domain, expected)
+    assert.equal(payload(initial).business_domain, expected)
+    assert.equal(initial.business_domain, value)
+  }
+  assert.throws(() => buildTaskGenerationPayload(defaults, {}, catalog), /业务领域目录暂不可用/)
+  assert.throws(() => buildTaskGenerationPayload(defaults, {}, catalog, []), /业务领域目录暂不可用/)
+})
 
 test('new task inherits independent scene and task context snapshot', () => {
   const mutableDefaults = { ...defaults }
@@ -88,7 +102,7 @@ test('catalog absence, unknown genre and engineering-ready genres fail closed', 
 
 test('future promoted synthetic genre uses formal route with no document-name changes', () => {
   const futureCatalog = { genres: [readyGenre('future', '测试未来文种')], legacy_mappings: [] }
-  const result = buildTaskGenerationPayload({ document_type: '测试未来文种', scene: '测试场景' }, {}, futureCatalog)
+  const result = buildTaskGenerationPayload({ document_type: '测试未来文种', scene: '测试场景' }, {}, futureCatalog, businessDomains)
   assert.equal(result.generation_route, 'full_article_drafting')
   assert.equal(result.scene, '测试场景')
   assert.throws(() => buildTaskGenerationPayload({ document_type: '工作总结' }, {}, futureCatalog), /请选择支持/)
@@ -96,7 +110,7 @@ test('future promoted synthetic genre uses formal route with no document-name ch
 
 test('legacy aliases normalize from backend metadata before formal submission', () => {
   const enabledSpeech = { ...catalog, genres: catalog.genres.map(item => item.genre_id === 'speech' ? readyGenre('speech', '讲话稿') : item) }
-  const result = buildTaskGenerationPayload({ document_type: '党课讲稿' }, {}, enabledSpeech)
+  const result = buildTaskGenerationPayload({ document_type: '党课讲稿' }, {}, enabledSpeech, businessDomains)
   assert.equal(result.document_type, '讲话稿')
   assert.equal(result.scene, '党课讲稿')
 })

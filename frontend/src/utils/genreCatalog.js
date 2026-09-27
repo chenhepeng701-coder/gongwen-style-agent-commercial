@@ -24,11 +24,42 @@ export function readSceneTaxonomy(response) {
   return response.items
 }
 
-export async function loadWritingCatalogs(getGenres, getScenes) {
-  const results = await Promise.allSettled([getGenres(), getScenes()])
+const businessDomainKey = value => String(value ?? '').replace(/\s/g, '').replace(/／/g, '/')
+
+export function readBusinessDomainCatalog(response) {
+  const items = response?.items
+  const identities = new Set()
+  if (!Array.isArray(items) || items.length === 0 || items.some(item => {
+    if (typeof item?.value !== 'string' || !item.value.trim()
+      || typeof item.display_name !== 'string' || !item.display_name.trim()
+      || !Array.isArray(item.aliases)) return true
+    return [item.value, ...item.aliases].some(name => {
+      const key = businessDomainKey(name)
+      if (typeof name !== 'string' || !key || identities.has(key)) return true
+      identities.add(key)
+      return false
+    })
+  })) throw new Error('业务领域目录暂不可用，请重新加载后再生成。')
+  return items
+}
+
+export function normalizeBusinessDomain(value, items = []) {
+  const key = businessDomainKey(value)
+  const item = items.find(item => [item.value, ...item.aliases].some(name => businessDomainKey(name) === key))
+  return item?.value ?? value
+}
+
+export function normalizeUiTaskBusinessDomain(task, items) {
+  const value = Object.prototype.hasOwnProperty.call(task || {}, 'businessDomain') ? task.businessDomain : task?.business_domain
+  return { ...task, businessDomain: normalizeBusinessDomain(value, items) }
+}
+
+export async function loadWritingCatalogs(getGenres, getScenes, getBusinessDomains) {
+  const results = await Promise.allSettled([getGenres(), getScenes(), getBusinessDomains()])
   const failed = results.find(result => result.status === 'rejected')
   if (failed) throw failed.reason
-  return { catalog: readGenreCatalog(results[0].value), scenes: readSceneTaxonomy(results[1].value) }
+  return { catalog: readGenreCatalog(results[0].value), scenes: readSceneTaxonomy(results[1].value),
+    businessDomains: readBusinessDomainCatalog(results[2].value) }
 }
 
 export function normalizeTaskGenre(task, catalog) {
