@@ -4,6 +4,7 @@ import {
   getEmbeddingSettings, saveEmbeddingSettings, testEmbeddingConnection,
 } from '../api'
 import Modal from '../components/Modal'
+import WritingReferenceSettings from '../components/WritingReferenceSettings'
 
 const INITIAL_FORM = {
   provider_key: 'deepseek',
@@ -485,6 +486,7 @@ export default function ModelConfigPage() {
       </div>
 
       {/* ── Model Presets ── */}
+      <WritingReferenceSettings />
       <div className="form-section mt-4">
         <h3>模型预设列表</h3>
         <table className="preset-table">

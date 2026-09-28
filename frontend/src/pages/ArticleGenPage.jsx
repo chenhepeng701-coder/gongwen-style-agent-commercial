@@ -241,6 +241,7 @@ export default function ArticleGenPage({
   historyEditorArticle,
   onHistoryEditorArticleConsumed,
   onNavigate,
+  onGenerationPendingChange,
 }) {
   const [rows, setRows] = useState(() => [createUiBatchTask(INITIAL_TASK_DEFAULTS)])
   const [scene, setScene] = useState('')
@@ -375,6 +376,16 @@ export default function ArticleGenPage({
       setCatalogLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!loading || typeof window === 'undefined') return
+    const handleBeforeUnload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [loading])
 
   useEffect(() => {
     if (!genreCatalog || !businessDomainOptions.length) return
@@ -585,6 +596,7 @@ export default function ArticleGenPage({
     setErrorModal(null)
     setResult(null)
     setLoading(true)
+    onGenerationPendingChange?.(true)
     setBatchProgress({ current: 0, total: validRows.length })
     const validTaskIds = new Set(validRows.map(row => row.id))
     setRows(currentRows => currentRows.map(row => (
@@ -728,6 +740,7 @@ export default function ArticleGenPage({
       stopRequestedRef.current = false
       setStopRequested(false)
       setLoading(false)
+      onGenerationPendingChange?.(false)
     }
   }
 

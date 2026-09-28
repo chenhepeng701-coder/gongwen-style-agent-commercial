@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import Layout from './Layout'
+import ConfirmDialog from './components/ConfirmDialog'
 import LibraryPage from './pages/LibraryPage'
 import ModelConfigPage from './pages/ModelConfigPage'
 import ArticleGenPage from './pages/ArticleGenPage'
@@ -93,13 +94,24 @@ export default function App() {
   const [activePage, setActivePage] = useState(getInitialActivePage)
   const [articleGenDraft, setArticleGenDraft] = useState(null)
   const [historyEditorArticle, setHistoryEditorArticle] = useState(null)
+  const generationPending = useRef(false)
+  const [navigationBlocked, setNavigationBlocked] = useState(false)
 
   const ActiveComponent = (PAGES[activePage] || PAGES[DEFAULT_ACTIVE_PAGE]).component
 
   const handleNavigate = (pageKey) => {
     const nextPage = VALID_PAGE_KEYS.has(pageKey) ? pageKey : DEFAULT_ACTIVE_PAGE
+    if (generationPending.current && PAGES[nextPage].component !== ArticleGenPage) {
+      setNavigationBlocked(true)
+      return
+    }
     setActivePage(nextPage)
     saveActivePage(nextPage)
+  }
+
+  const handleGenerationPendingChange = (pending) => {
+    generationPending.current = pending
+    if (!pending) setNavigationBlocked(false)
   }
 
   const handleReuseGenerationEntry = (entry) => {
@@ -139,6 +151,7 @@ export default function App() {
       <ActiveComponent
         activePage={activePage}
         onNavigate={handleNavigate}
+        onGenerationPendingChange={handleGenerationPendingChange}
         articleGenDraft={articleGenDraft}
         onArticleGenDraftConsumed={() => setArticleGenDraft(null)}
         historyEditorArticle={historyEditorArticle}
@@ -146,6 +159,19 @@ export default function App() {
         onReuseGenerationEntry={handleReuseGenerationEntry}
         onOpenGenerationEntry={handleOpenGenerationEntry}
         onUseTopicSuggestion={handleUseTopicSuggestion}
+      />
+      <ConfirmDialog
+        open={navigationBlocked}
+        tone="warning"
+        title="文章正在生成"
+        description="文章正在生成。为避免生成结果丢失，请等待生成完成后再离开当前写作工作区。"
+        cancelText="继续等待"
+        confirmText="查看生成状态"
+        onCancel={() => setNavigationBlocked(false)}
+        onConfirm={() => {
+          setNavigationBlocked(false)
+          handleNavigate('genResult')
+        }}
       />
     </Layout>
   )

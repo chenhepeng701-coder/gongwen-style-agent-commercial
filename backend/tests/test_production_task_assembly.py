@@ -286,6 +286,8 @@ def test_writer_failure_is_not_retried_or_fallen_back(configured, library, monke
 
 
 def test_protected_owners_unchanged_from_task_base():
+    from release_rc_01_package_scope import PACKAGE_SEAMS, assert_package_seam
+    from release_rc_01_scope import RELEASE_RC_01_FRONTEND_CONTENT_SHA256, assert_release_rc_01_frontend_content
     from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, assert_commercial_genre_content
     from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
@@ -308,6 +310,12 @@ def test_protected_owners_unchanged_from_task_base():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for path in paths:
+        if path in PACKAGE_SEAMS:
+            assert_package_seam(root, path)
+            continue
+        if path in RELEASE_RC_01_FRONTEND_CONTENT_SHA256:
+            assert_release_rc_01_frontend_content(root, path)
+            continue
         from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
         from genre_ui_scene_scope import MERGED_UPSTREAM_OWNER_PATHS, assert_integration_protected_owner
         if path in MERGED_UPSTREAM_OWNER_PATHS:

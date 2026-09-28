@@ -19,9 +19,12 @@ SCENE_OWNER_PATH = "backend/app/services/retrieval/scene_classifier.py"
 CATALOG_PATH = "backend/app/services/generation/genres/catalog.py"
 NEW_BACKEND_PATHS = (CATALOG_PATH,)
 FRONTEND_CONTENT_SHA256 = {
-    "frontend/src/App.jsx": "c3ace3f5a94c441ac0c3db483cd0a9b170fe218e992e5b45c1997cbb86bfb32d",
+    # RELEASE-RC-01 Phase 2 Repair: exact accepted Phase 1 navigation/lifecycle
+    # bytes, based on main e50981945773ac7263a5f90fb7f69569ff584098.
+    # Historical BASEs, protected backend owners and guard algorithms stay fixed.
+    "frontend/src/App.jsx": "e27f337faa06031a762a1516b39bf45d272ed0e10ca5150595ef706c86cb58f1",
     "frontend/src/api.js": "083238e2dcb5410781e4cab6fd7dd5065c159b10d947ba9c01303b1a93fb39d1",
-    "frontend/src/pages/ArticleGenPage.jsx": "f019cd8ad773c851aae6a15e7854469bad1ad74b5a69392dad4f536343ab0668",
+    "frontend/src/pages/ArticleGenPage.jsx": "f809320467dd6badd318ec13617c70569c30bd80f4d17ffa7a0f3c325a398b58",
     "frontend/src/pages/BatchTaskPage.jsx": "60cd69f4f16b16b771ff4d9e0af417a06489f1b0e678f438a5f093332201b224",
     "frontend/src/utils/batchExcelImport.js": "332dcfc2bc0d129cbe7e850a52792d66fcabf9304de6dbf8fde6c15318e28e49",
     "frontend/src/utils/batchTaskParams.js": "c1497b9a17a555c1aa21d5bf3bcee9409daf628e902b2c3b682ec2e759352a85",

@@ -1,6 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi.exceptions import RequestValidationError
+from fastapi.routing import APIRoute
+from app.utils.secret_store import SecretStoreError
 
 from app.config import (
     EmbeddingConfig,
@@ -22,9 +25,28 @@ from app.models.schemas import (
 )
 from app.services.library.embedder import test_embedding_connection as run_embedding_connection_test
 from app.services.llm.presets import list_model_presets
-from app.services.llm.connection_test import run_llm_connection_test
+from app.services.llm.connection_test import run_llm_connection_test, _redact_secret
 
-router = APIRouter()
+class SettingsRoute(APIRoute):
+    def get_route_handler(self):
+        handler = super().get_route_handler()
+
+        async def safe_settings_request(request):
+            try:
+                return await handler(request)
+            except SecretStoreError:
+                raise HTTPException(status_code=503, detail={
+                    "error_code": "SECRET_STORE_UNAVAILABLE", "message": str(SecretStoreError()),
+                }) from None
+            except RequestValidationError:
+                # FastAPI's default validation response includes submitted input.
+                raise HTTPException(status_code=422, detail={
+                    "error_code": "SETTINGS_INVALID", "message": "模型配置参数无效，请检查后重试。",
+                }) from None
+        return safe_settings_request
+
+
+router = APIRouter(route_class=SettingsRoute)
 
 
 def _normalize_base_url(value: str) -> str:
@@ -109,9 +131,35 @@ def test_llm_connection(payload: SettingsRequest):
         temperature=payload.temperature,
         timeout=payload.timeout,
     )
-    result = run_llm_connection_test(config)
+    try:
+        result = run_llm_connection_test(config)
+    except Exception:
+        result = {"success": False, "message": "模型连接测试失败，请检查配置后重试。", "response": ""}
+    result = {key: _redact_secret(value, api_key) if isinstance(value, str) else value
+              for key, value in result.items()}
     result["timestamp"] = timestamp
     return TestConnectionResponse(**result)
+
+
+@router.get("/writing-reference")
+def get_writing_reference():
+    from app.services.writing_reference_settings import reference_status
+    return reference_status()
+
+
+@router.post("/writing-reference")
+async def upload_writing_reference(file: UploadFile):
+    from app.models.full_article import FullArticleContractError
+    from app.services.writing_reference_settings import MAX_REFERENCE_BYTES, configure_reference
+    try:
+        raw = await file.read(MAX_REFERENCE_BYTES + 1)
+        return configure_reference(raw)
+    except FullArticleContractError as exc:
+        raise HTTPException(status_code=422, detail={
+            "error_code": exc.code, "message": "Writing Reference JSON 校验失败，请选择有效文件。",
+        }) from None
+    finally:
+        await file.close()
 
 
 @router.get("/model-presets", response_model=ModelPresetListResponse)
@@ -162,6 +210,11 @@ def test_embedding_connection(payload: EmbeddingRequest):
         model=payload.model or saved.model,
         timeout=payload.timeout or saved.timeout,
     )
-    result = run_embedding_connection_test(config)
+    try:
+        result = run_embedding_connection_test(config)
+    except Exception:
+        result = {"success": False, "message": "向量模型连接测试失败，请检查配置后重试。", "response": ""}
+    result = {key: _redact_secret(value, api_key) if isinstance(value, str) else value
+              for key, value in result.items()}
     result["timestamp"] = timestamp
     return TestConnectionResponse(**result)
