@@ -41,10 +41,11 @@ class NativePackagingTests(unittest.TestCase):
         for name in paths:
             self.assertEqual((ROOT / name).read_bytes(), (ARGS.build / 'stage' / name).read_bytes(), name)
         provenance = read(ARGS.build / 'stage/BUILD-MANIFEST.json')
-        self.assertEqual(provenance['commit'], '7d2df31b3660e656eadf483478785588e5ec53aa')
+        current_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+        self.assertEqual(provenance['commit'], current_head)
         self.assertEqual(provenance['python_version'], '3.12.14')
         self.assertEqual(provenance['pyinstaller_version'], '6.22.3')
-        self.assertEqual(provenance['source_state'], 'uncommitted_candidate')
+        self.assertEqual(provenance['source_state'], 'clean_tracked_source')
 
     def test_official_offline_runtime_signature_hash_and_license(self):
         verify_package.verify_webview2_installer(ARGS.webview2_installer, MANIFEST)
