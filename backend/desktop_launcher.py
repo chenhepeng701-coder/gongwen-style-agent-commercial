@@ -9,10 +9,10 @@ import threading
 import time
 import uuid
 import urllib.request
-import webbrowser
 
 from app.utils.runtime_paths import get_config_dir, get_logs_dir, initialize_runtime_environment, install_packaged_write_guard
 from app.utils.storage import atomic_write_text
+from desktop_shell import focus_existing, run_window
 
 APP_NAME = "公文写作助手"
 VERSION = "0.1.0"
@@ -94,8 +94,8 @@ def open_existing(state, timeout=45):
     while time.monotonic() < deadline:
         try:
             data = json.loads(state.read_text(encoding="utf-8"))
-            if healthy(data.get("port"), data.get("identity")):
-                webbrowser.open(f'http://127.0.0.1:{data["port"]}/')
+            if (healthy(data.get("port"), data.get("identity")) and
+                    focus_existing(data.get("hwnd"), data.get("pid"))):
                 return
         except (OSError, ValueError):
             pass
@@ -105,69 +105,6 @@ def open_existing(state, timeout=45):
 
 def show_error(message):
     ctypes.windll.user32.MessageBoxW(None, message, APP_NAME, 0x10)
-
-
-def control_window(url, running):
-    """Small native Win32 control window; no browser engine or UI runtime."""
-    from ctypes import wintypes as w
-    user, kernel = ctypes.windll.user32, ctypes.windll.kernel32
-    callback_type = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, w.HWND, w.UINT, w.WPARAM, w.LPARAM)
-
-    class WindowClass(ctypes.Structure):
-        _fields_ = [("style", w.UINT), ("proc", callback_type), ("class_extra", ctypes.c_int),
-                    ("window_extra", ctypes.c_int), ("instance", w.HINSTANCE), ("icon", w.HICON),
-                    ("cursor", w.HANDLE), ("background", w.HBRUSH), ("menu", w.LPCWSTR), ("name", w.LPCWSTR)]
-
-    kernel.GetModuleHandleW.restype = w.HMODULE
-    user.DefWindowProcW.argtypes = [w.HWND, w.UINT, w.WPARAM, w.LPARAM]
-    user.DefWindowProcW.restype = ctypes.c_ssize_t
-    user.CreateWindowExW.argtypes = [w.DWORD, w.LPCWSTR, w.LPCWSTR, w.DWORD, ctypes.c_int, ctypes.c_int,
-                                   ctypes.c_int, ctypes.c_int, w.HWND, w.HMENU, w.HINSTANCE, w.LPVOID]
-    user.CreateWindowExW.restype = w.HWND
-    user.DestroyWindow.argtypes = [w.HWND]
-    user.ShowWindow.argtypes = [w.HWND, ctypes.c_int]
-    user.SetTimer.argtypes = [w.HWND, ctypes.c_size_t, w.UINT, w.LPVOID]
-    user.MessageBoxW.argtypes = [w.HWND, w.LPCWSTR, w.LPCWSTR, w.UINT]
-
-    @callback_type
-    def procedure(hwnd, message, wp, lp):
-        if message == 0x0111:  # WM_COMMAND
-            if wp & 0xffff == 1:
-                webbrowser.open(url)
-                return 0
-            if wp & 0xffff == 2:
-                message = 0x0010
-        if message == 0x0010:  # WM_CLOSE
-            if user.MessageBoxW(hwnd, "退出将关闭本地服务。请先保存文稿，并等待正在进行的生成完成。确定退出？", APP_NAME, 0x24) == 6:
-                user.DestroyWindow(hwnd)
-            return 0
-        if message == 0x0113 and not running():  # WM_TIMER
-            show_error("本地服务已停止，请重新打开软件。")
-            user.DestroyWindow(hwnd)
-            return 0
-        if message == 0x0002:
-            user.PostQuitMessage(0)
-            return 0
-        return user.DefWindowProcW(hwnd, message, wp, lp)
-
-    instance = kernel.GetModuleHandleW(None)
-    cls = WindowClass(0, procedure, 0, 0, instance, None, None, 6, None, "GongwenDesktopControl")
-    if not user.RegisterClassW(ctypes.byref(cls)):
-        raise RuntimeError("无法创建软件窗口，请重试。")
-    hwnd = user.CreateWindowExW(0, cls.name, APP_NAME + " " + VERSION, 0x00CA0000,
-                                200, 200, 480, 185, None, None, instance, None)
-    if not hwnd:
-        raise RuntimeError("无法打开软件窗口，请重试。")
-    user.CreateWindowExW(0, "STATIC", "本地服务运行中。请保留此窗口，在浏览器中使用软件。", 0x50000000,
-                         20, 20, 430, 35, hwnd, None, instance, None)
-    for label, ident, x in (("打开界面", 1, 70), ("退出软件", 2, 260)):
-        user.CreateWindowExW(0, "BUTTON", label, 0x50010000, x, 75, 130, 32, hwnd, ident, instance, None)
-    user.SetTimer(hwnd, 1, 1000, None)
-    user.ShowWindow(hwnd, 1)
-    message = w.MSG()
-    while user.GetMessageW(ctypes.byref(message), None, 0, 0) > 0:
-        user.TranslateMessage(ctypes.byref(message))
-        user.DispatchMessageW(ctypes.byref(message))
 
 
 def run():
@@ -201,9 +138,10 @@ def run():
         thread = threading.Thread(target=server.run, kwargs={"sockets": [listener]}, daemon=True)
         thread.start()
         wait_for_health(port, identity, thread.is_alive)
-        atomic_write_text(state, json.dumps({"port": port, "identity": identity, "pid": os.getpid()}))
-        webbrowser.open(url)
-        control_window(url, thread.is_alive)
+        def publish(hwnd):
+            atomic_write_text(state, json.dumps({"port": port, "identity": identity,
+                                                "pid": os.getpid(), "hwnd": hwnd}))
+        run_window(url, thread.is_alive, publish)
     finally:
         if server is not None:
             server.should_exit = True
@@ -224,6 +162,11 @@ def main():
         try:
             with (get_logs_dir() / "launcher.log").open("a", encoding="utf-8") as log:
                 log.write(time.strftime("%Y-%m-%d %H:%M:%S ") + type(exc).__name__ + "\n")
+                trace = exc.__traceback__
+                while trace is not None:
+                    code = trace.tb_frame.f_code
+                    log.write(f"  {Path(code.co_filename).name}:{trace.tb_lineno}:{code.co_name}\n")
+                    trace = trace.tb_next
         except Exception:
             pass
         show_error("软件启动失败。请关闭后重试，或重新安装软件。您的用户数据会保留。")

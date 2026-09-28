@@ -1,0 +1,18 @@
+proxy_tools 0.1.0
+Source: https://files.pythonhosted.org/packages/f2/cf/77d3e19b7fabd03895caca7857ef51e4c409e0ca6b37ee6e9f7daa50b642/proxy_tools-0.1.0.tar.gz
+
+PyPI distribution metadata declares License: MIT.
+The published source also carries the following original notice:
+
+
+    proxy_tools.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Proxy. Extracted from Werkzeug
+
+    :copyright: (c) 2013 by Armin Ronacher (adapted by Jonathan Tushman 2014).
+    :license: BSD, see LICENSE for more details.
+
+
+The PyPI sdist and wheel do not contain the referenced LICENSE file.
+Both original notices are retained here; no license text is represented as supplied by the publisher.

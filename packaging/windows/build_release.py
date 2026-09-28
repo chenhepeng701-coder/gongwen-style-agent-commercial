@@ -1,5 +1,6 @@
 """Build from explicit Git paths into a fresh stage, never a worktree copy."""
 import argparse
+import ast
 from datetime import datetime, timezone
 import fnmatch
 import hashlib
@@ -17,6 +18,20 @@ HERE = Path(__file__).resolve().parent
 
 def sha(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def webview2_min_runtime(stage):
+    """Read the staged runtime owner's release constant without Windows imports."""
+    tree = ast.parse((stage / 'backend/desktop_shell.py').read_bytes())
+    values = [ast.literal_eval(node.value) for node in tree.body
+              if isinstance(node, ast.Assign) and any(
+                  isinstance(target, ast.Name) and target.id == 'WEBVIEW2_MIN_RUNTIME'
+                  for target in node.targets)]
+    assert len(values) == 1, 'One WebView2 minimum release constant is required'
+    version = values[0]
+    assert isinstance(version, tuple) and len(version) == 4
+    assert all(type(part) is int and 0 <= part <= 65535 for part in version)
+    return '.'.join(map(str, version))
 
 
 def git(*args):
@@ -64,7 +79,13 @@ def licenses(stage, site_packages, manifest, build_tools):
         assert distribution.version == version, f'Dependency version mismatch: {name}'
         license_files = [p for p in distribution.files or [] if
                          any(part.lower().startswith(('license', 'copying', 'notice')) for part in p.parts)]
-        assert license_files, f'Missing license: {name}'
+        if name == 'proxy_tools' and not license_files:
+            # Full upstream LICENSE is a mandatory pinned desktop_license_file.
+            # This additional NOTICE only explains the PyPI metadata discrepancy.
+            copy_input(HERE / 'licenses/proxy_tools-NOTICE.txt', stage / 'licenses/proxy_tools/NOTICE.txt', result,
+                       'proxy_tools==0.1.0 PyPI metadata and source copyright')
+        else:
+            assert license_files, f'Missing license: {name}'
         for index, path in enumerate(license_files):
             target = stage / 'licenses' / name / (str(index) + '-' + path.name)
             copy_input(Path(distribution.locate_file(path)), target, result, f'{name}=={version}')
@@ -108,8 +129,12 @@ def main():
     parser.add_argument('--site-packages', type=Path, required=True)
     parser.add_argument('--build-tools', type=Path, required=True)
     parser.add_argument('--nsis', type=Path)
+    parser.add_argument('--webview2-installer', type=Path, required=True)
     args = parser.parse_args()
     manifest = json.loads((HERE / 'manifest.json').read_text(encoding='utf-8'))
+    from verify_package import verify_desktop_licenses, verify_webview2_installer
+    verify_desktop_licenses(HERE, manifest)
+    verify_webview2_installer(args.webview2_installer, manifest)
     assert sys.version_info[:3] == (3, 12, 14), 'Build requires the recorded Python 3.12.14 runtime'
     tool_versions = {d.metadata['Name'].lower(): d.version for d in importlib.metadata.distributions(path=[str(args.build_tools)])}
     assert tool_versions.get('pyinstaller') == '6.22.3', 'Unexpected PyInstaller version'
@@ -127,7 +152,14 @@ def main():
         copy_input(ROOT / name, stage / name, records, 'git-tracked' if name in tracked else 'RELEASE-RC-01-approved-new')
     for name in ('manifest.json', 'app.spec', 'version_info.txt', 'build_release.py', 'verify_package.py', 'installer.nsi'):
         copy_input(HERE / name, stage / 'packaging/windows' / name, records, 'RELEASE-RC-01-packaging')
+    minimum_runtime = webview2_min_runtime(stage)
+    assert tuple(map(int, manifest['webview2_redistributable']['runtime_version'].split('.'))) >= tuple(
+        map(int, minimum_runtime.split('.'))), 'Bundled WebView2 is below the runtime release contract'
     records.extend(licenses(stage, args.site_packages, manifest, args.build_tools))
+    for item in manifest['desktop_license_files']:
+        path = HERE / item['path']
+        assert sha(path.read_bytes()) == item['sha256'], 'Desktop license evidence changed'
+        copy_input(path, stage / item['path'], records, item.get('source_url', 'desktop-dependency-license-evidence'))
     copy_input(HERE / 'licenses/Python-3.12-third-party.txt', stage / 'licenses/Python-3.12-third-party.txt', records,
                'https://docs.python.org/3.12/_sources/license.rst.txt')
     if args.nsis:
@@ -176,8 +208,17 @@ def main():
         with (run / 'installer-build.log').open('w', encoding='utf-8') as log:
             subprocess.run([str((args.nsis / 'makensis.exe').resolve()), '/INPUTCHARSET', 'UTF8',
                 '/DAPP_DIR=' + str(run / 'dist/公文写作助手'),
+                '/DWEBVIEW2_INSTALLER=' + str(args.webview2_installer.resolve()),
+                '/DWEBVIEW2_MIN_RUNTIME=' + minimum_runtime,
                 '/DOUTPUT_FILE=' + str(run / '公文写作助手-Setup.exe'), str(stage / 'packaging/windows/installer.nsi')],
                 stdout=log, stderr=subprocess.STDOUT, check=True)
+        installer = run / '公文写作助手-Setup.exe'
+        (run / 'INSTALLER-MANIFEST.json').write_text(json.dumps({
+            'filename': installer.name, 'sha256': sha(installer.read_bytes()),
+            'webview2_redistributable': manifest['webview2_redistributable'],
+            'webview2_min_runtime': minimum_runtime,
+            'offline_install': True, 'runtime_download_on_startup': False,
+        }, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({'build_directory': str(run), 'app': str(run / 'dist/公文写作助手/公文写作助手.exe')}, ensure_ascii=False))
 
 

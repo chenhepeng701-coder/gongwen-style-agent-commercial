@@ -1,6 +1,9 @@
 {
   "version": "0.1.0",
-  "production_tracked_patterns": ["backend/app/*.py", "backend/app/**/*.py"],
+  "production_tracked_patterns": [
+    "backend/app/*.py",
+    "backend/app/**/*.py"
+  ],
   "production_tracked_files": [
     "LICENSE",
     "backend/app/services/generation/case32_contract/brief_rules.txt",
@@ -17,19 +20,109 @@
     "backend/app/utils/secret_store.py",
     "backend/app/services/writing_reference_settings.py",
     "backend/app/utils/frontend_hosting.py",
-    "frontend/src/components/WritingReferenceSettings.jsx"
+    "frontend/src/components/WritingReferenceSettings.jsx",
+    "backend/desktop_shell.py"
   ],
-  "frontend_build_input_patterns": ["frontend/src/**"],
-  "frontend_build_input_files": ["frontend/index.html", "frontend/package.json", "frontend/package-lock.json", "frontend/vite.config.js"],
+  "frontend_build_input_patterns": [
+    "frontend/src/**"
+  ],
+  "frontend_build_input_files": [
+    "frontend/index.html",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+    "frontend/vite.config.js"
+  ],
   "python_runtime_distributions": {
-    "fastapi": "0.115.12", "uvicorn": "0.34.2", "python-docx": "1.1.2",
-    "pydantic": "2.11.4", "pydantic_core": "2.33.2", "python-multipart": "0.0.20",
-    "PyYAML": "6.0.2", "httpx": "0.28.1", "starlette": "0.46.2", "anyio": "4.15.1",
-    "annotated-types": "0.8.0", "typing-inspection": "0.4.4", "typing_extensions": "4.16.0",
-    "certifi": "2026.7.22", "click": "8.5.0", "colorama": "0.4.6", "h11": "0.16.0",
-    "httpcore": "1.0.9", "idna": "3.20", "lxml": "6.1.3"
+    "fastapi": "0.115.12",
+    "uvicorn": "0.34.2",
+    "python-docx": "1.1.2",
+    "pydantic": "2.11.4",
+    "pydantic_core": "2.33.2",
+    "python-multipart": "0.0.20",
+    "PyYAML": "6.0.2",
+    "httpx": "0.28.1",
+    "starlette": "0.46.2",
+    "anyio": "4.15.1",
+    "annotated-types": "0.8.0",
+    "typing-inspection": "0.4.4",
+    "typing_extensions": "4.16.0",
+    "certifi": "2026.7.22",
+    "click": "8.5.0",
+    "colorama": "0.4.6",
+    "h11": "0.16.0",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "lxml": "6.1.3",
+    "pywebview": "6.2.1",
+    "bottle": "0.13.4",
+    "proxy_tools": "0.1.0",
+    "pythonnet": "3.1.0",
+    "clr_loader": "0.3.1",
+    "cffi": "2.1.1",
+    "pycparser": "3.0"
   },
   "build_tool": "PyInstaller==6.22.3",
   "mode": "onedir",
-  "excluded": [".git", ".env", "user data", "private Writing Reference", "tests", "tmp", "logs", "node_modules", "frontend source", "pytest", "pip", "Vite server"]
+  "excluded": [
+    ".git",
+    ".env",
+    "user data",
+    "private Writing Reference",
+    "tests",
+    "tmp",
+    "logs",
+    "node_modules",
+    "frontend source",
+    "pytest",
+    "pip",
+    "Vite server",
+    "Qt",
+    "CEF",
+    "PySide",
+    "PyQt",
+    "MSHTML",
+    "WebBrowserInterop",
+    "WebView2 x86/ARM64 binaries"
+  ],
+  "webview2_redistributable": {
+    "filename": "MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+    "source_url": "https://go.microsoft.com/fwlink/?linkid=2124701",
+    "resolved_url": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/06fb6ad8-1976-4e78-9ceb-3ae170edebde/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+    "sha256": "771042db15cb5c463bac51a8408e70183d7130e8ac946709384c2223da582c1b",
+    "architecture": "x64",
+    "size": 212213456,
+    "license_url": "https://developer.microsoft.com/microsoft-edge/api/eula/webview2?locale=en-us",
+    "runtime_version": "154.0.4258.37",
+    "installer_file_version": "1.3.271.7",
+    "distribution": "Evergreen Standalone Installer",
+    "signature_subject": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+    "signature_thumbprint": "4028CAD637509D4744B17EC5B42AED8D7A31E6AF",
+    "download_page": "https://developer.microsoft.com/en-us/microsoft-edge/webview2",
+    "distribution_evidence": "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution#offline-deployment"
+  },
+  "desktop_license_files": [
+    {
+      "path": "licenses/desktop-dependencies.json",
+      "sha256": "13c11a631eb2cb20eb5ae6c69922ec1583f5ac10809e11e405d3d3a7e37807d2"
+    },
+    {
+      "path": "licenses/Microsoft-WebView2-Evergreen-LICENSE.txt",
+      "sha256": "37bf737218194eac96919e1e4c7fb7ffee4d854c8e028e6629bc3d476249c1e6"
+    },
+    {
+      "path": "licenses/Microsoft-WebView2-SDK-LICENSE.txt",
+      "sha256": "024b4e164f8b91fb2148af8fd28f701218d758d09b504a43f9946d6bedfeb771"
+    },
+    {
+      "path": "licenses/proxy_tools-NOTICE.txt",
+      "sha256": "4b6a0dc3629f493a9c213f3e1f984f9a761a5005e5ab25d12919bbcc50accc0a"
+    },
+    {
+      "path": "licenses/proxy_tools/LICENSE.txt",
+      "sha256": "a428fb8a2e762af3eb0a6edbbb88e9b42ccfee80fd9b423958bcacf9b9abbfe4",
+      "repository": "https://github.com/jtushman/proxy_tools",
+      "source_commit": "ccd35a569b95bec271a59890780c7821756c548a",
+      "source_url": "https://raw.githubusercontent.com/jtushman/proxy_tools/ccd35a569b95bec271a59890780c7821756c548a/LICENSE.txt"
+    }
+  ]
 }
