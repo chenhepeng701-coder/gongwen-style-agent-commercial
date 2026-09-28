@@ -103,19 +103,19 @@
   "desktop_license_files": [
     {
       "path": "licenses/desktop-dependencies.json",
-      "sha256": "13c11a631eb2cb20eb5ae6c69922ec1583f5ac10809e11e405d3d3a7e37807d2"
+      "sha256": "afbf36dd21a35afb63ea35f26ec20e03923df8c11cabfc638d4536aa66889ef2"
     },
     {
       "path": "licenses/Microsoft-WebView2-Evergreen-LICENSE.txt",
-      "sha256": "37bf737218194eac96919e1e4c7fb7ffee4d854c8e028e6629bc3d476249c1e6"
+      "sha256": "10f1778e10515abefbe25480bd21b2d73d75a82cc4b4460d3efa0adb1399b02e"
     },
     {
       "path": "licenses/Microsoft-WebView2-SDK-LICENSE.txt",
-      "sha256": "024b4e164f8b91fb2148af8fd28f701218d758d09b504a43f9946d6bedfeb771"
+      "sha256": "324083bf015092054be9d5851dafa1b79cbfab3331ff983476d502839515d8bb"
     },
     {
       "path": "licenses/proxy_tools-NOTICE.txt",
-      "sha256": "4b6a0dc3629f493a9c213f3e1f984f9a761a5005e5ab25d12919bbcc50accc0a"
+      "sha256": "30e4dd3f97e5507dcc562413ffd09a79a747f7b371ca889e42bd5fae5482b3b0"
     },
     {
       "path": "licenses/proxy_tools/LICENSE.txt",
