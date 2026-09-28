@@ -31,12 +31,12 @@ def test_desktop_http_boundary():
 
 def test_second_launch_opens_only_verified_existing_instance(tmp_path, monkeypatch):
     state = tmp_path / "instance.json"
-    state.write_text(json.dumps({"port": 8765, "identity": "verified"}))
+    state.write_text(json.dumps({"port": 8765, "identity": "verified", "pid": 123, "hwnd": 456}))
     monkeypatch.setattr(launcher, "healthy", lambda port, identity: port == 8765 and identity == "verified")
     opened = []
-    monkeypatch.setattr(launcher.webbrowser, "open", opened.append)
+    monkeypatch.setattr(launcher, "focus_existing", lambda hwnd, pid: opened.append((hwnd, pid)) or True)
     launcher.open_existing(state)
-    assert opened == ["http://127.0.0.1:8765/"]
+    assert opened == [(456, 123)]
 
 
 def test_startup_failure_and_stale_instance_are_explicit(tmp_path, monkeypatch):
