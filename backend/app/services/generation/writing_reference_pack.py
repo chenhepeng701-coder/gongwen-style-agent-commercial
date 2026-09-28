@@ -122,6 +122,11 @@ def load_writing_reference_pack() -> WritingReferencePack:
         raise FullArticleContractError("WRITING_REFERENCE_PACK_NOT_FOUND") from None
     except (OSError, ValueError):
         raise FullArticleContractError("WRITING_REFERENCE_PACK_UNREADABLE") from None
+    return validate_writing_reference_bytes(raw)
+
+
+def validate_writing_reference_bytes(raw: bytes) -> WritingReferencePack:
+    """Shared validation for the local settings upload and the Writer loader."""
     try:
         value = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_object)
         _PackSchema.model_validate(value)

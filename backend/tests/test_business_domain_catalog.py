@@ -238,8 +238,12 @@ def test_safety_production_summary_full_route_matches_required_base(
 
 
 def test_all_preexisting_backend_owners_except_exact_router_seam_are_base_bytes():
+    from release_rc_01_package_scope import PACKAGE_SEAMS, assert_package_seam
     paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", BASE_SHA, "--", "backend/app"], cwd=ROOT).decode().splitlines()
     for path in paths:
+        if path in PACKAGE_SEAMS:
+            assert_package_seam(ROOT, path)
+            continue
         if path == ROUTER:
             continue
         before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{path}"], cwd=ROOT)

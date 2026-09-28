@@ -4,11 +4,11 @@ import json
 import uuid
 from pathlib import Path
 
-from app.utils.runtime_paths import BACKEND_DIR, get_data_dir
+from app.utils.runtime_paths import get_config_dir, get_runtime_root, is_packaged
 from app.utils.storage import atomic_write_text
 
-APP_SETTINGS_PATH = get_data_dir() / "app_settings.json"
-DEFAULT_OUTPUT_DIR = BACKEND_DIR / "output"
+APP_SETTINGS_PATH = get_config_dir() / "app_settings.json"
+DEFAULT_OUTPUT_DIR = get_runtime_root() / "output"
 DEFAULT_GENERATION_SETTINGS = {
     "scene": "自动识别场景",
     "article_mode": "draft_article",
@@ -42,7 +42,7 @@ ALLOWED_EXPORT_FORMATS = {"Word", "TXT"}
 def _absolute_output_path(value: str | Path) -> Path:
     path = Path(str(value).strip()).expanduser()
     if not path.is_absolute():
-        path = BACKEND_DIR / path
+        path = get_runtime_root() / path
     return path.resolve()
 
 
@@ -65,6 +65,8 @@ def _write_settings(settings: dict) -> None:
 
 
 def _ensure_writable_dir(path: Path) -> Path:
+    if is_packaged() and not path.resolve().is_relative_to((get_runtime_root() / "output").resolve()):
+        raise ValueError("安装版导出目录必须位于用户运行数据的 output 目录内")
     try:
         if path.exists() and not path.is_dir():
             raise ValueError("输出目录不是有效目录")

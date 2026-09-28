@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routers import health, settings, library, retrieval, generation, operation
 from app.utils.runtime_paths import initialize_runtime_environment, get_output_dir
+from app.utils.frontend_hosting import mount_frontend
 
 
 @asynccontextmanager
@@ -52,6 +53,7 @@ app.include_router(generation.router, prefix='/api/generation', tags=['generatio
 app.include_router(operation.router, prefix='/api/operation', tags=['operation'])
 
 
-@app.get("/")
-async def root() -> dict:
-    return {"message": "gongwen-style-agent backend is running."}
+if not mount_frontend(app):
+    @app.get("/")
+    async def root() -> dict:
+        return {"message": "gongwen-style-agent backend is running."}

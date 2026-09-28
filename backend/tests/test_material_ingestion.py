@@ -393,6 +393,8 @@ def test_each_api_batch_checks_count_before_concatenation(local, monkeypatch, di
 
 
 def test_protected_generation_retrieval_and_legacy_owners_unchanged():
+    from release_rc_01_package_scope import PACKAGE_SEAMS, assert_package_seam
+    from release_rc_01_scope import RELEASE_RC_01_FRONTEND_CONTENT_SHA256, assert_release_rc_01_frontend_content
     from commercial_genre_scope import COMMERCIAL_GENRE_CONTENT_SHA256, assert_commercial_genre_content
     from p3b_boundary_scope import P3B_CONTENT_SHA256, assert_p3b_content
     from multi_genre_scope import MULTI_GENRE_CONTENT_SHA256, assert_multi_genre_content
@@ -411,6 +413,12 @@ def test_protected_generation_retrieval_and_legacy_owners_unchanged():
         "frontend/tests/utils/batchTaskParams.test.mjs": "bbe63b297ce60861b375ead5685dea457bb76f00",
     }
     for file in files:
+        if file in PACKAGE_SEAMS:
+            assert_package_seam(root, file)
+            continue
+        if file in RELEASE_RC_01_FRONTEND_CONTENT_SHA256:
+            assert_release_rc_01_frontend_content(root, file)
+            continue
         from genre_ui_scene_scope import GENRE_UI_SCENE_MIGRATIONS, assert_integration_content
         from genre_ui_scene_scope import MERGED_UPSTREAM_OWNER_PATHS, assert_integration_protected_owner
         if file in MERGED_UPSTREAM_OWNER_PATHS:
