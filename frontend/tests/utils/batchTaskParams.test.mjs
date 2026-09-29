@@ -94,10 +94,25 @@ test('count > 1 fails clearly; there is no current route fallback', () => {
   for (const count of [2, 3, 10]) assert.throws(() => payload({ ...defaults, count }), /仅支持生成 1 篇/)
 })
 
-test('catalog absence, unknown genre and engineering-ready genres fail closed', () => {
+test('catalog absence, unknown genre and synthetic unavailable genres fail closed', () => {
   assert.throws(() => buildTaskGenerationPayload(defaults), /目录尚未加载/)
   for (const document_type of ['', '未知文种', '调研报告']) assert.throws(() => payload({ document_type }), /请选择支持的标准文种/)
-  for (const document_type of ['讲话稿', '党课讲稿', '领导讲话稿', '工作汇报']) assert.throws(() => payload({ document_type }), /待商业验收/)
+  for (const flags of [
+    { production_ready: false, generation_route: null },
+    { production_ready: false, generation_route: 'full_article_drafting' },
+    { production_ready: true, generation_route: null },
+  ]) {
+    const genre = { ...readyGenre('synthetic_offline', '合成未生产文种'), ...flags }
+    const syntheticCatalog = { genres: [genre], legacy_mappings: [] }
+    assert.throws(() => buildTaskGenerationPayload({ document_type: genre.document_type }, {}, syntheticCatalog, businessDomains),
+      /当前文种暂不可生成，请重新选择文种或重新加载目录。/)
+  }
+  for (const mapping of catalog.legacy_mappings) {
+    const result = payload({ document_type: mapping.legacy_value })
+    assert.equal(result.document_type, mapping.document_type)
+    assert.equal(result.scene, mapping.scene)
+    assert.equal(result.generation_route, 'full_article_drafting')
+  }
 })
 
 test('future promoted synthetic genre uses formal route with no document-name changes', () => {

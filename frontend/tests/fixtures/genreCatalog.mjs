@@ -15,9 +15,9 @@ export const businessDomains = [
 export const catalog = {
   genres: [
     readyGenre('work_summary', '工作总结'),
-    { ...readyGenre('speech', '讲话稿'), production_ready: false, generation_route: null },
-    { ...readyGenre('report', '汇报材料'), production_ready: false, generation_route: null },
-    { ...readyGenre('plan', '工作方案'), aliases: ['实施方案'], production_ready: false, generation_route: null },
+    readyGenre('speech', '讲话稿'),
+    readyGenre('report', '汇报材料'),
+    { ...readyGenre('plan', '工作方案'), aliases: ['实施方案'] },
   ],
   legacy_mappings: [
     { legacy_value: '领导讲话稿', document_type: '讲话稿', scene: null },

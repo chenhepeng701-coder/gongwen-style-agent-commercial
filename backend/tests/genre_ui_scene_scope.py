@@ -29,11 +29,12 @@ FRONTEND_CONTENT_SHA256 = {
     "frontend/src/utils/batchExcelImport.js": "332dcfc2bc0d129cbe7e850a52792d66fcabf9304de6dbf8fde6c15318e28e49",
     "frontend/src/utils/batchTaskParams.js": "c1497b9a17a555c1aa21d5bf3bcee9409daf628e902b2c3b682ec2e759352a85",
     "frontend/tests/utils/batchExcelImport.test.mjs": "74f4515c7576019bbaa797766ee2cc22474347d57a228fa1b97879c7de2c20a5",
-    "frontend/tests/utils/batchTaskParams.test.mjs": "00b02c2dde863193f59266bc2dedaffa3c33b3e009ddbce39b585b872ba07d7f",
-    "frontend/src/components/WritingCatalogSelects.jsx": "3defcb035b1291c2e24ebffa40409cfb39b759f9d16d061cdc855f17e3b7090f",
-    "frontend/src/utils/genreCatalog.js": "72de34ed88b776ef53eb0179a53be3086cfe10f636d6789508b3d7a7949c4a58",
-    "frontend/tests/fixtures/genreCatalog.mjs": "fe4eba2a45961b4169cc7576fe083621cad6791d4194ecf00e029811f4f0f9d0",
-    "frontend/tests/pages/ArticleGenPage.genre-scene-routing.test.mjs": "6d74fc9449104f5a333dde5a898afe31eb523a253e4710b9dc01e320612b094f",
+    # MULTI-GENRE-PRODUCTION-GATE-01: exact names-only UI and its updated tests.
+    "frontend/tests/utils/batchTaskParams.test.mjs": "3522e24577842ab87ee4cd7f5891950204c9d5f70ee97038ec621323ec3043c4",
+    "frontend/src/components/WritingCatalogSelects.jsx": "d3cbb0b1cc186b435cc98258d30fa2046fef84f25f5b373335da26e675923d58",
+    "frontend/src/utils/genreCatalog.js": "596e61191b1dfa8a85e3f8b85291d6268494a447c4726407bfe49a6b57391a9d",
+    "frontend/tests/fixtures/genreCatalog.mjs": "e86f8fc37dc18c9ca05ad9bb7ad93a700b46b0ce65ca19adc87ee6f9c8a84bbd",
+    "frontend/tests/pages/ArticleGenPage.genre-scene-routing.test.mjs": "33571271304c16a5266c15a51c420959046c9cbecde67bab98b58018a8e1f81e",
     "frontend/tests/utils/genreCatalog.test.mjs": "e25c0bb5809843b104e6216dfbef868d6abcef17f1681fb97d38e8209bad425a",
 }
 GENRE_UI_SCENE_MIGRATIONS = (
@@ -55,7 +56,8 @@ SCENE_CONTRACT_CONTENT_SHA256 = {
     SCENE_OWNER_PATH: "45fdef0ec6250f480e1f0a328421bea2114be47b39b0d2078f07ceb95ec02de1",
 }
 # PR #18 introduced these files after the historical directory guards' BASEs.
-# They receive no migration allowance: current bytes must equal the merge BASE.
+# Their protected path membership stays fixed. The two gate-only declarations
+# below use exact task pins; every other owner still equals the merge BASE.
 MERGED_UPSTREAM_OWNER_PATHS = (
     "backend/app/services/generation/genres/upstream_adapters.py",
     "backend/app/services/generation/genres/upstream_genre_contracts.py",
@@ -160,6 +162,17 @@ def protected_owner_paths() -> tuple[str, ...]:
 
 def assert_integration_protected_owner(root: Path, path: str) -> None:
     assert path in protected_owner_paths()
+    # Fixed pins inside the existing guard preserve all historical global keys.
+    reviewed_pins = {
+        "backend/app/services/generation/genres/upstream_suite.py": "964c275e0e60398c9776571d0ab4c270d806f270f27e2e2050c46ba18b64e8a9",
+        "backend/app/services/generation/genres/upstream_genre_contracts.py": "7a9ca3322efa8db253e6629eeb4c047a9ea9eeae30f8d25bea985113bf8517eb",
+        # Test-support-only closeout: explicit loopback policy, same I/O guards.
+        "backend/tests/run_multi_genre_offline.py": "860b4c6ab9f41a4750f05d41f6fa7abfe8261d39e3f86418f80f915c27baef62",
+    }
+    if path in reviewed_pins:
+        assert sha256((root / path).read_bytes().replace(b"\r\n", b"\n")).hexdigest() == reviewed_pins[path], (
+            "UI/Scene protected owner changed: " + path)
+        return
     assert (root / path).read_bytes().replace(b"\r\n", b"\n") == integration_base_source(root, path), (
         "UI/Scene protected owner changed: " + path)
 

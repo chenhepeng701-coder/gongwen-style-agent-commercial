@@ -99,7 +99,7 @@ export function productionTaskError(task, catalog, exportFormat = 'docx') {
   const genre = catalog.genres.find(item => item.document_type === normalized.document_type)
   if (!genre) return `文种“${normalized.document_type || '未选择'}”无法确定，请选择支持的标准文种。`
   if (!genre.production_ready || genre.generation_route !== 'full_article_drafting') {
-    return `“${genre.display_name || genre.document_type}”已接入，待商业验收，暂不能生成。`
+    return '当前文种暂不可生成，请重新选择文种或重新加载目录。'
   }
   if (Number(task?.count ?? 1) !== 1) return '每项任务仅支持生成 1 篇，请拆分为多项任务。'
   if (!genre.export_formats.includes(exportFormat)) return '当前文种不支持所选导出格式。'
