@@ -19,21 +19,33 @@ const module = { exports: {} }
 new Function('require', 'module', 'exports', compiled.code)(createRequire(import.meta.url), module, module.exports)
 const { GenreSelect, SceneSelect, BusinessDomainSelect } = module.exports
 
-test('actual React genre select renders supplied catalog status and no extra genres', () => {
+test('actual React genre select renders enabled names only and no extra genres', () => {
   const html = renderToStaticMarkup(React.createElement(GenreSelect, { genres: catalog.genres, value: '工作总结', onChange() {} }))
   for (const genre of catalog.genres) assert.match(html, new RegExp(`value="${genre.document_type}"`))
   assert.equal((html.match(/<option/g) || []).length, catalog.genres.length + 1)
-  assert.match(html, /工作总结 · 已可生产/)
-  assert.match(html, /value="讲话稿" disabled="">讲话稿 · 已接入，待商业验收/)
-  assert.doesNotMatch(html, /ENGINEERING_READY|CommercialGenreContract/)
+  assert.match(html, /value="工作总结" selected="">工作总结<\/option>/)
+  assert.match(html, /value="讲话稿">讲话稿<\/option>/)
+  assert.doesNotMatch(html, /已可生产|已接入|待商业验收|ENGINEERING_READY|PRODUCTION_ENABLED|COMMERCIALLY_VERIFIED|EXPERIMENTAL/)
 })
 
 test('future production metadata enables real rendered option without document-specific branch', () => {
   const html = renderToStaticMarkup(React.createElement(GenreSelect, { genres: [readyGenre('future', '未来文种')], value: '未来文种', onChange() {} }))
-  assert.match(html, /value="未来文种" selected="">未来文种 · 已可生产/)
+  assert.match(html, /value="未来文种" selected="">未来文种<\/option>/)
   const empty = renderToStaticMarkup(React.createElement(GenreSelect, { genres: [], value: '', disabled: true }))
   assert.match(empty, /<select disabled="">/)
   assert.doesNotMatch(empty, /工作总结/)
+})
+
+test('synthetic future genres stay disabled when either production flag or route is unavailable', () => {
+  for (const flags of [
+    { production_ready: false, generation_route: 'full_article_drafting' },
+    { production_ready: true, generation_route: null },
+    { production_ready: false, generation_route: null },
+  ]) {
+    const genre = { ...readyGenre('synthetic_offline', '合成未来文种'), ...flags }
+    const html = renderToStaticMarkup(React.createElement(GenreSelect, { genres: [genre], value: '', onChange() {} }))
+    assert.match(html, /value="合成未来文种" disabled="">合成未来文种<\/option>/)
+  }
 })
 
 test('unknown historic genre remains visible as a disabled option', () => {

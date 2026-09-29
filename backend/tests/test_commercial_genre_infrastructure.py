@@ -204,17 +204,23 @@ def test_report_production_flag_cannot_substitute_for_capabilities(monkeypatch, 
         CommercialGenreRuntime.admit("report")
 
 
-@pytest.mark.parametrize("name", ["report", "未知文种"])
+@pytest.mark.parametrize("name", ["synthetic_engineering", "未知文种"])
 def test_json_cannot_forge_maturity_capabilities_or_validation_context(api, monkeypatch, name):
     client, _ = api
+    synthetic = replace(WORK_SUMMARY_ADAPTER, genre_id="synthetic_engineering",
+        document_type="合成工程文种", aliases=(), commercial=replace(CONTRACT,
+            genre_id="synthetic_engineering", maturity=CommercialMaturity.ENGINEERING_READY))
+    install(monkeypatch, WORK_SUMMARY_ADAPTER, synthetic)
     monkeypatch.setattr(route, "prepare_full_draft_material", forbidden)
     payload = {**REQUEST, "document_type": name, "genre_purpose": "offline", "production_ready": True,
                "maturity": "COMMERCIALLY_VERIFIED", "commercial": {"genre_id": name,
                "maturity": "PRODUCTION_ENABLED", "writer_calls": {"max_calls": 1}},
+               "capabilities": {"production_ready": True, "status": "VERIFIED_CORE_GENRE"},
                "context": {"genre_purpose": "offline"}}
     result = client.post("/api/generation/generate", json=payload)
     assert result.status_code == 422
-    assert "GENRE_" in result.text
+    assert ("COMMERCIAL_MATURITY_NOT_ADMITTED" if name == synthetic.genre_id
+            else "GENRE_NOT_REGISTERED") in result.text
 
 
 def test_actual_rule_bytes_fail_before_material_io(monkeypatch, tmp_path):
@@ -263,7 +269,7 @@ def test_synthetic_genre_composes_real_offline_chain_without_core_branch(monkeyp
         isolated.resolve(adapter.genre_id)
     isolated.register(adapter)
     validate_commercial_contract(adapter)
-    with pytest.raises(registry.GenreResolutionError, match="GENRE_OFFLINE_ONLY"):
+    with pytest.raises(registry.GenreResolutionError, match="COMMERCIAL_MATURITY_NOT_ADMITTED"):
         CommercialGenreRuntime.admit(adapter.genre_id)
     request = ArticleGenRequest.model_validate({**REQUEST, "document_type": adapter.document_type},
                                                context={"genre_purpose": "offline"})
@@ -332,7 +338,7 @@ def test_runtime_diagnostics_reuse_accounting_without_source_text(configured, ap
 
 
 def test_direct_runtime_construction_cannot_self_authorize():
-    with pytest.raises(registry.GenreResolutionError, match="GENRE_OFFLINE_ONLY"):
+    with pytest.raises(FullArticleContractError, match="COMMERCIAL_RUNTIME_ADMISSION_MISMATCH"):
         CommercialGenreRuntime(REPORT_ADAPTER, CONTRACT)
     with pytest.raises(FullArticleContractError, match="COMMERCIAL_RUNTIME_ADMISSION_MISMATCH"):
         CommercialGenreRuntime(WORK_SUMMARY_ADAPTER, replace(CONTRACT, version="forged"))

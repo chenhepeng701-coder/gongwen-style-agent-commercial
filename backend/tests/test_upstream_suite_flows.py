@@ -52,20 +52,31 @@ def _isolated(monkeypatch, *adapters):
 
 
 @pytest.mark.parametrize("adapter", UPSTREAM_ADAPTERS, ids=lambda a: a.genre_id)
-def test_every_integrated_contract_is_complete_without_production_admission(adapter):
+def test_every_integrated_contract_is_production_enabled_with_maturity_negative_control(adapter, monkeypatch):
     contract = validate_commercial_contract(adapter)
-    assert contract.maturity is CommercialMaturity.ENGINEERING_READY
-    assert adapter.capabilities.production_ready is False
+    assert contract.maturity is CommercialMaturity.PRODUCTION_ENABLED
+    assert adapter.capabilities.production_ready is True
+    assert adapter.capabilities.status == "VERIFIED_CORE_GENRE"
     assert adapter.capabilities.offline_architecture_proof is True
     assert registry.resolve_genre(adapter.document_type, purpose="offline") is adapter
-    with pytest.raises(registry.GenreResolutionError, match="GENRE_OFFLINE_ONLY"):
-        CommercialGenreRuntime.admit(adapter.document_type)
+    assert registry.resolve_genre(adapter.document_type, purpose="production") is adapter
+    assert CommercialGenreRuntime.admit(adapter.genre_id).adapter is adapter
     payload = dict(title="合成离线文种任务", document_type=adapter.document_type,
         generation_route="full_article_drafting", target_words=1200,
         genre_purpose="offline", production_ready=True,
         maturity="COMMERCIALLY_VERIFIED", commercial={"maturity": "PRODUCTION_ENABLED"},
         context={"genre_purpose": "offline"})
-    with pytest.raises(ValidationError, match="GENRE_OFFLINE_ONLY"):
+    assert ArticleGenRequest.model_validate(payload).document_type == adapter.document_type
+    synthetic = replace(adapter, genre_id="synthetic_" + adapter.genre_id,
+        document_type="合成" + adapter.document_type, aliases=(),
+        commercial=replace(contract, genre_id="synthetic_" + adapter.genre_id,
+            maturity=CommercialMaturity.ENGINEERING_READY))
+    _isolated(monkeypatch, synthetic)
+    assert validate_commercial_contract(synthetic).maturity is CommercialMaturity.ENGINEERING_READY
+    with pytest.raises(registry.GenreResolutionError, match="COMMERCIAL_MATURITY_NOT_ADMITTED"):
+        CommercialGenreRuntime.admit(synthetic.genre_id)
+    payload["document_type"] = synthetic.document_type
+    with pytest.raises(ValidationError, match="COMMERCIAL_MATURITY_NOT_ADMITTED"):
         ArticleGenRequest.model_validate(payload)
 
 

@@ -239,12 +239,19 @@ def test_safety_production_summary_full_route_matches_required_base(
 
 def test_all_preexisting_backend_owners_except_exact_router_seam_are_base_bytes():
     from release_rc_01_package_scope import PACKAGE_SEAMS, assert_package_seam
+    from genre_ui_scene_scope import assert_integration_protected_owner
     paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", BASE_SHA, "--", "backend/app"], cwd=ROOT).decode().splitlines()
     for path in paths:
         if path in PACKAGE_SEAMS:
             assert_package_seam(ROOT, path)
             continue
         if path == ROUTER:
+            continue
+        # MULTI-GENRE-PRODUCTION-GATE-01 reseals exactly these two declarations.
+        # Keep them protected by fixed byte hashes, not a directory exemption.
+        if path in ("backend/app/services/generation/genres/upstream_suite.py",
+                    "backend/app/services/generation/genres/upstream_genre_contracts.py"):
+            assert_integration_protected_owner(ROOT, path)
             continue
         before = subprocess.check_output(["git", "show", f"{BASE_SHA}:{path}"], cwd=ROOT)
         assert (ROOT / path).read_bytes().replace(b"\r\n", b"\n") == before.replace(b"\r\n", b"\n"), path

@@ -9,7 +9,7 @@ export function GenreSelect({ genres = [], value, ...props }) {
       {genres.map(genre => (
         <option key={genre.genre_id} value={genre.document_type}
           disabled={!genre.production_ready || genre.generation_route !== 'full_article_drafting'}>
-          {genre.display_name || genre.document_type} · {genre.production_ready && genre.generation_route === 'full_article_drafting' ? '已可生产' : '已接入，待商业验收'}
+          {genre.display_name || genre.document_type}
         </option>
       ))}
     </select>

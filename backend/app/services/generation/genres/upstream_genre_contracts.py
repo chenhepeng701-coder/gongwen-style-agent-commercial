@@ -287,7 +287,7 @@ def commercial_contract(local_genre_id: str, upstream_id: str) -> CommercialGenr
     prefix = f"upstream_{upstream_id}"
     return CommercialGenreContract(
         genre_id=local_genre_id, version=f"{prefix}_commercial_v1",
-        maturity=CommercialMaturity.ENGINEERING_READY,
+        maturity=CommercialMaturity.PRODUCTION_ENABLED,
         planning=PlanningCapability(identity=f"{prefix}_internal_plan_v1", mode="writer_internal",
             instruction=f"按{spec.title}的上游规则自主组织完整正文，不先输出提纲。{spec.review_instruction}"),
         evidence_organization=EvidenceOrganizationCapability(

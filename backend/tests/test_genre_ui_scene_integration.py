@@ -89,13 +89,9 @@ def test_catalog_api_is_exact_registry_read_only_projection(client):
         assert row["document_type"] == row["display_name"] == adapter.document_type
         assert row["aliases"] == list(adapter.aliases)
         assert row["export_formats"] == list(adapter.capabilities.export_formats)
-        assert row["production_ready"] is (adapter.genre_id == "work_summary")
-        if adapter.genre_id == "work_summary":
-            assert row["generation_route"] == "full_article_drafting"
-            assert row["commercial_maturity"] == "PRODUCTION_ENABLED"
-        else:
-            assert row["generation_route"] is None
-            assert row["commercial_maturity"] == "ENGINEERING_READY"
+        assert row["production_ready"] is True
+        assert row["generation_route"] == "full_article_drafting"
+        assert row["commercial_maturity"] == "PRODUCTION_ENABLED"
     assert client.post("/api/generation/genres", json={"production_ready": True}).status_code == 405
     payload["genres"].clear()
     assert len(genre_catalog()["genres"]) == 22
@@ -153,20 +149,31 @@ def test_legacy_catalog_mappings_use_canonical_genres_and_existing_scene_taxonom
     assert {row["legacy_value"]: (row["document_type"], row["scene"])
             for row in catalog["legacy_mappings"]} == expected
     for row in catalog["legacy_mappings"]:
-        assert registry.resolve_genre(row["document_type"]).document_type == row["document_type"]
+        assert registry.resolve_genre(row["document_type"], purpose="production").document_type == row["document_type"]
         assert row["scene"] is None or row["scene"] in scene_names
 
 
 @pytest.mark.parametrize("document_type", [
-    "讲话稿", "汇报材料", "工作方案", "通知", "述职报告", "调研报告", "预案", "心得体会",
+    "合成未生产文种", "述职报告", "调研报告", "预案", "心得体会",
     "心得体会/研讨发言", "研讨发言", "其他", "完全未注册文种",
 ])
-def test_http_production_gate_rejects_nonproduction_unknown_and_forged_flags(client, document_type):
+def test_http_production_gate_rejects_nonproduction_unknown_and_forged_flags(client, document_type, monkeypatch):
+    sample = registry.resolve_genre("work_summary")
+    synthetic = replace(sample, genre_id="synthetic_engineering", document_type="合成未生产文种",
+        aliases=(), commercial=replace(sample.commercial, genre_id="synthetic_engineering",
+            maturity=CommercialMaturity.ENGINEERING_READY))
+    local = registry.GenreRegistry()
+    for adapter in (*registry.GENRE_REGISTRY.all(), synthetic):
+        local.register(adapter)
+    monkeypatch.setattr(registry, "GENRE_REGISTRY", local)
     payload = request().model_dump()
     payload.update(document_type=document_type, production_ready=True, commercial_maturity="PRODUCTION_ENABLED",
-                   capabilities={"production_ready": True}, genre_purpose="offline")
+                   capabilities={"production_ready": True}, genre_purpose="offline",
+                   maturity="COMMERCIALLY_VERIFIED", commercial={"maturity": "PRODUCTION_ENABLED"})
     response = client.post("/api/generation/generate", json=payload)
     assert response.status_code == 422
+    assert ("COMMERCIAL_MATURITY_NOT_ADMITTED" if document_type == synthetic.document_type
+            else "GENRE_NOT_REGISTERED") in response.text
 
 
 def test_http_formal_count_above_one_is_rejected_before_writer(client):

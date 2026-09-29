@@ -87,6 +87,8 @@ def test_migration_baseline_is_the_user_required_merge():
 
 def test_offline_runner_preserves_foundation_security_guards():
     path = "backend/tests/run_multi_genre_offline.py"
+    from genre_ui_scene_scope import assert_integration_protected_owner
+    assert_integration_protected_owner(ROOT, path)
 
     class ExpandDefaultTaskLabel(ast.NodeTransformer):
         def visit_Name(self, node):
@@ -101,10 +103,14 @@ def test_offline_runner_preserves_foundation_security_guards():
             return node
 
     trees = [ast.parse(commercial_base_source(ROOT, path)), ast.parse((ROOT / path).read_bytes())]
-    # Only the task label is configurable. The actual file/network audit and
-    # the real transport/Embedding sentinels remain the Foundation algorithms.
+    # Runner closeout permits the exact network-policy delegation only. File
+    # protection and real transport/Embedding sentinels stay Foundation-identical.
     for name in ("audit", "forbidden_model", "forbidden_embedding"):
         nodes = [next(node for node in ast.walk(tree)
                       if isinstance(node, ast.FunctionDef) and node.name == name) for tree in trees]
+        if name == "audit":
+            tail = ast.Module(body=nodes[1].body[1:], type_ignores=[])
+            assert ast.dump(tail) == ast.dump(ast.parse("_audit_network(event, args, counts, task_name)"))
+            nodes = [ast.Module(body=[node.body[0]], type_ignores=[]) for node in nodes]
         normalized = [ast.dump(ExpandDefaultTaskLabel().visit(node), include_attributes=False) for node in nodes]
         assert normalized[0] == normalized[1], "Offline safety guard changed: " + name

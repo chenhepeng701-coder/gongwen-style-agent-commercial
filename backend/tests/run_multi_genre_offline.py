@@ -3,6 +3,8 @@
 From backend: python tests/run_multi_genre_offline.py -q tests
 Runtime/cache output stays in ignored tmp/multi-genre-foundation. Historical
 Run replay is deliberately unavailable in this architecture-only runner.
+Local lifecycle traffic is allowed; non-loopback targets and real model /
+Embedding transports remain forbidden.
 """
 import ipaddress
 import json
@@ -11,6 +13,49 @@ from pathlib import Path
 import socket
 import sys
 import tempfile
+
+
+def _is_loopback_target(host):
+    if isinstance(host, bytes):
+        try:
+            host = host.decode("ascii")
+        except UnicodeDecodeError:
+            return False
+    if not isinstance(host, str):
+        return False
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def _audit_network(event, args, counts, task_name):
+    if event not in {"socket.connect", "socket.sendto", "socket.getaddrinfo",
+                     "socket.gethostbyname", "socket.gethostbyaddr"}:
+        return
+    try:
+        if event in {"socket.connect", "socket.sendto"}:
+            address = args[1]
+            host = address[0] if isinstance(address, tuple) and len(address) in {2, 4} else None
+        else:
+            host = args[0]
+    except (IndexError, TypeError):
+        host = None
+    if _is_loopback_target(host):
+        # Preserve the separate Windows asyncio socketpair IPC accounting.
+        if event == "socket.connect":
+            frame = sys._getframe(1)
+            while frame:
+                if frame.f_code is socket.socketpair.__code__:
+                    counts["asyncio_socketpair_ipc"] += 1
+                    return
+                frame = frame.f_back
+        counts["loopback_network"] += 1
+        return
+    counts["external_network"] += 1
+    raise AssertionError(task_name + " forbids network: " + event)
 
 
 def main(*, workspace_relative="tmp/multi-genre-foundation",
@@ -28,7 +73,7 @@ def main(*, workspace_relative="tmp/multi-genre-foundation",
     parent.mkdir(parents=True, exist_ok=True)
     runtime = Path(tempfile.mkdtemp(prefix="runtime-", dir=parent))
     counts = dict(external_network=0, real_embedding=0, real_model=0,
-                  forbidden_data_access=0, asyncio_socketpair_ipc=0)
+                  forbidden_data_access=0, asyncio_socketpair_ipc=0, loopback_network=0)
     protected = [backend / name for name in ("data", "uploads", "output", ".env")]
     protected.extend((root / ".env", root / "writing_style_library"))
     user_manifest = parent / "protected-user-files.json"
@@ -48,22 +93,7 @@ def main(*, workspace_relative="tmp/multi-genre-foundation",
                 if path in user_files or any(path == directory or directory in path.parents for directory in protected):
                     counts["forbidden_data_access"] += 1
                     raise AssertionError(task_name + " forbids real or pre-existing user data access")
-        # Windows asyncio needs local socketpair IPC. No other socket is allowed.
-        if event == "socket.connect":
-            try:
-                loopback = ipaddress.ip_address(args[1][0]).is_loopback
-            except (ValueError, TypeError, IndexError):
-                loopback = False
-            if loopback:
-                frame = sys._getframe(1)
-                while frame:
-                    if frame.f_code is socket.socketpair.__code__:
-                        counts["asyncio_socketpair_ipc"] += 1
-                        return
-                    frame = frame.f_back
-        if event in {"socket.connect", "socket.getaddrinfo", "socket.gethostbyname", "socket.gethostbyaddr", "socket.sendto"}:
-            counts["external_network"] += 1
-            raise AssertionError(task_name + " forbids network: " + event)
+        _audit_network(event, args, counts, task_name)
 
     sys.addaudithook(audit)
     from app.utils import runtime_paths
@@ -90,7 +120,8 @@ def main(*, workspace_relative="tmp/multi-genre-foundation",
                           "-o", "cache_dir=" + str(runtime / "cache")])
     print(count_label + "=" + json.dumps(counts, sort_keys=True))
     (runtime / "call-counts.json").write_text(json.dumps(counts, indent=2), encoding="utf-8")
-    return result if not any(value for key, value in counts.items() if key != "asyncio_socketpair_ipc") else 1
+    return result if not any(value for key, value in counts.items()
+                             if key not in {"asyncio_socketpair_ipc", "loopback_network"}) else 1
 
 
 if __name__ == "__main__":

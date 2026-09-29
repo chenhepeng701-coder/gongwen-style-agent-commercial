@@ -91,9 +91,9 @@ def test_all_historical_baselines_pins_and_protected_path_lists_remain_immutable
         (ROOT / path).read_bytes())
 
 
-def test_offline_runner_inherits_unchanged_foundation_guards_and_requires_user_manifest():
+def test_offline_runner_inherits_pinned_foundation_guards_and_requires_user_manifest():
     path = "backend/tests/run_multi_genre_offline.py"
-    assert (ROOT / path).read_bytes().replace(b"\r\n", b"\n") == scope.integration_base_source(ROOT, path)
+    scope.assert_integration_protected_owner(ROOT, path)
     source = (ROOT / "backend/tests/run_genre_ui_scene_offline.py").read_text("utf-8")
     tree = ast.parse(source)
     assert any(isinstance(node, ast.ImportFrom) and node.module == "run_multi_genre_offline"

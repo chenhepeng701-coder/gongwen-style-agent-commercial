@@ -89,7 +89,7 @@ def test_legacy_relevance_only_callers_preserve_base_contract(baseline, document
     assert after == before
 
 
-def test_offline_report_profile_is_not_selected_by_current_production_route(baseline):
+def test_production_report_profile_is_selected_without_changing_shared_document_ranking(baseline):
     from app.models.generation import ArticleGenRequest
     from app.services.generation.generator import build_official_draft_task
     from app.services.generation.genres.registry import retrieval_profile_for, resolve_genre
@@ -100,13 +100,15 @@ def test_offline_report_profile_is_not_selected_by_current_production_route(base
     rows = candidates(30)
     before, _ = run(baseline, rows, current_task)
     default, _ = run(owner, rows, current_task)
-    assert default == before
-    assert retrieval_profile_for(request.document_type) is LEGACY_RETRIEVAL_PROFILE
+    for key in ("ranked_documents", "primary_document_id", "auxiliary_document_ids"):
+        assert default[key] == before[key]
+    assert retrieval_profile_for(request.document_type) is REPORT_RETRIEVAL_PROFILE
     offline_profile = resolve_genre(request.document_type, purpose="offline").retrieval_profile
     explicit_offline, _ = run(owner, rows, current_task, offline_profile)
     assert {row["coverage_role"] for row in explicit_offline["selected_chunks"]} == {
         "context", "progress", "issues", "recommendations"}
-    assert explicit_offline["selected_chunks"] != default["selected_chunks"]
+    assert explicit_offline == default
+    assert explicit_offline["selected_chunks"] != before["selected_chunks"]
 
 
 def test_every_summary_coverage_and_chunk_preference_matches_base(baseline):

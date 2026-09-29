@@ -50,20 +50,23 @@ const componentModule = { exports: {} };
 new Function('module', 'exports', 'require', compiled.outputFiles[0].text)(componentModule, componentModule.exports, require);
 const { GenreSelect, SceneSelect, BusinessDomainSelect } = componentModule.exports;
 const genreHtml = renderToStaticMarkup(React.createElement(GenreSelect, { genres: catalog.genres, value: '', onChange() {} }));
-assert.equal((genreHtml.match(/已接入，待商业验收/g) || []).length, 21);
-assert.equal((genreHtml.match(/已可生产/g) || []).length, 1);
+assert.doesNotMatch(genreHtml, /已可生产|已接入|待商业验收|ENGINEERING_READY|PRODUCTION_ENABLED|COMMERCIALLY_VERIFIED|EXPERIMENTAL/);
+const options = [...genreHtml.matchAll(/<option value="([^"]*)"([^>]*)>([^<]*)<\/option>/g)];
+const genreOptions = options.filter(([, value]) => value);
+assert.equal(genreOptions.length, 22);
+assert.equal(genreOptions.filter(([, , attributes]) => !attributes.includes('disabled')).length, 22);
 for (const genre of catalog.genres) {
-  assert.ok(genreHtml.includes('value="' + genre.document_type + '"'), genre.document_type);
+  const option = genreOptions.find(([, value]) => value === genre.document_type);
+  assert.ok(option, genre.document_type);
+  assert.equal(option[3], genre.display_name || genre.document_type);
+  assert.equal(genre.production_ready, true);
+  assert.equal(genre.commercial_maturity, 'PRODUCTION_ENABLED');
   const task = { title: '合成跨栈验收', document_type: genre.document_type, scene: scenes[0].name, count: 1 };
-  if (genre.production_ready) {
-    const payload = buildTaskGenerationPayload(task, { export_format: 'txt' }, catalog, domains);
-    assert.equal(payload.generation_route, 'full_article_drafting');
-    assert.equal(payload.document_type, genre.document_type);
-    assert.equal(payload.scene, scenes[0].name);
-    assert.throws(() => buildTaskGenerationPayload({ ...task, count: 2 }, {}, catalog));
-  } else {
-    assert.throws(() => buildTaskGenerationPayload(task, {}, catalog), /待商业验收/);
-  }
+  const payload = buildTaskGenerationPayload(task, { export_format: 'txt' }, catalog, domains);
+  assert.equal(payload.generation_route, 'full_article_drafting');
+  assert.equal(payload.document_type, genre.document_type);
+  assert.equal(payload.scene, scenes[0].name);
+  assert.throws(() => buildTaskGenerationPayload({ ...task, count: 2 }, {}, catalog));
 }
 const sceneHtml = renderToStaticMarkup(React.createElement(SceneSelect, { scenes, value: scenes[0].name, onChange() {} }));
 for (const scene of scenes) assert.ok(sceneHtml.includes(scene.name));
@@ -71,6 +74,16 @@ for (const mapping of catalog.legacy_mappings) {
   const normalized = normalizeTaskGenre({ document_type: mapping.legacy_value }, catalog);
   assert.equal(normalized.document_type, mapping.document_type);
   assert.equal(normalized.scene, mapping.scene);
+  const payload = buildTaskGenerationPayload({ title: '合成历史映射', document_type: mapping.legacy_value }, {}, catalog, domains);
+  assert.equal(payload.document_type, mapping.document_type);
+  assert.equal(payload.scene, mapping.scene);
+  assert.equal(payload.generation_route, 'full_article_drafting');
+}
+for (const value of ['述职报告', '调研报告', '心得体会', '预案', '其他', '未知历史文种']) {
+  assert.equal(normalizeTaskGenre({ document_type: value }, catalog).document_type, value);
+  const html = renderToStaticMarkup(React.createElement(GenreSelect, { genres: catalog.genres, value, onChange() {} }));
+  assert.ok(html.includes('value="' + value + '" disabled="" selected="">' + value + '（历史值，请重新选择）'));
+  assert.throws(() => buildTaskGenerationPayload({ document_type: value }, {}, catalog, domains), /请选择支持的标准文种/);
 }
 assert.throws(() => buildTaskGenerationPayload({ document_type: catalog.genres[0].document_type }, {}, null));
 for (const item of domains) {
@@ -115,5 +128,5 @@ process.stdout.write(JSON.stringify({ genres: catalog.genres.length, scenes: sce
     )
     assert result.returncode == 0, result.stderr
     observed = json.loads(result.stdout)
-    assert observed["genres"] == 22 and observed["production"] == 1
+    assert observed["genres"] == 22 and observed["production"] == 22
     assert observed["scenes"] == len(taxonomy.json()["items"])

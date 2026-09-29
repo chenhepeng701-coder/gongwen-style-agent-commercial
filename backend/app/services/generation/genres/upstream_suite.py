@@ -174,7 +174,7 @@ def build_suite_adapters():
             structure_contract=structure_contract(upstream_id),
             quality_contract_id=f"upstream_{upstream_id}_quality_v1",
             quality_evaluator=quality_evaluator(upstream_id),
-            capabilities=GenreCapabilities(status="EXPERIMENTAL", production_ready=False,
+            capabilities=GenreCapabilities(status="VERIFIED_CORE_GENRE", production_ready=True,
                                            offline_architecture_proof=True),
             fact_policy_extensions=("PRESERVE_PLAN_MODALITY",),
             commercial=commercial_contract(local_id, upstream_id),

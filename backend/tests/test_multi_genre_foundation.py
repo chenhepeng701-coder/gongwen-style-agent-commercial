@@ -38,6 +38,19 @@ REQUEST = dict(title="合成档案整理情况", document_type="汇报材料",
                generation_route="full_article_drafting", target_words=1200)
 
 
+@pytest.fixture
+def offline_adapter(monkeypatch):
+    adapter = replace(REPORT_ADAPTER, genre_id="synthetic_offline", document_type="合成非生产文种",
+        aliases=(), capabilities=replace(REPORT_ADAPTER.capabilities,
+            status="EXPERIMENTAL", production_ready=False),
+        commercial=replace(REPORT_ADAPTER.commercial, genre_id="synthetic_offline"))
+    isolated = registry.GenreRegistry()
+    for item in (*registry.GENRE_REGISTRY.all(), adapter):
+        isolated.register(item)
+    monkeypatch.setattr(registry, "GENRE_REGISTRY", isolated)
+    return adapter
+
+
 @pytest.fixture(autouse=True)
 def no_services(monkeypatch):
     from app.services.llm.openai_compatible_provider import OpenAICompatibleProvider
@@ -60,9 +73,9 @@ def test_work_summary_route_resolves_to_verified_adapter(name):
 
 @pytest.mark.parametrize("name,code", [
     (None, "GENRE_NOT_REGISTERED"), ("不存在的文种", "GENRE_NOT_REGISTERED"),
-    ("汇报材料", "GENRE_OFFLINE_ONLY"), ("report", "GENRE_OFFLINE_ONLY"),
+    ("合成非生产文种", "GENRE_OFFLINE_ONLY"), ("synthetic_offline", "GENRE_OFFLINE_ONLY"),
 ])
-def test_public_request_fails_closed(name, code):
+def test_public_request_fails_closed(name, code, offline_adapter):
     with pytest.raises(ValidationError, match=code):
         ArticleGenRequest(**{**REQUEST, "document_type": name})
     # A JSON field cannot request trusted Pydantic validation context.
@@ -71,8 +84,9 @@ def test_public_request_fails_closed(name, code):
                                         "genre_purpose": "offline", "production_ready": True})
 
 
-def test_production_service_revalidates_offline_request_before_any_io(monkeypatch):
-    request = ArticleGenRequest.model_validate(REQUEST, context={"genre_purpose": "offline"})
+def test_production_service_revalidates_offline_request_before_any_io(monkeypatch, offline_adapter):
+    request = ArticleGenRequest.model_validate({**REQUEST, "document_type": offline_adapter.document_type},
+                                               context={"genre_purpose": "offline"})
     monkeypatch.setattr(full_draft_generation, "prepare_full_draft_material",
                         lambda *_: pytest.fail("Offline adapter reached production materials"))
     monkeypatch.setattr(full_draft_generation, "load_writing_reference_pack",
@@ -81,8 +95,8 @@ def test_production_service_revalidates_offline_request_before_any_io(monkeypatc
         asyncio.run(full_draft_generation.generate_full_draft(request))
 
 
-@pytest.mark.parametrize("genre", ["汇报材料", "未注册文种"])
-def test_actual_http_route_does_not_expose_offline_capability(api, monkeypatch, genre):
+@pytest.mark.parametrize("genre", ["合成非生产文种", "未注册文种"])
+def test_actual_http_route_does_not_expose_offline_capability(api, monkeypatch, genre, offline_adapter):
     client, route = api
     monkeypatch.setattr(route, "prepare_full_draft_material",
                         lambda *_: pytest.fail("Rejected genre reached material preparation"))
@@ -144,7 +158,7 @@ def test_second_adapter_registration_runs_complete_offline_chain_without_core_ed
     isolated.register(REPORT_ADAPTER)  # The only extension operation.
     request = ArticleGenRequest.model_validate(REQUEST, context={"genre_purpose": "offline"})
     adapter = registry.resolve_genre(request.document_type, purpose="offline")
-    assert not adapter.capabilities.production_ready
+    assert adapter.capabilities.production_ready
     task = build_official_draft_task(request)
     searches = []
 
